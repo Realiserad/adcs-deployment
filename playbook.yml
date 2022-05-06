@@ -1,0 +1,55 @@
+- name: Build documentation
+  hosts: localhost
+  tasks:
+    - name: Get shortened commit hash
+      command:
+        cmd: git rev-parse --short HEAD
+      register: short_commit_hash
+    - name: Create directory structure
+      file:
+        state: directory
+        path: "{{ item }}"
+      with_items:
+        - "{{ playbook_dir }}/_docs/chapters"
+        - "{{ playbook_dir }}/_docs/graphics"
+    - name: Create index from template
+      template:
+        src: index.rst.j2
+        dest: "{{ playbook_dir }}/_docs/index.rst"
+    - name: Create chapters from template
+      template:
+        src: "{{ item }}"
+        dest: '{{ playbook_dir }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
+      with_fileglob:
+        - "chapters/*.rst.j2"
+    - name: Perform RST linting
+      command:
+        cmd: rst-lint {{ item }}
+      with_fileglob:
+        - "{{ playbook_dir}}/_docs/chapters/*.rst"
+    - name: Copy graphics
+      copy:
+        src: "{{ item }}"
+        dest: "{{ playbook_dir }}/_docs/graphics"
+      with_fileglob:
+        - "graphics/*.png"
+    - name: Create Sphinx configuration
+      template:
+        src: conf.py.j2
+        dest: "{{ playbook_dir }}/_docs/conf.py"
+    - name: Copy Sphinx files
+      copy:
+        src: "{{ item }}"
+        dest: "{{ playbook_dir }}/_docs"
+      with_items:
+        - Makefile
+        - mycustomstyle.sty
+        - atea.png
+    - name: Build the training manual as PDF
+      make:
+        chdir: "{{ playbook_dir }}/_docs"
+        target: latexpdf
+    - name: Build the training manual as HTML
+      make:
+        chdir: "{{ playbook_dir }}/_docs"
+        target: html

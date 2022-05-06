@@ -1,0 +1,299 @@
+Installation Manual
+===================
+
+Create a CSR for the issuing CA
+-------------------------------
+
+#. Log in to {{ servers.issuing_ca }} using RDP.
+
+#. Optionally adjust the keyboard layout using PowerShell::
+
+    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+
+#. Reset the password of the domain administrator account using PowerShell::
+
+    $NewPassword = Read-Host -AsSecureString
+    Set-ADAccountPassword -Identity {{ accounts.domain.user }} -NewPassword $NewPassword -Reset
+
+#. Create the file ``C:\CAPolicy.inf``::
+
+    [Version]
+    Signature = "$Windows NT$"
+
+    [Certsrv_Server]
+    LoadDefaultTemplates = 0
+
+#. Install the AD CS Windows feature::
+
+    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+
+#. Install AD CS and create an issuing CA using PowerShell::
+
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#Microsoft Software Key Storage Provider" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ organisation.name }},C={{ organisation.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ location.log }}" -DatabaseDirectory "{{ location.database }}" -Force
+
+#. Transfer the file ``C:\ICA1.csr`` to {{ servers.root_ca }}.
+
+Create a repository
+-------------------
+
+#. Log in to {{ servers.repository }} using RDP.
+
+#. Optionally adjust the keyboard layout using PowerShell::
+
+    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+
+#. Reset the password of the local administrator account using PowerShell::
+
+    $NewPassword = Read-Host -AsSecureString
+    $UserAccount = Get-LocalUser -Name "{{ accounts.local.user }}"
+    $UserAccount | Set-LocalUser -Password $NewPassword
+
+#. Install IIS and remove the default website using PowerShell::
+
+    Install-WindowsFeature -Name Web-Server -IncludeManagementTools
+    Remove-IISSite -Name "Default Web Site"
+
+#. Create a folder where the repository files should be stored.
+
+    New-Item -Path "C:\inetpub" -Name "pki" -ItemType "directory"
+
+#. Create a new website for the repository::
+
+    New-IISSite -Name PKI -PhysicalPath "C:\inetpub\pki" -Protocol http -BindingInformation "*:80:"
+
+#. Create a local user account::
+
+    $Password = Read-Host -AsSecureString
+    New-LocalUser -AccountNeverExpires -Name "PKIUser" -Password $Password
+
+#. Create an SMB share using PowerShell::
+
+    New-SmbShare -Name "PKI Repository" -Path "C:\inetpub\pki"
+
+Create the Root CA
+-------------------
+
+#. Log in to {{ servers.root_ca }} using RDP.
+
+#. Optionally adjust the keyboard layout using PowerShell::
+
+    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+
+#. Check the local time against a reliable watch, and adjust it if necessary.
+
+#. Reset the password of the local administrator account using PowerShell::
+
+    $NewPassword = Read-Host -AsSecureString
+    $UserAccount = Get-LocalUser -Name "{{ accounts.local.user }}"
+    $UserAccount | Set-LocalUser -Password $NewPassword
+
+#. Install the AD CS Windows feature::
+
+    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+
+#. Create a root CA using PowerShell::
+
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "ECDSA_P256#Microsoft Software Key Storage Provider" -KeyLength 256 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ organisation.name }},C={{ organisation.country }}" -Force
+
+#. Create and run the file ``C:\CASetup.bat``::
+
+    CertUtil -setreg CA\CRLPeriodUnits 52
+    CertUtil -setreg CA\CRLPeriod Weeks
+    CertUtil -setreg CA\CRLDeltaPeriodUnits 0
+    CertUtil -setreg CA\CRLDeltaPeriod Days
+
+    :: https://nolanrumble.com/security/crl-option-numbers-and-variables-what-do-they-mean
+    CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ organisation.domain }}/%%3.crl"
+    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ organisation.domain }}/%%3.crt"
+
+    CertUtil -setreg CA\ValidityPeriodUnits 10
+    CertUtil -setreg CA\ValidityPeriod Years
+
+    CertUtil -setreg CA\AuditFilter 127
+
+    net stop certsvc
+    net start certsvc
+    CertUtil -ping 30
+
+Sign the issuing CA
+-------------------
+
+#. Submit the CSR for the issuing CA and save the request ID::
+
+    $request = CertReq -submit -config - C:\ICA1.csr | Out-String | Select-String 'RequestId: (\d+)'
+    $requestId = $request.Matches[0].Groups[1].Value.Trim()
+
+#. Accept the request and grab a copy of the certificate::
+
+    CertUtil -resubmit $requestId
+    CertReq -retrieve -config - $requestId C:\ICA1.crt
+
+#. Issue a CRL from the root CA::
+
+    CertUtil -crl
+
+#. Export a copy of the root CA certificate::
+
+    CertUtil "-ca.cert" "C:\R1.crt"
+
+#. Transfer the files ``C:\ICA1.crt``, ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ servers.repository }}.
+
+#. Transfer the file ``C:\ICA1.crt`` and ``C:\R1.crt`` to {{ servers.issuing_ca }}.
+
+Activate the issuing CA
+-----------------------
+
+#. Log in to {{ servers.issuing_ca }} using RDP.
+
+#. Publish the root CA certificate to AD::
+
+    CertUtil -dspublish -f C:\R1.crt
+
+#. Install the CA certificate chain::
+
+    Import-Certificate -FilePath C:\R1.crt -CertStoreLocation Cert:\LocalMachine\Root
+    CertUtil -installcert "C:\ICA1.crt"
+
+#. Create and run the file ``C:\CASetup.bat``::
+
+    CertUtil -setreg CA\CRLPeriodUnits 7
+    CertUtil -setreg CA\CRLPeriod Days
+    CertUtil -setreg CA\CRLDeltaPeriodUnits 0
+    CertUtil -setreg CA\CRLDeltaPeriod Days
+
+    :: https://nolanrumble.com/security/crl-option-numbers-and-variables-what-do-they-mean
+    CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ organisation.domain }}/%%3.crl"
+    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ organisation.domain }}/%%3.crt"
+
+    CertUtil -setreg CA\ValidityPeriodUnits 2
+    CertUtil -setreg CA\ValidityPeriod Years
+
+    CertUtil -setreg CA\AuditFilter 127
+
+    net stop certsvc
+    net start certsvc
+    CertUtil -ping 30
+
+Publish a CRL from the issuing CA to the repository
+---------------------------------------------------
+
+#. Create the file ``C:\CopyCRL.bat``::
+
+    net use X: "\\pki.{{ organisation.domain }}\PKI Repository" "{{ accounts.service.password }}" /user:pki.{{ organisation.domain }}\PKIUser /persistent:Yes
+    xcopy "C:\*.crl" X:\ /y
+    net use X: /delete
+
+#. Schedule a daily background task::
+
+    $actions = New-ScheduledTaskAction -Execute "C:\CopyCRL.bat"
+    $trigger = New-ScheduledTaskTrigger -Daily -At "02:00"
+    $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM"
+    $settings = New-ScheduledTaskSettingsSet -RunOnlyIfNetworkAvailable -WakeToRun
+    $task = New-ScheduledTask -Action $actions -Principal $principal -Trigger $trigger -Settings $settings
+    Register-ScheduledTask "CopyCRL" -InputObject $task
+
+#. Issue a CRL and run the task to copy it to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
+
+Configure certificate templates
+-------------------------------
+
+#. Log in to one of the domain controllers using RDP.
+
+.. note:: You can use the command ``nltest /dclist:{{ organisation.domain }}`` to get the names of the domain controllers.
+
+#. Click on the start button, type ``mmc.exe`` and press **Enter** to open Microsoft Management Console.
+
+#. Press **Ctrl + M***, double-click on the **Certificate Templates** snap-in and click on **OK**.
+
+#. Double-click on **Certificate Templates** in the tree on the left. This will show all available certificate templates in a list on the right.
+
+{% for template in templates %}
+#. Right-click on {{ template.from }} and click on **Duplicate Template**.
+
+#. Click on the **Compatibility** tab and make the following changes:
+
+    #. In the *Certification Authority* dropdown, pick **Windows Server 2016** and click on **OK**.
+    
+    #. In the *Certificate recipients** dropdown, pick **Windows 10 / Windows Server 2016** and click on **OK**.
+
+#. Click on the **General** tab and make the following changes:
+
+    #. In the **Template display name** field, type ``{{ template.name }}``.
+
+    #. In the **Validity period** field, specify ``{{ template.validity }}`` days.
+
+    #. In the **Renewal period** field, specify ``{{ template.renewal_period }}`` days.
+
+    {% if template.publish %}
+    #. Tick the options **Publish certificate in Active Directory** and **Do not automatically reenroll if a duplicate certificate exists in Active Directory**.
+    {% endif %}
+
+#. Click on the **Cryptography** tab and make the following changes:
+
+    #. In the **Provider Category** dropdown, pick **Key Storage Provider**.
+
+    {% if template.use_ec %}
+    #. In the **Algorithm name** dropdown, pick **ECDH_P256**.
+    {% endif %}
+
+    #. In the **Request Hash** dropdown, pick **SHA256**.
+
+
+#. Click on the **Security** tab and make the following changes:
+
+    #. Click on **Add...**, type ``{{ template.group }}`` and click on **OK**.
+
+    #. Tick the options **Enroll** and **Autoenroll**.
+
+#. Click on the **Subject Name** tab and make the following changes:
+
+    {% if template.subject.email %}
+    #. Tick the option **E-mail name**. 
+    {% endif %}
+
+    {% if template.subject.dnsname %}
+    #. Tick the option **DNS name**.
+    {% endif %}
+
+    {% if template.subject.upn %}
+    #. Tick the option **UPN**. 
+    {% endif %}
+
+#. Click on **OK** to save the template.
+{% endfor %}
+
+Enable autoenrollment
+---------------------
+
+#. Click on the start button, type **Group Policy Management** and press **Enter**.
+
+#. Right-click on **Domains -> {{ organisation.domain }} -> Group Policy Objects -> GPO-PKI** and click on **Edit** to open *Group Policy Management Editor*.
+
+#. Expand **Computer Configuration -> Policies -> Windows Settings -> Security Settings** and click on **Public Key Policies**. The public key policies is shown on the right. Double-click on **Certificate Services Client - Auto-enrollment** to open *Certificate Services Client - Auto-enrollment Properties*.
+
+#. In the **Configuration Model** dropdown, pick **Enabled**.
+
+#. Tick the option **Renew expired certificates, update pending certificayes, and remove revoked certificates**.
+
+#. Tick the option **Update certificates that use certificate templates**.
+
+#. Click on **OK**.
+
+Enable certificate templates
+----------------------------
+
+#. Log in to ``{{ servers.issuing_ca }}`` using RDP.
+
+#. Pull the GPO changes from the domain controller::
+
+    gpupdate
+
+{% for template in templates %}
+#. Enable the template *{{ template.name }}* using PowerShell::
+
+    Add-CATemplate -Name "{{ template.name | replace(' ', '') }}" -Force
+
+{% endfor %}

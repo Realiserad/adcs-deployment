@@ -1,0 +1,24 @@
+Prerequisites
+=============
+
+#. Create virtual machines with Windows 2022 Server:
+
+    - ``{{ servers.root_ca }}``
+    - ``{{ servers.issuing_ca }}``
+    - ``{{ servers.repository }}``
+
+#. Join the server ``{{ servers.issuing_ca }}`` and ``{{ servers.repository }}`` to the domain.
+
+#. Create a group policy object *GPO-PKI*.
+
+#. Configure the firewalls according to *Appendix A*.
+
+#. Share instructions and credentials for VPN access.
+
+#. Create a local administrator account ``{{ accounts.local.user }}``.
+
+#. Create an enterprise domain account ``{{ accounts.domain.user }}``.
+
+#. Ensure that there is a network drive mapped to ``{{ servers.issuing_ca }}`` with at least 128 GB of free storage available for storing the CA logs and certificate database.
+
+#. Ensure that the domain ``pki.{{ organisation.domain }}`` points to ``{{ servers.repository }}`` and can be resolved both internally and externally.

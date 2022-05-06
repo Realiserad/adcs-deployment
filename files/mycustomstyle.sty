@@ -1,0 +1,38 @@
+% Redefine the 'normal' header/footer style when using "fancyhdr" package:
+% Note: this presupposes "twoside". If "oneside" class option, there will be warnings.
+%\spx@ifundefined{fancyhf}{}{
+  % Use \pagestyle{normal} as the primary pagestyle for text.
+  \fancypagestyle{normal}{
+    \fancyhf{}
+% (for \py@HeaderFamily cf "TITLES")
+    \fancyfoot[R]{{\py@HeaderFamily\thepage}}
+    \fancyfoot[L]{{\py@HeaderFamily\nouppercase{\leftmark}}}
+    \fancyhead[R]{{\py@HeaderFamily \@title, \py@release}}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0.4pt}
+  }
+  % Update the plain style so we get the page number & footer line,
+  % but not a chapter or section title.  This is to keep the first
+  % page of a chapter and the blank page between chapters `clean.'
+  \fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[R]{{\py@HeaderFamily\thepage}}
+    %\fancyfoot[L]{{\py@HeaderFamily\nouppercase{\leftmark}}}
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0.4pt}
+  }
+%}
+
+% modifications to fncychap style Bjarne
+\ChNameVar{\raggedleft\normalsize\fontfamily{fvs}\selectfont}
+\ChNumVar{\raggedleft\normalsize\fontfamily{fvs}\selectfont}
+\ChTitleVar{\raggedleft\huge\fontfamily{fvs}\selectfont}
+\makeatletter
+\renewcommand\DOCH{%
+  \mghrulefill{\RW}\par\nobreak
+  \CNV\FmN{\@chapapp}\space \CNoV\thechapter\par\nobreak
+  \vskip -1\baselineskip\vskip 5pt
+  \mghrulefill{\RW}\par\nobreak
+  \vskip 20\p@
+  }
+\makeatother
