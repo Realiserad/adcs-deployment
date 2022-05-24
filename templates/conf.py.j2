@@ -16,13 +16,13 @@ version = "{{ short_commit_hash.stdout }}"
 release = "{{ short_commit_hash.stdout }}"
 
 language = None
-exclude_patterns = [' _build', 'Thumbs.db', '.DS_Store' ]
+exclude_patterns = [ ' _build', 'Thumbs.db', '.DS_Store' ]
 pygments_style = 'sphinx'
 todo_include_todos = False
 
 html_theme = "{{ theme }}"
 
-{% if training_manual.theme == 'guzzle_sphinx_theme' %}
+{% if theme == 'guzzle_sphinx_theme' %}
 html_theme_path = guzzle_sphinx_theme.html_theme_path()
 html_theme = 'guzzle_sphinx_theme'
 extensions.append("guzzle_sphinx_theme")
@@ -38,7 +38,7 @@ html_theme_options = {
 html_static_path = [ '_static' ]
 html_logo = 'atea.png'
 
-{% if training_manual.theme == 'guzzle_sphinx_theme' %}
+{% if theme == 'guzzle_sphinx_theme' %}
 html_sidebars = {
     '**': [
         'logo-text.html',
@@ -59,13 +59,13 @@ html_sidebars = {
 htmlhelp_basename = 'AteaProject'
 
 latex_engine = 'pdflatex'
-latex_logo = 'atea.png'
+latex_logo = 'atea_aligned.png'
 latex_elements = {
     'papersize': 'a4paper',
     'preamble': '\\usepackage{mycustomstyle}',
     'extraclassoptions':',openany,oneside',
 }
-latex_additional_files = [ 'mycustomstyle.sty' ]s
+latex_additional_files = [ 'mycustomstyle.sty' ]
 latex_documents = [
     (master_doc, 
      'MicrosoftPKI.tex', 

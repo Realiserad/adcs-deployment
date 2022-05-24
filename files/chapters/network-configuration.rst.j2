@@ -1,0 +1,83 @@
+Appendix A - Network Configuration
+==================================
+
+.. list-table:: Firewall rules
+   :widths: 1 1 1 1
+   :header-rows: 1
+
+   * - Src
+     - Dst
+     - Dst proto/port
+     - Description
+   * - Jumphost
+     - {{ servers.root_ca.name }}
+     - tcp/3389
+     - RDP
+   * - Jumphost
+     - {{ servers.issuing_ca.name }}
+     - tcp/3389
+     - RDP
+   * - Jumphost
+     - {{ servers.repository.name }}
+     - tcp/3389
+     - RDP
+   * - Jumphost
+     - Domain controllers
+     - tcp/3389
+     - RDP
+   * - {{ servers.issuing_ca.name }}
+     - Domain controller
+     - tcp/135
+     - RPC Endpoint Mapper
+   * - {{ servers.issuing_ca.name }}
+     - Domain controllers
+     - tcp/1024-65535
+     - RPC
+   * - {{ servers.issuing_ca.name }}
+     - Domain controllers
+     - tcp/389
+     - LDAP
+   * - {{ servers.issuing_ca.name }}
+     - Domain controllers
+     - udp/389
+     - LDAP
+   * - {{ servers.issuing_ca.name }}
+     - Domain controllers
+     - tcp/636
+     - LDAP over TLS
+   * - {{ servers.issuing_ca.name }}
+     - DNS servers
+     - tcp/53
+     - DNS
+   * - {{ servers.issuing_ca.name }}
+     - DNS servers
+     - udp/53
+     - DNS
+   * - {{ servers.issuing_ca.name }}
+     - Domain controllers
+     - 88/tcp
+     - Kerberos
+   * - {{ servers.issuing_ca.name }}
+     - DNS server
+     - 88/udp
+     - Kerberos
+   * - All computers connected to the domain
+     - {{ servers.issuing_ca.name }}
+     - tcp/135
+     - RPC Endpoint Mapper
+   * - All computers connected to the domain
+     - {{ servers.issuing_ca.name }} 
+     - tcp/49152-65535
+     - RPC
+   * - {{ servers.repository.name }}
+     - DNS servers
+     - tcp/53
+     - DNS
+   * - {{ servers.repository.name }}
+     - DNS servers
+     - udp/53
+     - DNS
+   * - Internet
+     - {{ servers.repository.name }}
+     - http/80
+     - Certificate validation

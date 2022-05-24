@@ -1,0 +1,35 @@
+Appendix B - Inventory
+======================
+
+.. list-table:: PKI machines
+   :widths: 2 2 2 1 1 1 2
+   :header-rows: 1
+
+   * - Name
+     - IP 
+     - Operating system
+     - RAM
+     - Disk
+     - vCPU
+     - Purpose
+   * - {{ servers.root_ca.name }}
+     - {{ servers.root_ca.ip }}
+     - {{ servers.root_ca.os }}
+     - 2 GB
+     - 32 GB
+     - 2
+     - Trust anchor for the ``{{ customer.domain }}`` domain.
+   * - {{ servers.issuing_ca.name }}
+     - {{ servers.issuing_ca.ip }}
+     - {{ servers.issuing_ca.os }}
+     - 8 GB
+     - 32 GB
+     - 2
+     - Issues certificates for users and computers in the ``{{ customer.domain }}`` domain.
+   * - {{ servers.repository.name }}
+     - {{ servers.repository.ip }}
+     - {{ servers.repository.os }}
+     - 8 GB
+     - 64 GB
+     - 2
+     - Distributes CA certificates and CRLs over HTTP.    

@@ -1,10 +1,14 @@
 - name: Build documentation
   hosts: localhost
+  gather_facts: False
   tasks:
     - name: Get shortened commit hash
       command:
         cmd: git rev-parse --short HEAD
       register: short_commit_hash
+    - name: Generate a secret
+      set_fact:
+        secret: "{{ lookup('password', '/dev/null length=16') }}"
     - name: Create directory structure
       file:
         state: directory
@@ -45,6 +49,7 @@
         - Makefile
         - mycustomstyle.sty
         - atea.png
+        - atea_aligned.png
     - name: Build the training manual as PDF
       make:
         chdir: "{{ playbook_dir }}/_docs"
@@ -53,3 +58,15 @@
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: html
+
+    - name: Create installation package
+      community.general.archive:
+        path: 
+          - "{{ playbook_dir }}/_docs/_build/html"
+          - "{{ playbook_dir }}/_docs/_build/latex/MicrosoftPKI.pdf"
+        format: zip
+        dest: "{{ playbook_dir }}/Customer.zip"
+    - name: Build assessment bundle
+      shell: "sh ./build.sh"
+      args:
+        chdir: "files/pki-assessment"
