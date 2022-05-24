@@ -1,0 +1,130 @@
+Operations Manual
+=================
+
+Inspect the status of the PKI
+-----------------------------
+
+To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
+
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Click on the start button, type ``pkiview.msc`` and press **Enter**.
+
+#. Expand the tree on the left and click on your issuing CA.
+
+#. Ensure that all entries are marked with *OK* in the *Status* column.
+
+.. figure:: ../graphics/pkiview.png
+
+      An example of what Enterprise PKI Viewer looks like for a fully-functional AD CS installation.
+
+Back up the root CA
+-------------------
+
+Create a backup to disk using ``CertUtil``. The backup contains all issued certificates, the CA log and the private key of the CA as a PFX-file.
+
+#. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
+
+#. Run the backup command::
+
+    CertUtil -backup C:\Backup
+
+#. Type in the password protecting the private key in the backup.
+
+#. Backup keys in the registry::
+
+    reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\backup.reg
+
+#. Transfer the backup directory ``C:\Backup`` and registry file ``C:\backup.reg`` to a secure location.
+
+#. Turn off ``{{ servers.root_ca.name }}``.
+
+Restore a backup of the root CA
+-------------------------------
+
+#. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
+
+#. Verify the following:
+
+    - The server name must be the same as name of the server from where the backup was created.
+    - ``%systemroot%`` must match ``%systemroot%`` from where the backup was made.
+
+#. Transfer the latest backup directory ``C:\Backup`` and registry file ``C:\backup.reg`` to the root CA server.
+
+#. Create the file ``C:\CAPolicy.inf`` if it does not already exist::
+
+    [Version]
+    Signature = "$Windows NT$"
+
+    [Certsrv_Server]
+    LoadDefaultTemplates = 0
+
+#. Install the AD CS Windows feature if not already installed::
+
+    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+
+#. Import the registry keys::
+
+    reg import C:\backup.reg
+
+#. Run the restore command::
+
+    CertUtil -restore C:\Backup
+
+#. Type in the password used to protect the private key.
+
+#. TODO
+
+Issue a new root CA CRL
+-----------------------
+
+TODO
+
+Renew an issuing CA
+-------------------
+
+TODO
+
+Manually publish CRLs
+---------------------
+
+TODO
+
+Revoke an issuing CA
+--------------------
+
+TODO
+
+Revoke an enduser certificate
+-----------------------------
+
+TODO
+
+Reenroll all certificate holders
+--------------------------------
+
+TODO
+
+Manually enroll for a user certificate
+--------------------------------------
+
+#. Log in with the user with whom you want to enroll.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M** and double-click on the **Certificates** snap-in.
+
+#. If a dialog windows is shown, select **My user account** and click on **Finish**.
+
+#. Click on **OK** to add the snap-in.
+
+#. Right-click on **Certificates - Current User** in the panel on the right, and click on **All tasks → Automatically Enroll and Retrieve Certificates**. The *Certificate Enrollment* wizard opens.
+
+#. Click on **Next** to start the wizard.
+
+#. 
+
+Manually enroll for a computer certificate
+------------------------------------------
+
+TODO

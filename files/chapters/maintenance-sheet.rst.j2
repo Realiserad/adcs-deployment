@@ -1,0 +1,53 @@
+Appendix C - Maintenance Sheet
+==============================
+
+{% for offset in [ 0, 10 ] %}
+.. list-table:: Maintenance sheet from {{ year + 1 + offset }} to {{ year + 10 + offset }}
+   :widths: 4 1 1 1 1 1 1 1 1 1 1
+   :header-rows: 1
+
+   * - 
+     - {{ year + 1 + offset }}
+     - {{ year + 2 + offset }}
+     - {{ year + 3 + offset }}
+     - {{ year + 4 + offset }}
+     - {{ year + 5 + offset }}
+     - {{ year + 6 + offset }}
+     - {{ year + 7 + offset }}
+     - {{ year + 8 + offset }}
+     - {{ year + 9 + offset }}
+     - {{ year + 10 + offset }}
+   * - Review ACL of root CA
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+   * - Issue new root CA CRL
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+     - X
+   * - Renew issuing CA
+     - 
+     - 
+     - 
+     - 
+     - X
+     - 
+     - 
+     - 
+     - 
+     -
+{% endfor %}
