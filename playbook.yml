@@ -16,6 +16,7 @@
       with_items:
         - "{{ playbook_dir }}/_docs/chapters"
         - "{{ playbook_dir }}/_docs/graphics"
+        - "{{ playbook_dir }}/release"
     - name: Create index from template
       template:
         src: index.rst.j2
@@ -50,6 +51,7 @@
         - mycustomstyle.sty
         - atea.png
         - atea_aligned.png
+
     - name: Build the training manual as PDF
       make:
         chdir: "{{ playbook_dir }}/_docs"
@@ -58,15 +60,18 @@
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: html
-
     - name: Create installation package
       community.general.archive:
         path: 
           - "{{ playbook_dir }}/_docs/_build/html"
           - "{{ playbook_dir }}/_docs/_build/latex/MicrosoftPKI.pdf"
         format: zip
-        dest: "{{ playbook_dir }}/Customer.zip"
+        dest: "{{ playbook_dir }}/release/Customer.zip"
     - name: Build assessment bundle
-      shell: "sh ./build.sh"
+      shell: "sh build.sh"
       args:
         chdir: "files/pki-assessment"
+    - name: Create sales documentation
+      shell: "python3 render.py"
+      args:
+        chdir: "files/sales"

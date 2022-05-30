@@ -78,7 +78,7 @@ Create a repository
     Set-ACL "C:\inetpub\pki\" $Acl
     Grant-SmbShareAccess -Name "PKI Repository" -AccountName "PKI\PKIUser" -AccessRight Full -Force
 
-Create the Root CA
+Create the root CA
 -------------------
 
 #. Log in to {{ servers.root_ca.name }} using RDP.
@@ -305,11 +305,6 @@ Enable autoenrollment
 
 #. Click on **OK**.
 
-Set DCOM Port
---------- ----
-
-#. TODO
-
 Enable certificate templates
 ----------------------------
 
@@ -325,3 +320,44 @@ Enable certificate templates
     Add-CATemplate -Name "{{ template.name | replace(' ', '') }}" -Force
 
 {% endfor %}
+
+{% if network.dcom_port is defined %}
+Set a static DCOM port
+----------------------
+
+#. Click on the start button, type ``Component Services`` and press **Enter**.
+
+#. In the tree on the left, expand **Component Services → Computers → My Computer** and click on **DCOM Config**.
+
+#. In the panel on the right, right-click on **CertSrv Request** on click on **Properties**.
+
+#. Click on the **Endpoints** tab.
+
+#. Click on **Add**. The *DCOM Enpoint Properties* dialog is shown.
+
+#. Select the option **Use static endpoint** and type in the port number ``{{ network.dcom_port }}`` in the textbox, then click on **OK**.
+
+#. Click on **OK** to close the *CertSr Request Properties* dialog.
+
+.. figure:: ../graphics/dcom_configuration.png
+   
+        DCOM configuration for *CertSrv Request* with a static endpoint for port 4000.
+
+#. Disable RPC for the *ICertPassage* interface::
+
+    certutil -setreg ca\interfaceflags +IF_NORPCICERTREQUEST
+
+#. Restart AD CS::
+
+    net stop certsvc
+    net start certsvc
+
+.. note:: The CA will not change listening ports until the first certificate request comes in. This means that you must send a certificate request to the CA before making adjustments to the firewall rules. 
+
+    Check which port is being used by running something like:
+
+    .. code-block:: powershell
+
+        netstat -anob | Select-String -Pattern certsrv.exe -Context 1,0
+    
+{% endif %}

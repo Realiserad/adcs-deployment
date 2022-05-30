@@ -7,6 +7,13 @@ Om du kör verktyget på en domänansluten maskin så kommer den automatiskt att
 
 Om din miljö innehåller en så kallad *standalone CA* (dvs en AD CS-server som inte är ansluten till någon domän) så kommer du behöva köra verktyget flera gånger, en gång på en domänansluten maskin och en gång för varje AD CS-server med en standalone CA installerad.
 
+Hantering av data
+-----------------
+
+Verktyget *ADCS Collector* samlar in information om hur ert PKI-system är konfigurerat, det samlar *inte* in några lösenord, privata nycklar eller kontodetaljer.
+
+ADCS Collector krypterar informationen och den kan endast läsas på den analysportal som PKI Solutions tillhandahåller åt Atea. Analysportalen ligger på en dedikerad Azure-instans och inställningarna "Allow PKI Solutions to view and manage your organization" samt "Allow storage of ADCS Collector files" är inaktiverade för att säkerställa att endast Atea kan komma åt datat. Mer information finns på [PKI Solutions webbsida](https://www.pkisolutions.com/assessment-data-protection).
+
 Instruktioner
 -------------
 
@@ -27,19 +34,72 @@ När modulen importeras så görs en systemkontroll. Åtgärda eventuella proble
 
 ![Ett exempel på hur en lyckad systemkontroll ser ut efter att ha importerat ADCSCollector-modulen i PowerShell.](graphics/install_module.png)
 
-5. Kontrollera vilka AD CS-servrar som kommer att genomlysas.
+5. Kontrollera vilka AD CS-servrar som finns i Active Directory::
 ```
 Get-AdcsServerList
 ```
 
-6. Genomför genomlysningen av alla AD CS-servrar som listades i föregående steg och spara resultatet i mappen ``C:\AdcsCollector``.
+Fortsätt till kapitlet *Genomlys en CA-hierarki* om du har en CA-hierarki (dvs en eller flera certifikatutfärdare signerade av samma rotutfärdare) eller *Genomlys flera CA-hierarkier* om du har mer än en CA-hierarki.
+
+Genomlys en CA-hierarki
+-----------------------
+
+1. Genomför genomlysningen av alla AD CS-servrar som listades i föregående steg och spara resultatet i mappen ``C:\AdcsCollector``.
 ```
 Start-AdcsCollector
 ```
 
 När verktyget har kört klart, kommer den skriva ut meddelandet "Data collection completed".
 
-7. Öppna mappen ``C:\AdcsCollector\Reports\cab`` och dela filen som ligger i denna mapp med Atea.
-![Mappen ``C:\AdcsCollector\Reports\cab`` innehåller en JSONX-fil som ska delas med Atea.](graphics/find_report.png)
+Genomlys flera CA-hierarkier
+----------------------------
 
-**Viktigt!** ADCSCollector kan samla in känsliga data om ert PKI-system. Om filen skickas med mail är det viktigt att den krypteras med ett starkt lösenord innan den skickas till Atea. Skicka lösenordet via en separat kommunikationskanal, till exempel med SMS.
+Om du har mer än en CA-hierarki måste du köra verktyget flera gånger, en gång för varje CA-hierarki.
+
+I nedanstående exempel har vi tre utfärdare, *Sub CA A*, *Sub CA B* och *Sub CA C*, där *Sub CA A* och *Sub CA B* är signerade av en rotutfärdare och *Sub CA C* är signerad av en annan rotutfärdare. Om vi kör ``Get-AdcsServerList`` på ``server01-example.com`` kommer vi att se något i stil med:
+```
+PS> Get-AdcsServerList
+ServerName         : server01.example.com
+CAName             : Sub CA A
+SanitizedName      : Sub CA A
+SanitizedShortName : Sub CA A
+ConfigString       : server01.example.com\Sub CA A
+Source             : DsEntry, Registry, Local
+DomainID           :
+Succeed            : False
+
+ServerName         : server02.example.com
+CAName             : Sub CA B
+SanitizedName      : Sub CA B
+SanitizedShortName : Sub CA B
+ConfigString       : server02.example.com\Sub CA B
+Source             : DsEntry
+DomainID           :
+Succeed            : False
+
+ServerName         : server03.example.com
+CAName             : Sub CA C
+SanitizedName      : Sub CA C
+SanitizedShortName : Sub CA C
+ConfigString       : server03.example.com\Sub CA C
+Source             : DsEntry
+DomainID           :
+Succeed            : False
+```
+
+De motsvarande kommandona blir då:
+```
+Start-AdcsCollector -Include "server01.example.com", "server02.example.com" -UseIncludeOnly
+Start-AdcsCollector -Include "server03.example.com" -UseIncludeOnly
+```
+
+1. Kör ``StartAdcsCollector`` upprepade gånger med flaggorna ``-Include`` och ``-UseIncludeOnly`` enligt exemplet ovan.
+
+Efter varje körning kommer verktyget att skriva ut meddelandet "Data collection completed".
+
+Skicka resultatet till Atea
+---------------------------
+
+1. Öppna mappen ``C:\AdcsCollector\Reports\cab`` och dela alla filer som ligger i denna mapp med Atea.
+
+![Mappen ``C:\AdcsCollector\Reports\cab`` innehåller en eller flera JSONX-filer som ska delas med Atea.](graphics/find_report.png)
