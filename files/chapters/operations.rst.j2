@@ -21,21 +21,19 @@ To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
 Back up the root CA
 -------------------
 
-Create a backup to disk using ``CertUtil``. The backup contains all issued certificates, the CA log and the private key of the CA as a PFX-file.
+Create a backup to disk using ``CertUtil``. The backup contains all issued certificates, the CA log, and the private key of the CA as a P12-file.
 
 #. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
 
-#. Run the backup command::
+#. Run the backup command and type in the password used to protect the private key::
 
     CertUtil -backup C:\Backup
 
-#. Type in the password protecting the private key in the backup.
-
 #. Backup keys in the registry::
 
-    reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\backup.reg
+    reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\Backup\backup.reg
 
-#. Transfer the backup directory ``C:\Backup`` and registry file ``C:\backup.reg`` to a secure location.
+#. Transfer the backup directory ``C:\Backup`` to a secure location.
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
@@ -44,49 +42,54 @@ Restore a backup of the root CA
 
 #. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
 
-#. Verify the following:
+#. Reset the server using SysPrep::
 
-    - The server name must be the same as name of the server from where the backup was created.
-    - ``%systemroot%`` must match ``%systemroot%`` from where the backup was made.
+    %WINDIR%\system32\sysprep\sysprep.exe /generalize /reboot /oobe
 
-#. Transfer the latest backup directory ``C:\Backup`` and registry file ``C:\backup.reg`` to the root CA server.
+When configuring Windows, configure the name of the server to be ``{{ servers.root_ca.name }}`` as specified in the backup file.
 
-#. Create the file ``C:\CAPolicy.inf`` if it does not already exist::
+#. Transfer the latest backup directory ``C:\Backup`` to the root CA server.
 
-    [Version]
-    Signature = "$Windows NT$"
-
-    [Certsrv_Server]
-    LoadDefaultTemplates = 0
-
-#. Install the AD CS Windows feature if not already installed::
+#. Install the AD CS Windows feature::
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
 
+#. Restore the CA certificate and private key::
+
+    $BackupPassword = Read-Host -AsSecureString
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CertFile 'C:\Backup\R1.p12' -CertFilePassword $BackupPassword -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+
+#. Restore the CA database using CertUtil::
+
+    Remove-Item C:\Windows\System32\CertLog\* -Force
+    CertUtil -restoreDB C:\Backup
+
 #. Import the registry keys::
 
-    reg import C:\backup.reg
+    reg import C:\Backup\backup.reg
 
-#. Run the restore command::
+#. Restart AD CS::
 
-    CertUtil -restore C:\Backup
+    net stop certsvc
+    net start certsvc
 
-#. Type in the password used to protect the private key.
-
-#. TODO
+#. Turn off ``{{ servers.root_ca.name }}``.
 
 Issue a new root CA CRL
 -----------------------
 
-TODO
+#. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
+
+#. Issue a CRL from the root CA::
+
+    CertUtil -crl
+
+#. Transfer the file ``C:\R1.crt`` to ``C:\inetpub\pki`` on {{ servers.repository.name }}.
+
+#. Turn off ``{{ servers.root_ca.name }}``.
 
 Renew an issuing CA
 -------------------
-
-TODO
-
-Manually publish CRLs
----------------------
 
 TODO
 
@@ -122,7 +125,7 @@ Manually enroll for a user certificate
 
 #. Click on **Next** to start the wizard.
 
-#. 
+#. TODO
 
 Manually enroll for a computer certificate
 ------------------------------------------

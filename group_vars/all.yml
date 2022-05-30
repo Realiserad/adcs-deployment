@@ -1,6 +1,7 @@
 title: Exempel
 link: https://atea.se
 year: 2022
+classification: Konfidentiell
 customer:
   domain: atea.se
   name: Atea Sverige AB
@@ -28,6 +29,8 @@ accounts:
 location:
   log: C:\Log
   database: C:\Database
+network:
+  dcom_port: 4000
 templates:
   - from: Computer
     name: Atea Computer
