@@ -84,14 +84,57 @@ Issue a new root CA CRL
 
     CertUtil -crl
 
-#. Transfer the file ``C:\R1.crt`` to ``C:\inetpub\pki`` on {{ servers.repository.name }}.
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\R1.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
 Renew an issuing CA
 -------------------
 
-TODO
+Create a CSR
+~~~~~~~~~~~~
+
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
+
+#. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate**.
+
+#. Windows will ask if you want to stop AD CS. Click **Yes** to stop AD CS and continue with the renewal.
+
+#. You will now have the option to generate a new keypair. Pick **No** and click on **OK**.
+
+#. Click on **Cancel** to save the CSR to disk and start AD CS again.
+
+#. Transfer the file ``C:\ICA1.csr`` to ``{{ servers.root_ca.name }}``.
+
+Sign the CA certificate
+~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. Submit the CSR for the issuing CA and save the request ID::
+
+    $request = CertReq -submit -config - C:\ICA1.csr | Out-String | Select-String 'RequestId: (\d+)'
+    $requestId = $request.Matches[0].Groups[1].Value.Trim()
+
+#. Accept the request and retrieve a copy of the new issuing CA certificate::
+
+    CertUtil -resubmit $requestId
+    CertReq -retrieve -config - $requestId C:\ICA1.crt
+
+#. Transfer the file ``C:\ICA1.crt`` to ``{{ servers.issuing_ca.name }}``.
+
+Install the CA certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Install the CA certificate::
+
+    CertUtil -installcert "C:\ICA1.crt"
 
 Revoke an issuing CA
 --------------------

@@ -33,10 +33,14 @@ Create a CSR for the issuing CA
 
 #. Transfer the file ``C:\ICA1.csr`` to {{ servers.root_ca.name }}.
 
-Create a repository
+Create repositories
 -------------------
 
-#. Log in to {{ servers.repository.name }} using RDP.
+{% for server in servers.repositories %}
+Create {{ server.name}}
+~~~~~~~{{ '~' * server.name | length }} 
+
+#. Log in to {{ server.name }} using RDP.
 
 #. Optionally adjust the keyboard layout using PowerShell::
 
@@ -76,7 +80,8 @@ Create a repository
     $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone", "FullControl", "ContainerInherit,Objectinherit", "None", "Allow")
     $Acl.AddAccessRule($AccessRule)
     Set-ACL "C:\inetpub\pki\" $Acl
-    Grant-SmbShareAccess -Name "PKI Repository" -AccountName "PKI\PKIUser" -AccessRight Full -Force
+    Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ server.name }}\PKIUser" -AccessRight Full -Force
+{% endfor %}
 
 Create the root CA
 -------------------
@@ -131,7 +136,7 @@ Sign the issuing CA
     $request = CertReq -submit -config - C:\ICA1.csr | Out-String | Select-String 'RequestId: (\d+)'
     $requestId = $request.Matches[0].Groups[1].Value.Trim()
 
-#. Accept the request and grab a copy of the certificate::
+#. Accept the request and retrieve a copy of the issuing CA certificate::
 
     CertUtil -resubmit $requestId
     CertReq -retrieve -config - $requestId C:\ICA1.crt
@@ -144,7 +149,9 @@ Sign the issuing CA
 
     CertUtil "-ca.cert" "C:\R1.crt"
 
-#. Transfer the files ``C:\ICA1.crt``, ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ servers.repository.name }}.
+{% for server in servers.repositories %}
+#. Transfer the files ``C:\ICA1.crt``, ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
 
 #. Transfer the file ``C:\ICA1.crt`` and ``C:\R1.crt`` to {{ servers.issuing_ca.name }}.
 
@@ -187,9 +194,12 @@ Publish a CRL from the issuing CA to the repository
 
 #. Create the file ``C:\CopyCRL.bat``::
 
-    net use X: "\\pki.{{ customer.domain }}\PKI Repository" "{{ secret }}" /user:pki.{{ customer.domain }}\PKIUser /persistent:Yes
+{% for server in servers.repositories %}
+    :: Copy CRLs to {{ server.name }}
+    net use X: "\\{{ server.name }}.{{ customer.domain }}\PKI Repository" "{{ secret }}" /user:{{ server.name }}.{{ customer.domain }}\PKIUser /persistent:Yes
     xcopy "C:\*.crl" X:\ /y
     net use X: /delete
+{% endfor %}
 
 #. Schedule a daily background task::
 
