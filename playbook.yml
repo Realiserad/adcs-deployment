@@ -27,11 +27,9 @@
         dest: '{{ playbook_dir }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
       with_fileglob:
         - "chapters/*.rst.j2"
-    - name: Perform RST linting
-      command:
-        cmd: rst-lint {{ item }}
-      with_fileglob:
-        - "{{ playbook_dir}}/_docs/chapters/*.rst"
+    #- name: Perform RST linting
+    #  command:
+    #    cmd: doc8 "{{ playbook_dir }}/_docs/chapters"
     - name: Copy graphics
       copy:
         src: "{{ item }}"

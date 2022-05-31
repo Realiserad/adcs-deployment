@@ -75,6 +75,8 @@ When configuring Windows, configure the name of the server to be ``{{ servers.ro
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
+.. _issue root ca crl:
+
 Issue a new root CA CRL
 -----------------------
 
@@ -104,7 +106,13 @@ Create a CSR
 
 #. Windows will ask if you want to stop AD CS. Click **Yes** to stop AD CS and continue with the renewal.
 
-#. You will now have the option to generate a new keypair. Pick **No** and click on **OK**.
+#. You will now have the option to generate a new keypair. You should generate a new keypair if:
+
+    - You suspect that the private key of the issuing CA may have been compromised.
+    - There are a lot of revoked certificates on the CRL, and you want to start over with an empty CRL.
+    - You need to switch to a new type of key.
+
+#. Pick **Yes** or **No** according to your needs and click on **OK**.
 
 #. Click on **Cancel** to save the CSR to disk and start AD CS again.
 
@@ -136,10 +144,29 @@ Install the CA certificate
 
     CertUtil -installcert "C:\ICA1.crt"
 
+#. Restart AD CS::
+
+    net stop certsvc
+    net start certsvc
+
 Revoke an issuing CA
 --------------------
 
-TODO
+You should only revoke an issuing CA certificate if you suspect that the private key may have been compromised, as revoking a CA will cause all certificates issued from it to be invalidated.
+
+#. If you are revoking the issuing CA currently being in use, you should :ref:`renew the issuing CA certificate <renew issuing ca>` first.
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. List the certificates issued by the root CA using CertUtil. Make a note of the serial number for the certificate you want to revoke.
+
+CertUtil -out "Issued Common Name","Certificate Expiration date","Serial Number" -view Log csv
+
+#. Revoke the certificate, replace ``serial number`` with the serial number of the certificate as reported by CertUtil.
+
+    CertUtil -revoke "serial number"
+
+#. Follow :ref:`the instructions to issue a new CRL from the root CA <issue root ca crl>`.
 
 Revoke an enduser certificate
 -----------------------------
