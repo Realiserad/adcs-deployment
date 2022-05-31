@@ -106,13 +106,7 @@ Create a CSR
 
 #. Windows will ask if you want to stop AD CS. Click **Yes** to stop AD CS and continue with the renewal.
 
-#. You will now have the option to generate a new keypair. You should generate a new keypair if:
-
-    - You suspect that the private key of the issuing CA may have been compromised.
-    - There are a lot of revoked certificates on the CRL, and you want to start over with an empty CRL.
-    - You need to switch to a new type of key.
-
-#. Pick **Yes** or **No** according to your needs and click on **OK**.
+#. You will now have the option to generate a new keypair. Pick **Yes** and click on **OK**.
 
 #. Click on **Cancel** to save the CSR to disk and start AD CS again.
 
@@ -148,6 +142,11 @@ Install the CA certificate
 
     net stop certsvc
     net start certsvc
+
+#. Create a CRL using the new keypair and publish it to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
 
 Revoke an issuing CA
 --------------------

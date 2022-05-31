@@ -80,7 +80,7 @@ Create {{ server.name }}
     $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone", "FullControl", "ContainerInherit,Objectinherit", "None", "Allow")
     $Acl.AddAccessRule($AccessRule)
     Set-ACL "C:\inetpub\pki\" $Acl
-    Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ server.name }}\PKIUser" -AccessRight Full -Force
+    Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ server.name ~ '.' ~ customer.domain }}\PKIUser" -AccessRight Full -Force
 {% endfor %}
 
 Create the root CA
@@ -116,8 +116,8 @@ Create the root CA
     CertUtil -setreg CA\CRLDeltaPeriod Days
 
     :: https://nolanrumble.com/security/crl-option-numbers-and-variables-what-do-they-mean
-    CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ customer.domain }}/%%3.crl"
-    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3.crt"
+    CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ customer.domain }}/%%3-%%8.crl"
+    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3-%%8.crt"
 
     CertUtil -setreg CA\ValidityPeriodUnits 10
     CertUtil -setreg CA\ValidityPeriod Years
