@@ -7,9 +7,13 @@ customer:
   name: Atea Sverige AB
   simple_name: Atea
   country: SE
+  # Possible choices are:
+  #  - RSA4096
+  #  - P256
+  key_specification: P256
 theme: guzzle_sphinx_theme
 servers:
-  root_ca: 
+  root_ca:
     name: app-RootCA
     ip: 192.168.56.100
     os: Windows Server 2022
@@ -22,9 +26,9 @@ servers:
       ip: 192.168.56.102
       os: Windows Server 2022
 accounts:
-  domain: 
+  domain:
     user: foo.foobarsson
-  local: 
+  local:
     user: Administrator
 location:
   log: C:\Log

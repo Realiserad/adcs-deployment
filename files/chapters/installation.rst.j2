@@ -29,7 +29,13 @@ Create a CSR for the issuing CA
 
 #. Create an issuing CA using PowerShell::
 
+{% if customer.key_specification == 'P256' %}
     Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#Microsoft Software Key Storage Provider" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ location.log }}" -DatabaseDirectory "{{ location.database }}" -Force
+{% elif customer.key_specification == 'RSA4096' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ location.log }}" -DatabaseDirectory "{{ location.database }}" -Force
+{% else %}
+    Unknown key specification '{{ customer.key_specification }}'.
+{% endif %}
 
 #. Transfer the file ``C:\ICA1.csr`` to {{ servers.root_ca.name }}.
 
@@ -106,7 +112,13 @@ Create the root CA
 
 #. Create a root CA using PowerShell::
 
+{% if customer.key_specification == 'P256' %}
     Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "ECDSA_P256#Microsoft Software Key Storage Provider" -KeyLength 256 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+{% elif customer.key_specification == 'RSA4096' %}
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 4096 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+{% else %}
+    Unknown key specification '{{ customer.key_specification }}'.
+{% endif %}
 
 #. Create and run the file ``C:\CASetup.bat``::
 
