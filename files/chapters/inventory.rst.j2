@@ -2,7 +2,7 @@ Appendix B - Inventory
 ======================
 
 .. list-table:: PKI machines
-   :widths: 2 2 2 1 1 1 2
+   :widths: 2 2 2 1 2 1 2
    :header-rows: 1
 
    * - Name
@@ -23,13 +23,15 @@ Appendix B - Inventory
      - {{ servers.issuing_ca.ip }}
      - {{ servers.issuing_ca.os }}
      - 8 GB
-     - 32 GB
+     - 32 GB (and a >128 GB network drive)
      - 2
      - Issues certificates for users and computers in the ``{{ customer.domain }}`` domain.
-   * - {{ servers.repository.name }}
-     - {{ servers.repository.ip }}
-     - {{ servers.repository.os }}
+{% for server in servers.repositories %}
+   * - {{ server.name }}
+     - {{ server.ip }}
+     - {{ server.os }}
      - 8 GB
-     - 64 GB
+     - 32 GB
      - 2
-     - Distributes CA certificates and CRLs over HTTP.    
+     - Distributes CA certificates and CRLs over HTTP.
+{% endfor %}

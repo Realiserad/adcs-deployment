@@ -1,6 +1,11 @@
 Appendix A - Network Configuration
 ==================================
 
+Firewall configuration
+----------------------
+
+The firewall should only allow access to the ports as specified in the table below.
+
 .. list-table:: Firewall rules
    :widths: 1 1 1 1
    :header-rows: 1
@@ -12,12 +17,14 @@ Appendix A - Network Configuration
    * - Jumphost
      - | {{ servers.root_ca.name }}
        | {{ servers.issuing_ca.name }}
-       | {{ servers.repository.name }}
+{% for server in servers.repositories %}
+       | {{ server.name }}
+{% endfor %}
        | Domain controllers
      - tcp/3389
      - RDP
    * - {{ servers.issuing_ca.name }}
-     - Domain controller
+     - Domain controllers
      - tcp/135
      - RPC Endpoint Mapper
    * - {{ servers.issuing_ca.name }}
@@ -33,7 +40,9 @@ Appendix A - Network Configuration
      - tcp/636
      - LDAP over TLS
    * - | {{ servers.issuing_ca.name }}
-       | {{ servers.repository.name }}
+{% for server in servers.repositories %}
+       | {{ server.name }}
+{% endfor %}
      - DNS servers
      - tcp/53 and udp/53
      - DNS
@@ -54,13 +63,50 @@ Appendix A - Network Configuration
      - tcp/1024-65535
      - CertSrv requests over DCOM
    * - Internet
-     - {{ servers.repository.name }}
+{% for server in servers.repositories %}
+     - {{ server.name }}
+{% endfor %}
      - http/80
      - Certificate validation
 
 {% if network.dcom_port is defined %}
-Firewall hardening
-------------------
-
-After a certificate request has been successfully processed by ``{{ servers.issuing_ca.name }}``, all subsequent certificate requests can be sent to port {{ network.dcom_port }}. This means that the firewall may be locked down to only allow incoming connections to that port.
+.. note:: After a certificate request has been successfully processed by ``{{ servers.issuing_ca.name }}``, all subsequent certificate requests can be sent to port {{ network.dcom_port }}. This means that the firewall may be locked down to only allow incoming connections to that port.
 {% endif %}
+
+DNS configuration
+-----------------
+
+The records specified in the table below should be added manually to the DNS server.
+
+.. list-table:: DNS records
+   :widths: 2 2 1 2
+   :header-rows: 1
+
+   * - Record name
+     - Record value(s)
+     - Record type
+     - Load balacing policy
+   * - {{ servers.root_ca.name ~ '.' ~ customer.domain }}
+     - {{ servers.root_ca.ip }}
+     - A
+     - N/A
+   * - {{ servers.issuing_ca.name ~ '.' ~ customer.domain }}
+     - {{ servers.issuing_ca.ip }}
+     - A
+     - N/A
+{% for server in servers.repositories %}
+   * - {{ server.name ~ '.' ~ customer.domain }}
+     - {{ server.ip }}
+     - A
+     - N/A
+{% endfor %}
+   * - {{ 'pki' ~ '.' ~ customer.domain }}
+{% for server in servers.repositories %}
+{% if loop.index == 0 %}
+     - {{ server.ip }}
+{% else %}
+     - | {{ server.ip }}
+{% endif %}
+{% endfor %}
+     - A
+     - Round-robin

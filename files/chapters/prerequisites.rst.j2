@@ -1,18 +1,23 @@
 Prerequisites
 =============
 
-#. Configure the firewalls according to *Appendix A*.
+#. Configure the firewalls and DNS servers according to *Appendix A*.
 
-#. Create machines according to *Appendix B - Inventory*.
+#. Ensure that the domain ``pki.{{ customer.domain }}`` can be resolved from the internet.
+
+#. Create machines according to *Appendix B*.
 
 #. Join the server ``{{ servers.issuing_ca.name }}`` to the domain ``{{ customer.domain }}``.
 
-#. Share instructions and credentials for VPN access.
-
-#. Create a local administrator account ``{{ accounts.local.user }}``.
-
-#. Create an enterprise domain account ``{{ accounts.domain.user }}``.
-
 #. Ensure that there is a network drive mapped to ``{{ servers.issuing_ca.name }}`` with at least 128 GB of free storage available for storing the CA logs and certificate database.
 
-#. Ensure that the domain ``pki.{{ customer.domain }}`` points to ``{{ servers.repository.ip }}`` and can be resolved both internally and externally.
+#. Create a local administrator account ``{{ accounts.local.user }}`` on the following servers:
+
+    - ``{{ servers.root_ca.name }}``
+{% for server in servers.repositories %}
+    - ``{{ server.name}}``
+{% endfor %}
+
+#. Create an enterprise administrator account ``{{ accounts.domain.user }}``.
+
+#. Share instructions and credentials for VPN access.

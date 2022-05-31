@@ -17,10 +17,10 @@ servers:
     name: app-IssuingCA
     ip: 192.168.56.101
     os: Windows Server 2022
-  repository:
-    name: app-Repository
-    ip: 192.168.56.102
-    os: Windows Server 2022
+  repositories:
+    - name: app-Repository
+      ip: 192.168.56.102
+      os: Windows Server 2022
 accounts:
   domain: 
     user: foo.foobarsson
