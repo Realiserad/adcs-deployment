@@ -20,9 +20,9 @@ Download LaTeX, Python and Python's package manager.
 sudo apt install texlive-full python3 python3-pip
 ```
 
-Install Sphinx, Ansible and the RST linter.
+Install Sphinx, Ansible and the RST linting tools:
 ```
-pip3 install sphinx ansible restructuredtext-lint::
+pip3 install sphinx ansible restructuredtext-lint doc8
 ```
 
 Install the Ansible modules needed.
