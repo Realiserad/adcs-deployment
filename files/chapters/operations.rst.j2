@@ -157,9 +157,9 @@ You should only revoke an issuing CA certificate if you suspect that the private
 
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
 
-#. List the certificates issued by the root CA using CertUtil. Make a note of the serial number for the certificate you want to revoke.
+#. List the certificates issued by the root CA using CertUtil. Make a note of the serial number for the certificate you want to revoke::
 
-CertUtil -out "Issued Common Name","Certificate Expiration date","Serial Number" -view Log csv
+    CertUtil -out "Issued Common Name","Certificate Expiration date","Serial Number" -view Log csv
 
 #. Revoke the certificate, replace ``serial number`` with the serial number of the certificate as reported by CertUtil.
 
@@ -167,15 +167,82 @@ CertUtil -out "Issued Common Name","Certificate Expiration date","Serial Number"
 
 #. Follow :ref:`the instructions to issue a new CRL from the root CA <issue root ca crl>`.
 
-Revoke an enduser certificate
------------------------------
+Revoke the certificate for a domain computer
+--------------------------------------------
 
-TODO
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Make a note of the serial number of the certificate you want to revoke.
+
+If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this::
+
+    CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+
+If you do not have a copy of the certificate, you can list all certificates issued to a particular computer in the domain using CertUtil. Replace ``computerName`` with the name of the computer::
+
+    CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\computerName$" -view Log csv
+
+#. Revoke the certificate using CertUtil. Replace ``serial number`` with the serial number of the certificate::
+
+    CertUtil -revoke "serial number"
+
+#. Optionally create a new CRL and push it out to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
+
+Revoke the certificate for a domain user
+----------------------------------------
+
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Make a note of the serial number of the certificate you want to revoke.
+
+If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this::
+
+    CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+
+If you do not have a copy of the certificate, you can list all certificates issued to a particular user in the domain using CertUtil. Replace ``userName`` with the name of the user::
+
+    CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\userName" -view Log csv
+
+#. Revoke the certificate using CertUtil. Replace ``serial number`` with the serial number of the certificate::
+
+    CertUtil -revoke "serial number"
+
+#. Optionally create a new CRL and push it out to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
 
 Reenroll all certificate holders
 --------------------------------
 
-TODO
+Reenrollment of a certificate occurrs when the certificate is about to expire, or when the schema version of the certificate template used to issue the certificate has been updated.
+
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M**, double-click on **Certificate Templates** in the panel on the left and click on **OK** to add the *Certificate Templates* snap-in.
+
+#. Double-click on **Certificate Templates** in the panel on the left. This will list all certificate templates in AD.
+
+#. Bump the major version number of the certificate by right-clicking on the certificate template you want clients to reenroll for, and click on **Reenroll All Certificate Holders**.
+
+    .. figure:: ../graphics/reenroll_certificate_holders.png
+
+        Reenrollment of all certificate holders for a certificate template called *Atea User*.
+
+To trigger reenrollment of a computer certificate, one of the following actions must be taken:
+
+    - The computer must be restarted, or
+    - An administrator must run ``CertUtil -pulse`` on the computer
+
+To trigger reenrollement of a user certificate, one of the following actions must be taken:
+
+    - The user must log in, or
+    - The user must run ``CertUtil -user -pulse`` on their computer
 
 Manually enroll for a user certificate
 --------------------------------------
@@ -190,13 +257,53 @@ Manually enroll for a user certificate
 
 #. Click on **OK** to add the snap-in.
 
-#. Right-click on **Certificates - Current User** in the panel on the right, and click on **All tasks → Automatically Enroll and Retrieve Certificates**. The *Certificate Enrollment* wizard opens.
+#. Right-click on **Certificates - Current User → Personal → Certificates** in the panel on the left, and click on **All Tasks → Request New Certificate...**. The *Certificate Enrollment* wizard opens.
 
 #. Click on **Next** to start the wizard.
 
-#. TODO
+#. Click on **Next** to choose the certificate enrollment policy configured by the administrator.
+
+#. Tick the checkboxes for the certificate templates you want to enroll for and click on **Enroll**.
+
+    .. note:: Only user certificates you are allowed to enroll for are shown in the list.
+
+    .. figure:: ../graphics/enroll_user_certificate.png
+        :width: 50%
+        :align: center
+
+        Enrollment of a user certificate for the *Atea User* certificate template.
+
+#. Wait until the certificate has been issued och click on **Finish** to close the wizard.
+
+    .. figure:: ../graphics/enroll_user_certificate_ok.png
+        :width: 50%
+        :align: center
+
+        What it looks like after a successful enrollment.
 
 Manually enroll for a computer certificate
 ------------------------------------------
 
-TODO
+#. Log in as an administrator on the computer where you want to enroll.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M** and double-click on the **Certificates** snap-in.
+
+#. Pick **Computer account** and click on **Next**.
+
+#. Click on **Finish** to manage certificates on the local computer.
+
+#. Click on **OK** to add the snap-in.
+
+#. Right-click on **Certificates (Local Computer) → Personal → Certificates** in the panel on the left, and click on **All Tasks → Request New Certificate...**. The *Certificate Enrollment* wizard opens.
+
+#. Click on **Next** to start the wizard.
+
+#. Click on **Next** to choose the certificate enrollment policy configured by the administrator.
+
+#. Tick the checkboxes for the certificate templates you want to enroll for and click on **Enroll**.
+
+    .. note:: Only computer certificates you are allowed to enroll for are shown in the list.
+
+#. Wait until the certificate has been issued och click on **Finish** to close the wizard.

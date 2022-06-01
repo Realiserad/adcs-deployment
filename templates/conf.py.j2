@@ -64,28 +64,29 @@ latex_elements = {
     'papersize': 'a4paper',
     'preamble': '\\usepackage{mycustomstyle}',
     'extraclassoptions':',openany,oneside',
+    'figure_align': 'H',
 }
 latex_additional_files = [ 'mycustomstyle.sty' ]
 latex_documents = [
-    (master_doc, 
-     'MicrosoftPKI.tex', 
+    (master_doc,
+     'MicrosoftPKI.tex',
      u'Microsoft PKI',
-     u'{{ title }}', 
+     u'{{ title }}',
      'manual'),
 ]
 man_pages = [
-    (master_doc, 
-     'Microsoft PKI', 
+    (master_doc,
+     'Microsoft PKI',
      u'{{ title }}',
-     [ author ], 
+     [ author ],
      1)
 ]
 texinfo_documents = [
-    (master_doc, 
-     'MicrosoftPKI', 
+    (master_doc,
+     'MicrosoftPKI',
       u'Microsoft PKI',
-      author, 
-      'Microsoft PKI', 
+      author,
+      'Microsoft PKI',
       'Documentation describing how to install and manage a Microsoft PKI.',
       'Miscellaneous'),
 ]
