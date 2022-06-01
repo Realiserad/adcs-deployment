@@ -163,7 +163,7 @@ You should only revoke an issuing CA certificate if you suspect that the private
 
     CertUtil -out "Issued Common Name","Certificate Expiration date","Serial Number" -view Log csv
 
-#. Revoke the certificate, replace ``serial number`` with the serial number of the certificate as reported by CertUtil.
+#. Revoke the certificate, replace ``serial number`` with the serial number of the certificate as reported by CertUtil::
 
     CertUtil -revoke "serial number"
 
@@ -176,13 +176,19 @@ Revoke the certificate for a domain computer
 
 #. Make a note of the serial number of the certificate you want to revoke.
 
-If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this::
+    .. note:: Lookup the serial number
 
-    CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+        If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this:
 
-If you do not have a copy of the certificate, you can list all certificates issued to a particular computer in the domain using CertUtil. Replace ``computerName`` with the name of the computer::
+        .. code-block:: powershell
 
-    CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\computerName$" -view Log csv
+            CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+
+        If you do not have a copy of the certificate, you can list all certificates issued to a particular computer in the domain using CertUtil. Replace ``computerName`` with the name of the computer:
+
+        .. code-block:: powershell
+
+            CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\computerName$" -view Log csv
 
 #. Revoke the certificate using CertUtil. Replace ``serial number`` with the serial number of the certificate::
 
@@ -200,13 +206,19 @@ Revoke the certificate for a domain user
 
 #. Make a note of the serial number of the certificate you want to revoke.
 
-If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this::
+    .. note:: Lookup the serial number
 
-    CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+        If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this:
 
-If you do not have a copy of the certificate, you can list all certificates issued to a particular user in the domain using CertUtil. Replace ``userName`` with the name of the user::
+        .. code-block:: powershell
 
-    CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\userName" -view Log csv
+            CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+
+        If you do not have a copy of the certificate, you can list all certificates issued to a particular user in the domain using CertUtil. Replace ``userName`` with the name of the user:
+
+        .. code-block:: powershell
+
+            CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\userName" -view Log csv
 
 #. Revoke the certificate using CertUtil. Replace ``serial number`` with the serial number of the certificate::
 
