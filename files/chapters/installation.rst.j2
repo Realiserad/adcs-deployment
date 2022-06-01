@@ -232,7 +232,7 @@ Configure certificate templates
 
 #. Log in to one of the domain controllers using RDP.
 
-.. note:: You can use the command ``nltest /dclist:{{ customer.domain }}`` to get the names of the domain controllers.
+    .. note:: You can use the command ``nltest /dclist:{{ customer.domain }}`` to get the names of the domain controllers.
 
 #. Click on the start button, type ``mmc.exe`` and press **Enter** to open Microsoft Management Console.
 
@@ -277,9 +277,14 @@ Configure certificate templates
 
 #. Click on the **Security** tab and make the following changes:
 
-    #. Click on **Add...**, type ``{{ template.group }}`` and click on **OK**.
-
+{% for group in template.groups %}
+    #. Click on **Add...**, type ``{{ group.name }}`` and click on **OK**.
+{% if group.autoenroll %}
     #. Tick the options **Read**, **Enroll** and **Autoenroll**.
+{% else %}
+    #. Tick the options **Read** and **Enroll**.
+{% endif %}
+{% endfor %}
 
 #. Click on the **Subject Name** tab and make the following changes:
 
