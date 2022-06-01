@@ -38,12 +38,29 @@ network:
 templates:
   - from: Computer
     name: Atea Computer
+    description: Certificate for workstations in the domain.
+    validity: 365
+    renewal_period: 90
+    publish: No
+    use_ec: Yes
+    groups:
+      - name: Domain Computers
+        autoenroll: Yes
+    subject:
+      email: No
+      dnsname: Yes
+      upn: No
+  - from: User
+    name: Atea User
+    description: Certificate for users in the domain.
     validity: 365
     renewal_period: 90
     publish: Yes
     use_ec: Yes
-    group: Domain Computers
+    groups:
+      - name: Domain Users
+        autoenroll: Yes
     subject:
       email: Yes
-      dnsname: Yes
+      dnsname: No
       upn: Yes
