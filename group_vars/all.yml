@@ -12,6 +12,8 @@ customer:
   #  - P256
   key_specification: P256
 theme: guzzle_sphinx_theme
+extras:
+#  naming_and_profile_document:
 servers:
   root_ca:
     name: app-RootCA
