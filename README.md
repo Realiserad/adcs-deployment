@@ -47,3 +47,22 @@ The result is put in the ``release`` folder:
 - ``Genomlysning av PKI.zip`` contains *AD CS Collector* and instructions for how to use it.
 - ``proposal-adcs-with-luna.docx`` describes a proposal for an installation of AD CS with a Luna 7 HSM.
 - ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on AD CS.
+
+Contribute
+==========
+
+Small changes, unlikely to cause any breakage can be pushed directly to main. Larger work, split over multiple commits which should be reviewed as one, can preferably be put on a separate branch. Fo example:
+
+1. Create and check out a new branch in git.
+```
+git branch my-fancy-feature
+```
+
+2. Commit your changes and push them to GitHub.
+```
+git add -A
+git commit
+git push --set-upstream origin my-fancy-feature
+```
+
+A pull request can then be created from the branch ``my-fancy-feature`` and reviewed in GitHub before merging to ``main``.
