@@ -8,7 +8,7 @@ A *Naming and Profile Document* describes the certificates issued by AD CS. Such
 #. Export the certificate templates as LDIF-files using PowerShell::
 
 {% for template in templates %}
-    ldifde -m -v -d "CN={{ template.name }},CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC={{ customer.domain.split('.')[0] }},DC={{ customer.domain.split('.')[1] }}" -f {{ template.name.replace(' ', '') }}.ldf
+    ldifde -m -v -d "CN={{ template.name.replace(' ', '') }},CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC={{ customer.domain.split('.')[0] }},DC={{ customer.domain.split('.')[1] }}" -f {{ template.name.replace(' ', '') }}.ldf
 {% endfor %}
 
 TODO
