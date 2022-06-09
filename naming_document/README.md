@@ -32,7 +32,7 @@ How to use
 5. Install the necessary dependencies.
 
     ```
-    pip3 install ldif pyyaml
+    pip3 install ldif pyyaml pygments-ldif
     ```
 
 6. Run the Ansible playbook to build the Naming and Profile Document.
@@ -46,7 +46,7 @@ The playbook creates a ``release`` folder where the document is located.
 Create a sample
 ===============
 
-If you just want to quickly build a document for review, you can use the sample templates located in the ``samples`` directory by running the Ansible playbok with the ``--tags sample`` as shown below.
+If you just want to quickly build a document for review, you can use the sample templates located in the ``samples`` directory by running the Ansible playbok with ``--tags sample`` as shown below.
 
 ```
     ansible-playbook playbook.yml --tags sample

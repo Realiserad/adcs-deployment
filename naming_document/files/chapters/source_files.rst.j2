@@ -1,0 +1,15 @@
+Appendix A - Source files
+=========================
+
+This appendix lists the LDIF files used to build this document.
+
+{% for result in parsed_templates.results %}
+
+{% set template = result.stdout | from_yaml %}
+
+.. literalinclude:: ../ldif/{{ template.name }}.ldf
+   :language: ldif
+   :linenos:
+   :caption: {{ template.name }}
+
+{% endfor %}

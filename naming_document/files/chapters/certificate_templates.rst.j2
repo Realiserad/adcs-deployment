@@ -5,20 +5,68 @@ Certificate templates
 
 {% set template = result.stdout | from_yaml %}
 
-{{ template.displayName }}
-{{ '-' * template.displayName | length }}
+{{ template.displayname }}
+{{ '-' * template.displayname | length }}
 
 {% if template.description is defined %}
 {{ template.description }}
 {% endif %}
 
-.. list-table:: Settings
-   :widths: 1 1
-   :header-rows: 1
+.. list-table:: General information
+   :widths: 2 3
+   :header-rows: 0
 
-   * - Setting
-     - Value
-   * - Name of the certificate template in AD.
+   * - Name of the certificate template in AD
      - {{ template.name }}
+   * - Domain
+     - {{ template.distinguishedname.dc | join('.') }}
+   * - Certificate template OID
+     - |
+{% for oid_part in template.mspki_cert_template_oid | split('.') %}
+{% if loop.index0 == 0 %}
+       | {{ oid_part }}
+{% else %}
+       | {{ loop.index0 * '...' ~ ' .' ~ oid_part }}
+{% endif %}
+{% endfor %}
+
+.. list-table:: Flags set
+   :widths: 1 1
+   :header-rows: 0
+
+   * - Flag
+     - Description
+{% if 'CT_FLAG_MACHINE_TYPE' in template.flags %}
+   * - CT_FLAG_MACHINE_TYPE
+     - This is a certificate issued to a machine.
+{% endif %}
+{% if 'CT_FLAG_IS_CA' in template.flags %}
+   * - CT_FLAG_IS_CA
+     - This is a certificate issued to a certificate authority.
+{% endif %}
+{% if 'CT_FLAG_ADD_TEMPLATE_NAME' in template.flags %}
+   * - CT_FLAG_ADD_TEMPLATE_NAME
+     - This certificate contains the template name certificate extension.
+{% endif %}
+{% if 'CT_FLAG_IS_CROSS_CA' in template.flags %}
+   * - CT_FLAG_IS_CROSS_CA
+     - This certificate is used for cross-certification.
+{% endif %}
+{% if 'CT_FLAG_DONOTPERSISTINDB' in template.flags %}
+   * - CT_FLAG_DONOTPERSISTINDB
+     - The certificate is not persisted in the certificate authority's database.
+{% endif %}
+{% if 'CT_FLAG_ADD_EMAIL' in template.flags %}
+   * - CT_FLAG_ADD_EMAIL
+     - The certificate contains the email address of the subject recorded in AD.
+{% endif %}
+{% if 'CT_FLAG_PUBLISH_TO_DS' in template.flags %}
+   * - CT_FLAG_PUBLISH_TO_DS
+     - The certificate is published to AD.
+{% endif %}
+{% if 'CT_FLAG_EXPORTABLE_KEY' in template.flags %}
+   * - CT_FLAG_EXPORTABLE_KEY
+     - The private key of this certificate may be exported.
+{% endif %}
 
 {% endfor %}

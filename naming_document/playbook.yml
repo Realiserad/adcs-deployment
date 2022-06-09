@@ -15,6 +15,7 @@
       with_items:
         - "{{ playbook_dir }}/_docs/chapters"
         - "{{ playbook_dir }}/_docs/graphics"
+        - "{{ playbook_dir }}/_docs/templates"
         - "{{ playbook_dir }}/release"
         - "{{ playbook_dir }}/customer"
       tags:
@@ -40,7 +41,6 @@
         dest: "{{ playbook_dir }}/_docs/index.rst"
       tags:
         - always
-
     - name: Create chapters from template
       template:
         src: "{{ item }}"

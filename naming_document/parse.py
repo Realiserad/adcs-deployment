@@ -255,7 +255,7 @@ for dn, records in parser.parse():
                         if int(_value) & 0x00ffffff:
                             _flags.append('NCRYPT_ALLOW_ALL_USAGES')
                         _value = _flags
-                    policies[_key] = _value
+                    policies[_key.lower().replace('-', '_')] = _value
                 template[key] = policies
             continue
         # https://docs.microsoft.com/en-us/windows/win32/adschema/a-mspki-ra-signature
@@ -351,6 +351,10 @@ for dn, records in parser.parse():
             template[key] = records[key][0]
         else:
             template[key] = records[key]
+
+    # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
+    template = { k.lower().replace('-', '_'): v for k, v in template.items() }
+
     json_data = json.dumps(template, cls = HexEncoder)
     yaml_data = yaml.dump(yaml.load(json_data,
         Loader = yaml.SafeLoader),
