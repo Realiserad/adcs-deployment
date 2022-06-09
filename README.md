@@ -15,20 +15,13 @@ The documentation is written in RST and Jinja2 which can be edited using any tex
 Install on Ubuntu
 -----------------
 
-Download LaTeX, Python and Python's package manager.
-```
-sudo apt install texlive-full python3 python3-pip
-```
+Install the required packages using ``apt`` and Python's package manager.
 
-Install Sphinx, Ansible and the RST linting tools:
-```
-pip3 install sphinx ansible restructuredtext-lint doc8
-```
-
-Install the Ansible modules needed.
-```
-ansible-galaxy collection install community.general
-```
+    ```
+    sudo apt install texlive-full python3 python3-pip zip pandoc git
+    pip3 install sphinx ansible restructuredtext-lint doc8 docxtplexit
+    ansible-galaxy collection install community.general
+    ```
 
 Build
 =====
@@ -54,15 +47,17 @@ Contribute
 Small changes, unlikely to cause any breakage can be pushed directly to main. Larger work, split over multiple commits which should be reviewed as one, can preferably be put on a separate branch. Fo example:
 
 1. Create and check out a new branch in git.
-```
-git branch my-fancy-feature
-```
+
+    ```
+    git branch my-fancy-feature
+    ```
 
 2. Commit your changes and push them to GitHub.
-```
-git add -A
-git commit
-git push --set-upstream origin my-fancy-feature
-```
+
+    ```
+    git add -A
+    git commit
+    git push --set-upstream origin my-fancy-feature
+    ```
 
 A pull request can then be created from the branch ``my-fancy-feature`` and reviewed in GitHub before merging to ``main``.
