@@ -1,0 +1,20 @@
+Certificate Templates
+=====================
+
+{% for template in extras.naming_and_profile_document.templates %}
+{{ template.displayName }}
+{{ '-' * template.displayName | length }}
+
+{% if template.description is defined %}
+{{ template.description }}
+{% endif %}
+
+.. list-table:: Settings
+   :widths: 1 1
+   :header-rows: 1
+
+   * - Setting
+     - Value
+   * - Name of the certificate template in AD.
+     - {{ template.name }}
+{% endfor %}
