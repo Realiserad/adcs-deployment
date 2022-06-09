@@ -1,7 +1,10 @@
-Certificate Templates
+Certificate templates
 =====================
 
-{% for template in extras.naming_and_profile_document.templates %}
+{% for result in parsed_templates.results %}
+
+{% set template = result.stdout | from_yaml %}
+
 {{ template.displayName }}
 {{ '-' * template.displayName | length }}
 
@@ -17,4 +20,5 @@ Certificate Templates
      - Value
    * - Name of the certificate template in AD.
      - {{ template.name }}
+
 {% endfor %}

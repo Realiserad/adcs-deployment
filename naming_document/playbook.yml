@@ -6,6 +6,8 @@
       command:
         cmd: git rev-parse --short HEAD
       register: short_commit_hash
+      tags:
+        - always
     - name: Create directory structure
       file:
         state: directory
@@ -14,23 +16,50 @@
         - "{{ playbook_dir }}/_docs/chapters"
         - "{{ playbook_dir }}/_docs/graphics"
         - "{{ playbook_dir }}/release"
+        - "{{ playbook_dir }}/customer"
+      tags:
+        - always
+    - name: Copy sample templates
+      copy:
+        src: '{{ item }}'
+        dest: customer/
+      with_fileglob: samples/*.ldf
+      tags:
+        - sample
+    - name: Parse certificate templates
+      shell:
+        cmd: python3 parse.py {{ item }}
+      with_fileglob: customer/*.ldf
+      register: parsed_templates
+      tags:
+        - always
+
     - name: Create index from template
       template:
         src: index.rst.j2
         dest: "{{ playbook_dir }}/_docs/index.rst"
+      tags:
+        - always
+
     - name: Create chapters from template
       template:
         src: "{{ item }}"
         dest: '{{ playbook_dir }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
       with_fileglob:
         - "chapters/*.rst.j2"
+      tags:
+        - always
     - name: Perform RST linting
       command:
         cmd: doc8 --max-line-length 2000 "{{ playbook_dir }}/_docs/chapters"
+      tags:
+        - always
     - name: Create Sphinx configuration
       template:
         src: conf.py.j2
         dest: "{{ playbook_dir }}/_docs/conf.py"
+      tags:
+        - always
     - name: Copy Sphinx files
       copy:
         src: "{{ item }}"
@@ -40,8 +69,18 @@
         - mycustomstyle.sty
         - atea.png
         - atea_aligned.png
+      tags:
+        - always
 
     - name: Build PDF
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: latexpdf
+      tags:
+        - always
+    - name: Copy PDF to release folder
+      copy:
+        src: "{{ playbook_dir }}/_docs/_build/latex/NamingDocument.pdf"
+        dest: "{{ playbook_dir }}/release/Naming and Profile Document.pdf"
+      tags:
+        - always

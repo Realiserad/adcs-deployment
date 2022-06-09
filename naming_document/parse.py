@@ -107,11 +107,13 @@ ignored_attributes = [
 
 if sys.argv[1].startswith('/') or sys.argv[1].startswith('~'):
     # Use absolute path
-    parser = LDIFParser(open(sys.argv[1]), "rb",
+    parser = LDIFParser(
+        input_file = open(sys.argv[1], "rb"),
         ignored_attr_types = ignored_attributes)
 else:
     # Assume path relative to the current working directory
-    parser = LDIFParser(open(os.path.join(os.getcwd(), sys.argv[1]), "rb"),
+    parser = LDIFParser(
+        input_file = open(os.path.join(os.getcwd(), sys.argv[1]), "rb"),
         ignored_attr_types = ignored_attributes)
 
 for dn, records in parser.parse():

@@ -24,7 +24,18 @@ How to use
 
 4. Adjust ``group_vars/all.yml`` to fit your needs.
 
-5. Run the Ansible playbook to build the Naming and Profile Document.
+    ```
+    mkdir -p group_vars
+    cp ../group_vars/*.yml group_vars/
+    ```
+
+5. Install the necessary dependencies.
+
+    ```
+    pip3 install ldif pyyaml
+    ```
+
+6. Run the Ansible playbook to build the Naming and Profile Document.
 
     ```
     ansible-playbook playbook.yml
@@ -35,7 +46,8 @@ The playbook creates a ``release`` folder where the document is located.
 Create a sample
 ===============
 
-If you just want to quickly build a document for review, you can use the sample templates located in the ``samples`` directory by running the Ansible playbok with the ``--sample`` tag.
+If you just want to quickly build a document for review, you can use the sample templates located in the ``samples`` directory by running the Ansible playbok with the ``--tags sample`` as shown below.
+
 ```
     ansible-playbook playbook.yml --tags sample
 ```
