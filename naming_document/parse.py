@@ -37,15 +37,13 @@ class HexEncoder(json.JSONEncoder):
             return ''.join(format(x, '02x') for x in o)
         return json.JSONEncoder.default(self, o)
 
-# Converts a Win32 FILETIME structure to a dictionary
+# Converts a Win32 FILETIME structure to a dictionary.
 # {
 #   "unit": "years|months|weeks|days|hours",
 #   "value": int
 # }
 def filetime_to_dict(filetime):
-    # This variable contains the number of 100-nanosecond
-    # intervals since January 1, 1601 UTC.
-    intervals = int.from_bytes(filetime, byteorder = 'big')
+    intervals = 18446744073709551616 - int.from_bytes(filetime, byteorder = 'little')
     if intervals % (1E7 * 60 * 60 * 24 * 365) == 0:
         return {
             "unit": "years",
@@ -73,7 +71,7 @@ def filetime_to_dict(filetime):
         }
     return {
         "unit": "filetime",
-        "value": intervals
+        "value": filetime
     }
 
 # Convert directory string "CN=someName,O=someOrg,C=EX", to
