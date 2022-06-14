@@ -12,6 +12,8 @@ customer:
   #  - P256
   key_specification: P256
 theme: guzzle_sphinx_theme
+extras:
+#  naming_and_profile_document:
 servers:
   root_ca:
     name: app-RootCA
@@ -25,9 +27,6 @@ servers:
     - name: app-Repository
       ip: 192.168.56.102
       os: Windows Server 2022
-  domain_controllers:
-    - name: app-DC
-      ip: 192.168.56.1
 accounts:
   domain:
     user: foo.foobarsson

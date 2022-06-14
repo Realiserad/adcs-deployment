@@ -1,0 +1,34 @@
+from diagrams import Diagram, Edge, Cluster
+from diagrams.generic.os import Windows
+
+with Diagram("PKI Server Architecture", show = False, graph_attr = graph_attr):
+    with Cluster("Network Zone - Tier 0"):
+        root_ca = Windows("{{ servers.root_ca.name }}")
+        issuing_ca = Windows("{{ servers.issuing_ca.name }}")
+        with Cluster("Domain controllers"):
+            domain_controllers = [
+{% for dc in servers.domain_controllers %}
+                Windows("{{ dc.name }}"),
+{% endfor %}
+            ]
+    with Cluster("Network Zone - Tier 1"):
+        repositories = [
+{% for repository in servers.repositories %}
+            Windows("{{ repository.name }}"),
+{% endfor %}
+        ]
+    issuing_ca << \
+        Edge(color = "black",
+             style = "dashed",
+             label = "Signing CA certificates for") << \
+        root_ca
+    repositories << \
+        Edge(color = "green",
+             style = "solid",
+             label = "Publishes CRLs to") << \
+        issuing_ca
+    domain_controllers << \
+        Edge(color = "blue",
+             style = "solid",
+             label = "Fetches GPOs from") << \
+        issuing_ca
