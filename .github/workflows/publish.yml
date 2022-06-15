@@ -11,7 +11,7 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.BUILD_SECRET }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build the container image
       run: |
         docker build -t ghcr.io/realiserad/adcs-deployment .
