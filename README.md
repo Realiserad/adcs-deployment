@@ -49,7 +49,7 @@ Build on Ubuntu
 Contribute
 ==========
 
-Small changes, unlikely to cause any breakage can be pushed directly to main. Larger work, split over multiple commits which should be reviewed as one, can preferably be put on a separate branch. Fo example:
+Small changes, unlikely to cause any breakage can be pushed directly to main. Larger work, split over multiple commits which should be reviewed as one, can preferably be put on a separate branch. For example:
 
 1. Create and check out a new branch in git.
     ```
