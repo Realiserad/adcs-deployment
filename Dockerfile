@@ -1,10 +1,13 @@
 FROM ubuntu:jammy
 
+LABEL org.opencontainers.image.source https://github.com/Realiserad/adcs-deployment
+
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
 RUN apt update
-RUN apt install -y texlive-full python3 python3-pip zip pandoc git graphviz
+RUN apt install -y texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra latexmk texlive-luatex
+RUN apt install -y python3 python3-pip zip pandoc git graphviz
 RUN pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams guzzle_sphinx_theme
 RUN ansible-galaxy collection install community.general
 
