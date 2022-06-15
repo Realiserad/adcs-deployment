@@ -6,6 +6,7 @@ on:
 jobs:
   publish-container:
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '#nobuild') }}
     steps:
     - name: Checkout the code from GitHub
       uses: actions/checkout@v2
