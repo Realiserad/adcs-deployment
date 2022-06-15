@@ -1,4 +1,4 @@
-[![publish](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml)
+[![publish](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml)
 
 About
 =====
