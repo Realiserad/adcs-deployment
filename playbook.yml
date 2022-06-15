@@ -73,7 +73,7 @@
       community.general.archive:
         path:
           - "{{ playbook_dir }}/_docs/_build/html"
-          - "{{ playbook_dir }}/_docs/_build/latex/System Documentation.pdf"
+          - "{{ playbook_dir }}/_docs/_build/latex/system-documentation.pdf"
         format: zip
         dest: "{{ playbook_dir }}/release/system-documentation.zip"
     - name: Build assessment bundle

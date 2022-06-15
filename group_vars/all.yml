@@ -1,7 +1,10 @@
-title: Exempel
+title: Active Directory Certificate Services
 link: https://atea.se
 year: 2022
+theme: guzzle_sphinx_theme
 classification: Konfidentiell
+consultant:
+  name: Foo Foobarsson
 customer:
   domain: atea.se
   name: Atea Sverige AB
@@ -11,7 +14,6 @@ customer:
   #  - RSA4096
   #  - P256
   key_specification: P256
-theme: guzzle_sphinx_theme
 servers:
   root_ca:
     name: app-RootCA
