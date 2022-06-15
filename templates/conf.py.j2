@@ -1,3 +1,10 @@
+#
+# The Sphinx configuration file.
+#
+# See https://www.sphinx-doc.org/en/master/usage/configuration.html for
+# available options.
+#
+
 {% if  theme == 'guzzle_sphinx_theme' %}
 import guzzle_sphinx_theme
 {% endif %}
@@ -71,7 +78,7 @@ latex_documents = [
     (master_doc,
      'system-documentation.tex',
      u'{{ title }}\n{{ customer.name }}',
-     'Prepared by ' + author,
+     author,
      'manual'),
 ]
 man_pages = [
