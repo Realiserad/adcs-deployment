@@ -1,3 +1,5 @@
+[![publish](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=pull_request)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml)
+
 About
 =====
 
