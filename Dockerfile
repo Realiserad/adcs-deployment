@@ -1,5 +1,7 @@
 FROM ubuntu:jammy
 
+LABEL org.opencontainers.image.source https://github.com/realiserad/adcs-deployment
+
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
