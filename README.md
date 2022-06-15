@@ -17,12 +17,9 @@ Install on Ubuntu
 
 Install the required packages using ``apt`` and Python's package manager.
 
-    ```
     sudo apt install texlive-full python3 python3-pip zip pandoc git
-    pip3 install sphinx ansible restructuredtext-lint doc8 docxtplexit diagrams
+    pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams
     ansible-galaxy collection install community.general
-    ```
-
 Build
 =====
 
