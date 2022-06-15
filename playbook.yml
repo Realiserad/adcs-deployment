@@ -73,9 +73,9 @@
       community.general.archive:
         path:
           - "{{ playbook_dir }}/_docs/_build/html"
-          - "{{ playbook_dir }}/_docs/_build/latex/MicrosoftPKI.pdf"
+          - "{{ playbook_dir }}/_docs/_build/latex/System Documentation.pdf"
         format: zip
-        dest: "{{ playbook_dir }}/release/Customer.zip"
+        dest: "{{ playbook_dir }}/release/system-documentation.zip"
     - name: Build assessment bundle
       shell: "sh build.sh"
       args:

@@ -8,7 +8,7 @@ templates_path = [ '_templates' ]
 source_suffix = '.rst'
 master_doc = 'index'
 
-project = u'Microsoft PKI'
+project = u'Active Directory Certificate Services'
 copyright = u'Atea Sverige AB'
 author = u'Bastian Fredriksson'
 
@@ -69,24 +69,24 @@ latex_elements = {
 latex_additional_files = [ 'mycustomstyle.sty' ]
 latex_documents = [
     (master_doc,
-     'MicrosoftPKI.tex',
-     u'Microsoft PKI',
+     'system-documentation.tex',
+     u'Active Directory Certificate Services',
      u'{{ title }}',
      'manual'),
 ]
 man_pages = [
     (master_doc,
-     'Microsoft PKI',
+     'Active Directory Certificate Services',
      u'{{ title }}',
      [ author ],
      1)
 ]
 texinfo_documents = [
     (master_doc,
-     'MicrosoftPKI',
-      u'Microsoft PKI',
+     'system-documentation',
+      u'Active Directory Certificate Services',
       author,
-      'Microsoft PKI',
-      'Documentation describing how to install and manage a Microsoft PKI.',
+      'Active Directory Certificate Services',
+      'Documentation describing a PKI based on AD CS.',
       'Miscellaneous'),
 ]
