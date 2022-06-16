@@ -55,7 +55,10 @@ Build on Ubuntu
 Contribute
 ==========
 
-It is recommended to commit changes to a separate branch and create a pull request in GitHub. This makes it possible to perform a code review and test any changes separately. The changes can then be merged to ``main`` in GitHub.
+Pull requests
+-------------
+
+It is recommended to commit changes to a separate branch and create a pull request in GitHub. This makes it possible to perform a code review and test any changes separately.
 
 1. Create and check out a new branch in git.
     ```
@@ -68,5 +71,14 @@ It is recommended to commit changes to a separate branch and create a pull reque
     git commit
     git push --set-upstream origin my-fancy-feature
     ```
-    
+Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request ``Draft`` in the title to avoid an accidental merge of unfinished work.
+
+Squash commits before merging
+-----------------------------
+
+Consider squashing the commits into one commit when merging to ``main`` to keep the history clean. In GitHub, this is done by selecting the option "Squash and merge" when accepting the pull request.
+
+Automatic builds
+----------------
+
 Once changes are pushed to the ``main`` branch, GitHub Actions will automatically build a new container and push it to the GitHub Container Registry. If you want to avoid triggering a container build, you can put ``#nobuild`` somewhere in your commit message.
