@@ -32,6 +32,12 @@ You can use the container to build the documentation on any system where you hav
     docker run -v (pwd)/group_vars/all.yml:/build/all.yml -v (pwd)/release:/build/release realiserad/adcs-deployment
     ```
 
+| File                     | Description                                                                      | Required |
+|--------------------------|----------------------------------------------------------------------------------|----------|
+| /build/all.yml           | Ansible configuration file.                                                      | Yes      |
+| /build/logo.png          | Customer logo.                                                                   | No       |
+| /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | No       |
+
 Build on Ubuntu
 ---------------
 
