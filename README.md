@@ -26,9 +26,7 @@ You can use the container to build the documentation on any system where you hav
 
 1. Adjust ``group_vars/all.yml`` according to the customer's needs.
 
-2. Replace the customer specific files in ``files/customer``.
-
-3. Build and run the container. The configuration file ``all.yml`` must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
+2. Build and run the container. The configuration file ``all.yml`` must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
     ```
     docker build -t realiserad/adcs-deployment .
     docker run -v (pwd)/group_vars/all.yml:/build/all.yml -v (pwd)/release:/build/release realiserad/adcs-deployment
@@ -68,5 +66,5 @@ It is recommended to commit changes to a separate branch and create a pull reque
     git commit
     git push --set-upstream origin my-fancy-feature
     ```
-    
+
 Once changes are pushed to the ``main`` branch, GitHub Actions will automatically build a new container and push it to the GitHub Container Registry. If you want to avoid triggering a container build, you can put ``#nobuild`` somewhere in your commit message.
