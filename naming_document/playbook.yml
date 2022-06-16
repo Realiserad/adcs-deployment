@@ -2,6 +2,10 @@
   hosts: localhost
   gather_facts: False
   tasks:
+    - name: Check if an Ansible configuration file already exists
+      stat:
+        path: "{{ playbook_dir }}/group_vars/all.yml"
+      register: ansible_configuration
     - name: Get shortened commit hash
       command:
         cmd: git rev-parse --short HEAD
@@ -20,13 +24,18 @@
         - "{{ playbook_dir }}/customer"
       tags:
         - always
-    - name: Copy sample configuration
+    - name: Retrieve the Ansible configuration file
+      copy:
+        src: "{{ playbook_dir }}/../group_vars/all.yml"
+        dest: "{{ playbook_dir }}/group_vars/all.yml"
+      when: ansible_configuration.stat.exists == false
+    - name: Copy sample LDIF configuration
       copy:
         src: sample/Configuration.ldf
         dest: customer/
       tags:
         - sample
-    - name: Parse configuration
+    - name: Parse LDIF configuration
       shell:
         cmd: python3 files/parse.py --file customer/Configuration.ldf
       register: parsed_templates

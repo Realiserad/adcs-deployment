@@ -11,9 +11,8 @@ RUN apt install -y python3 python3-pip zip pandoc git graphviz
 RUN pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams guzzle_sphinx_theme
 RUN ansible-galaxy collection install community.general
 
-RUN mkdir -p /build/release
+RUN mkdir -p /etc/ansible
 RUN mkdir -p /root/group_vars
-RUN ln -s /build/release /root/release
 RUN ln -s /build/all.yml /root/group_vars/all.yml
 
 COPY files /root/files
@@ -21,6 +20,13 @@ COPY templates /root/templates
 COPY playbook.yml /root/playbook.yml
 COPY .git /root/.git
 
+# extras.naming_and_profile_document
+COPY naming_document /root/naming_document
+RUN pip3 install ldif pyyaml pygments-ldif
+
+COPY container/run.sh /root
+COPY container/ansible.cfg /etc/ansible
+
 WORKDIR /root
 
-CMD ansible-playbook playbook.yml
+CMD /bin/sh run.sh
