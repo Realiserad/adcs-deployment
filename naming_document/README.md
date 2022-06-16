@@ -10,17 +10,17 @@ How to use
 
 1. Log in to one of the domain controllers.
 
-2. Open PowerShell and export the certificate templates from AD using ``ldifde``. For example, if you want to export a certificate template named ``MyTemplate``residing in the ``example.com`` domain, you would run the following command:
+2. Open PowerShell and export *Public Key Services* from AD using ``ldifde``. For example, if your domain is called ``example.com``, you would run the following command:
 
     ```
-    ldifde -m -v -d "CN=MyTemplate,CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC=example,DC=com" -f MyTemplate.ldf
+    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,DC=example,DC=com" -f Configuration.ldf
     ```
 
-    This saves the certificate template as an LDIF-file named ``MyTemplate.ldf``.
+    This saves the configuration as an LDIF-file named ``Configuration.ldf``.
 
-    > **NOTE** You need to use the ``.ldf`` file extension for the certificate template to be included in the Naming and Profile Document.
+    > **NOTE** You need to use the filename ``Configuration.ldf`` for the playbook to detect it.
 
-3. Create a new folder called ``customer`` in this folder. Transfer your LDIF-files to this directory.
+3. Create a new folder called ``customer`` in this folder. Transfer ``Configuration.ldf`` to this directory.
 
 4. Adjust ``group_vars/all.yml`` to fit your needs.
 
@@ -28,6 +28,15 @@ How to use
     mkdir -p group_vars
     cp ../group_vars/*.yml group_vars/
     ```
+
+    > **NOTE** You may not want to include all certificate templates from AD in your Naming and Profile Document. You can specify the name of the templates you want to include in the document like this:
+    >
+    > ```
+    > naming_and_profile_document:
+    >     templates:
+    >     - name: Certificate Template 1
+    >     - name: Certificate Template 2
+    > ```
 
 5. Install the necessary dependencies.
 
@@ -47,7 +56,6 @@ Create a sample
 ===============
 
 If you just want to quickly build a document for review, you can use the sample templates located in the ``samples`` directory by running the Ansible playbok with ``--tags sample`` as shown below.
-
 ```
-    ansible-playbook playbook.yml --tags sample
+ansible-playbook playbook.yml --tags sample
 ```
