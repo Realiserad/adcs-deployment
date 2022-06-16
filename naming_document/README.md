@@ -3,7 +3,7 @@ About
 
 This directory contains files needed to build a Naming and Profile Document for an AD CS-installation.
 
-The content of the document is extracted from certificate templates exported from AD as LDIF files.
+The content of the document is extracted from the Public Key Services configuration exported from AD as LDIF objects.
 
 How to use
 ==========
@@ -21,25 +21,26 @@ How to use
 
 3. Create a new folder called ``customer`` in this folder. Transfer ``Configuration.ldf`` to this directory.
 
-4. Adjust ``group_vars/all.yml`` to fit your needs.
+4. Install the necessary dependencies.
     ```
-    mkdir -p group_vars
-    cp ../group_vars/*.yml group_vars/
+    pip3 install ldif pyyaml pygments-ldif
+    ```
+
+5. Adjust ``group_vars/all.yml`` to fit the customer's needs.
+    ```
+    npm install -g @alexlafroscia/yaml-merge
+    yaml-merge ../group_vars/sample.yml group_vars/sample.yml > group_vars/all.yml
     ```
 
     > **NOTE** You may not want to include all certificate templates from AD in your Naming and Profile Document. You can specify the name of the templates you want to include in the document like this:
     >
     > ```
-    > naming_and_profile_document:
-    >     templates:
-    >     - name: Certificate Template 1
-    >     - name: Certificate Template 2
+    > extras:
+    >     naming_and_profile_document:
+    >         templates:
+    >     -       name: Certificate Template 1
+    >     -       name: Certificate Template 2
     > ```
-
-5. Install the necessary dependencies.
-    ```
-    pip3 install ldif pyyaml pygments-ldif
-    ```
 
 6. Run the Ansible playbook to build the Naming and Profile Document.
     ```
@@ -51,7 +52,7 @@ The playbook creates a ``release`` folder where the document is located.
 Create a sample
 ===============
 
-If you just want to quickly build a document for review, you can use the sample templates located in the ``samples`` directory by running the Ansible playbok with ``--tags sample`` as shown below.
+If you just want to quickly build a document for review, you can use the sample file located in the ``sample`` directory by running the Ansible playbok with ``--tags sample`` as shown below.
 ```
 ansible-playbook playbook.yml --tags sample
 ```

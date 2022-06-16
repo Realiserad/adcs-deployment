@@ -1,9 +1,9 @@
-Certificate templates
-=====================
+Certificates
+============
 
-{% for result in parsed_templates.results %}
+{% set templates = parsed_templates.stdout | from_yaml %}
 
-{% set template = result.stdout | from_yaml %}
+{% for template in templates %}
 
 {{ template.displayname }}
 {{ '-' * template.displayname | length }}

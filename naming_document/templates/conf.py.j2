@@ -1,3 +1,10 @@
+#
+# The Sphinx configuration file.
+#
+# See https://www.sphinx-doc.org/en/master/usage/configuration.html for
+# available options.
+#
+
 {% if  theme == 'guzzle_sphinx_theme' %}
 import guzzle_sphinx_theme
 {% endif %}
@@ -10,7 +17,7 @@ master_doc = 'index'
 
 project = u'Naming and Profile Document'
 copyright = u'Atea Sverige AB'
-author = u'Bastian Fredriksson'
+author = u'{{ consultant.name }}'
 
 version = "{{ short_commit_hash.stdout }}"
 release = "{{ short_commit_hash.stdout }}"
@@ -69,21 +76,21 @@ latex_elements = {
 latex_additional_files = [ 'mycustomstyle.sty' ]
 latex_documents = [
     (master_doc,
-     'NamingDocument.tex',
-     u'Naming and Profile Document',
-     u'{{ title }}',
+     'naming-document.tex',
+     u'Naming and Profile Document\\\\{{ customer.name }}',
+     author,
      'manual'),
 ]
 man_pages = [
     (master_doc,
-     'Naming and Profile Document',
-     u'{{ title }}',
+     u'Naming and Profile Document',
+     u'Naming and Profile Document',
      [ author ],
      1)
 ]
 texinfo_documents = [
     (master_doc,
-     'NamingDocument',
+     'naming-document',
       u'Naming and Profile Document',
       author,
       'Naming and Profile Document',

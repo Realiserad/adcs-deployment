@@ -1,4 +1,4 @@
-- name: Build Naming and Profile Document
+- name: Build the Naming and Profile Document
   hosts: localhost
   gather_facts: False
   tasks:
@@ -20,21 +20,24 @@
         - "{{ playbook_dir }}/customer"
       tags:
         - always
-    - name: Copy sample templates
+    - name: Copy sample configuration
       copy:
-        src: '{{ item }}'
+        src: sample/Configuration.ldf
         dest: customer/
-      with_fileglob: samples/*.ldf
       tags:
         - sample
-    - name: Parse certificate templates
+    - name: Parse configuration
       shell:
-        cmd: python3 parse.py {{ item }}
-      with_fileglob: customer/*.ldf
+        cmd: python3 files/parse.py --file customer/Configuration.ldf
       register: parsed_templates
       tags:
         - always
-
+    - name: Extract certificate templates from configuration
+      shell:
+        cmd: python3 files/extract_templates.py --file customer/Configuration.ldf --output-directory customer/ldif
+      tags:
+        - always
+      when: extras.naming_and_profile_document.include_ldif | default(false)
     - name: Create index from template
       template:
         src: index.rst.j2
@@ -80,7 +83,7 @@
         - always
     - name: Copy PDF to release folder
       copy:
-        src: "{{ playbook_dir }}/_docs/_build/latex/NamingDocument.pdf"
-        dest: "{{ playbook_dir }}/release/Naming and Profile Document.pdf"
+        src: "{{ playbook_dir }}/_docs/_build/latex/naming-document.pdf"
+        dest: "{{ playbook_dir }}/release/naming-document.pdf"
       tags:
         - always

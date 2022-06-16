@@ -6,5 +6,7 @@ Naming and Profile Document
    :caption: Contents:
 
    chapters/about
-   chapters/certificate_templates
+   chapters/certificates
+{% if extras.naming_and_profile_document.include_ldif | default(false) %}
    chapters/source_files
+{% endif %}

@@ -35,7 +35,6 @@
 import argparse
 from ldif import LDIFParser
 import os
-import sys
 import json
 import yaml
 from datetime import datetime
@@ -110,10 +109,9 @@ argparser.add_argument('--debug', help = 'Enable debug logging to syslog.', acti
 argparser.add_argument('--file', help = 'Path to a file with LDIF object(s) to parse.', required = True)
 args = argparser.parse_args()
 
-# Determine if an LDAP object with the given DN represents an
-# AD CS certificate template.
-def is_certificate_template(dn):
-    return 'CN=Certificate Template' in dn
+# Determine if an LDAP object represents an AD CS certificate template.
+def is_certificate_template(records):
+    return 'pKICertificateTemplate' in records['objectClass']
 
 log = logging.getLogger('syslog')
 if args.debug:
@@ -148,7 +146,7 @@ else:
         ignored_attr_types = ignored_attributes)
 
 for dn, records in parser.parse():
-    if not is_certificate_template(dn):
+    if not is_certificate_template(records):
         log.debug('Skipped object which is not a certificate template: %s' % dn)
         continue
     log.info('Parsed certificate template: %s' % dn)

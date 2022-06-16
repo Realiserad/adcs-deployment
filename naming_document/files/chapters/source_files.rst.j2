@@ -1,15 +1,22 @@
 Appendix A - Source files
 =========================
 
-This appendix lists the LDIF files used to build this document.
+This appendix lists the LDIF files for the certificate templates.
 
-{% for result in parsed_templates.results %}
+{% set templates = parsed_templates.stdout | from_yaml %}
 
-{% set template = result.stdout | from_yaml %}
+{% for template in templates %}
 
-.. literalinclude:: ../ldif/{{ template.name }}.ldf
+{{ template.displayname }}
+{{ '-' * template.displayname | length }}
+
+To import this certificate template to AD, copy and paste the LDIF shown below to a file ``{{ template.name }}.ldf`` on one of the domain controllers, and run the following PowerShell command::
+
+   ldifde -i -k -f {{ template.name }}.ldf
+
+.. literalinclude:: ../../customer/ldif/{{ template.name }}.ldf
    :language: ldif
    :linenos:
-   :caption: {{ template.name }}
+   :caption: LDIF representation of {{ template.displayname }}.
 
 {% endfor %}
