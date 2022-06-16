@@ -11,7 +11,6 @@ How to use
 1. Log in to one of the domain controllers.
 
 2. Open PowerShell and export *Public Key Services* from AD using ``ldifde``. For example, if your domain is called ``example.com``, you would run the following command:
-
     ```
     ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,DC=example,DC=com" -f Configuration.ldf
     ```
@@ -23,7 +22,6 @@ How to use
 3. Create a new folder called ``customer`` in this folder. Transfer ``Configuration.ldf`` to this directory.
 
 4. Adjust ``group_vars/all.yml`` to fit your needs.
-
     ```
     mkdir -p group_vars
     cp ../group_vars/*.yml group_vars/
@@ -39,13 +37,11 @@ How to use
     > ```
 
 5. Install the necessary dependencies.
-
     ```
     pip3 install ldif pyyaml pygments-ldif
     ```
 
 6. Run the Ansible playbook to build the Naming and Profile Document.
-
     ```
     ansible-playbook playbook.yml
     ```
