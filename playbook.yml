@@ -16,6 +16,7 @@
       with_items:
         - "{{ playbook_dir }}/_docs/chapters"
         - "{{ playbook_dir }}/_docs/graphics"
+        - "{{ playbook_dir }}/_docs/diagrams"
         - "{{ playbook_dir }}/release"
     - name: Create index from template
       template:
@@ -36,6 +37,16 @@
         dest: "{{ playbook_dir }}/_docs/graphics"
       with_fileglob:
         - "graphics/*.png"
+    - name: Copy diagrams scripts
+      template:
+        src: "{{ item }}"
+        dest: '{{ playbook_dir }}/_docs/diagrams/{{ item | basename | regex_replace("\.j2$", "") }}'
+      with_fileglob: templates/diagrams/*.py.j2
+    - name: Render diagrams
+      shell: python3 {{ item }}
+      args:
+        chdir: "{{ playbook_dir }}/_docs/diagrams"
+      with_fileglob: "{{ playbook_dir }}/_docs/diagrams/*.py"
     - name: Create Sphinx configuration
       template:
         src: conf.py.j2
@@ -50,21 +61,21 @@
         - atea.png
         - atea_aligned.png
 
-    - name: Build the training manual as PDF
+    - name: Build PDF
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: latexpdf
-    - name: Build the training manual as HTML
+    - name: Build HTML
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: html
     - name: Create installation package
       community.general.archive:
-        path: 
+        path:
           - "{{ playbook_dir }}/_docs/_build/html"
-          - "{{ playbook_dir }}/_docs/_build/latex/MicrosoftPKI.pdf"
+          - "{{ playbook_dir }}/_docs/_build/latex/system-documentation.pdf"
         format: zip
-        dest: "{{ playbook_dir }}/release/Customer.zip"
+        dest: "{{ playbook_dir }}/release/system-documentation.zip"
     - name: Build assessment bundle
       shell: "sh build.sh"
       args:

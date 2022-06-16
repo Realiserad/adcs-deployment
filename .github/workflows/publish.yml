@@ -1,0 +1,23 @@
+name: publish
+on:
+  push:
+    branches:    
+      - 'main'
+jobs:
+  publish-container:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '#nobuild') }}
+    steps:
+    - name: Checkout the code from GitHub
+      uses: actions/checkout@v2
+    - name: Log in to the GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build the container image
+      run: |
+        docker build -t ghcr.io/realiserad/adcs-deployment .
+        docker run -v $(pwd)/group_vars/all.yml:/build/all.yml ghcr.io/realiserad/adcs-deployment
+        docker push ghcr.io/realiserad/adcs-deployment
