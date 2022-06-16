@@ -11,7 +11,14 @@
 #        ↪ CN=Public Key Services,CN=Services,CN=Configuration,
 #        ↪ DC=example,DC=com" -f MyTemplate.ldf
 #
-# The parsed data is printed as YAML to stdout.
+# You can also export everything under Public Key Services, including
+# certificate authorities. This will allow the tool to do some cross
+# referencing and include additional data in the output.
+#
+#    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,
+#        ↪ DC=example,DC=com" -f Configuration.ldf
+#
+# The parsed data is printed as a YAML list to stdout.
 #
 # Before you can run the script, you need to install a couple of
 # Python packages:
@@ -20,14 +27,20 @@
 #
 # Usage:
 #
-#     python3 parse.py <Template.ldif>
+#     python3 parse.py --file <Template.ldif>
+#
+# Log lines are written to the syslog. To enable debug logging, run the script
+# with the --debug flag.
 
+import argparse
 from ldif import LDIFParser
 import os
 import sys
 import json
 import yaml
 from datetime import datetime
+import logging
+import logging.handlers
 
 # Class for hex encoding all binary values we don't have
 # any special handling for.
@@ -92,6 +105,24 @@ def dictionary_string_to_dict(dictionary_string):
             dict[_key.lower()].append(_value)
     return dict
 
+argparser = argparse.ArgumentParser(description = 'Parse certificate templates exported from Active Directory into human-readable YAML.')
+argparser.add_argument('--debug', help = 'Enable debug logging to syslog.', action = 'store_true')
+argparser.add_argument('--file', help = 'Path to a file with LDIF object(s) to parse.', required = True)
+args = argparser.parse_args()
+
+# Determine if an LDAP object with the given DN represents an
+# AD CS certificate template.
+def is_certificate_template(dn):
+    return 'CN=Certificate Template' in dn
+
+log = logging.getLogger('syslog')
+if args.debug:
+    log.setLevel(logging.DEBUG)
+else:
+    log.setLevel(logging.INFO)
+handler = logging.handlers.SysLogHandler(address = '/dev/log')
+log.addHandler(handler)
+
 # Remove these attributes from the output
 ignored_attributes = [
     'changetype',
@@ -103,19 +134,24 @@ ignored_attributes = [
     'uSNCreated'
 ]
 
-if sys.argv[1].startswith('/') or sys.argv[1].startswith('~'):
+all_parsed_templates = []
+
+if args.file.startswith('/') or args.file.startswith('~'):
     # Use absolute path
     parser = LDIFParser(
-        input_file = open(sys.argv[1], "rb"),
+        input_file = open(args.file, "rb"),
         ignored_attr_types = ignored_attributes)
 else:
     # Assume path relative to the current working directory
     parser = LDIFParser(
-        input_file = open(os.path.join(os.getcwd(), sys.argv[1]), "rb"),
+        input_file = open(os.path.join(os.getcwd(), args.file), "rb"),
         ignored_attr_types = ignored_attributes)
 
 for dn, records in parser.parse():
-#    print('Parsed certificate template: %s' % dn)
+    if not is_certificate_template(dn):
+        log.debug('Skipped object which is not a certificate template: %s' % dn)
+        continue
+    log.info('Parsed certificate template: %s' % dn)
     template = {}
     for key in records:
         if key == 'distinguishedName':
@@ -280,19 +316,23 @@ for dn, records in parser.parse():
         # https://ldapwiki.com/wiki/KeyUsage
         if key == 'pKIKeyUsage':
             key_usages = []
-            if records[key][0][0] & (0b1 << 7):
+            if records[key][0][0] == ' ':
+                log.debug('ignoring bad KU bits')
+                continue
+            key_usage_bits = records[key][0][0]
+            if  key_usage_bits & (0b1 << 7):
                 key_usages.append('digitalSignature')
-            if records[key][0][0] & (0b1 << 6):
+            if key_usage_bits & (0b1 << 6):
                 key_usages.append('contentCommitment')
-            if records[key][0][0] & (0b1 << 5):
+            if key_usage_bits & (0b1 << 5):
                 key_usages.append('keyEncipherment')
-            if records[key][0][0] & (0b1 << 4):
+            if key_usage_bits & (0b1 << 4):
                 key_usages.append('dataEncipherment')
-            if records[key][0][0] & (0b1 << 3):
+            if key_usage_bits & (0b1 << 3):
                 key_usages.append('keyAgreement')
-            if records[key][0][0] & (0b1 << 2):
+            if key_usage_bits & (0b1 << 2):
                 key_usages.append('keyCertSign')
-            if records[key][0][0] & (0b1 << 1):
+            if key_usage_bits & (0b1 << 1):
                 key_usages.append('cRLSign')
             # TODO: Handle encryptOnly and decryptOnly KU
             template[key] = key_usages
@@ -352,9 +392,10 @@ for dn, records in parser.parse():
 
     # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
     template = { k.lower().replace('-', '_'): v for k, v in template.items() }
+    all_parsed_templates.append(template)
 
-    json_data = json.dumps(template, cls = HexEncoder)
-    yaml_data = yaml.dump(yaml.load(json_data,
-        Loader = yaml.SafeLoader),
-        default_flow_style = False)
-    print(yaml_data)
+json_data = json.dumps(all_parsed_templates, cls = HexEncoder)
+yaml_data = yaml.dump(yaml.load(json_data,
+    Loader = yaml.SafeLoader),
+    default_flow_style = False)
+print(yaml_data)
