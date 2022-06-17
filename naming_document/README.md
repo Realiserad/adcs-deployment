@@ -36,10 +36,10 @@ How to use
     >
     > ```
     > extras:
-    >     naming_and_profile_document:
-    >         templates:
-    >     -       name: Certificate Template 1
-    >     -       name: Certificate Template 2
+    >   naming_and_profile_document:
+    >     templates:
+    >     - name: Certificate Template 1
+    >     - name: Certificate Template 2
     > ```
 
 6. Run the Ansible playbook to build the Naming and Profile Document.
