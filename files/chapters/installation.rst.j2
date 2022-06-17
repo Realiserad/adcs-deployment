@@ -127,6 +127,12 @@ Create the root CA
     CertUtil -setreg CA\CRLDeltaPeriodUnits 0
     CertUtil -setreg CA\CRLDeltaPeriod Days
 
+    :: https://www.pkisolutions.com/adcs-certificate-serial-number-generation-algorithms-a-comrehensive-guide
+    CertUtil -setreg ca\highserial {{ servers.root_ca.policy.high_serial | default(0) }}
+{% if servers.root_ca.policy.keep_expired_certificates_on_crl | default(false) %}
+    CertUtil –setreg ca\CRLFlags +CRLF_PUBLISH_EXPIRED_CERT_CR
+{% endif %}
+
     :: https://nolanrumble.com/security/crl-option-numbers-and-variables-what-do-they-mean
     CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ customer.domain }}/%%3.crl"
     CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3.crt"

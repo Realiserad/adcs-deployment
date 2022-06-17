@@ -1,5 +1,7 @@
-Certificates
-============
+Leaf certificates
+=================
+
+This chapter describes the leaf certificates issued to subscribers.
 
 {% set templates = parsed_templates.stdout | from_yaml %}
 
@@ -8,16 +10,20 @@ Certificates
 {{ template.displayname }}
 {{ '-' * template.displayname | length }}
 
-{% if template.description is defined %}
-{{ template.description }}
+{% set description = extras.naming_and_profile_document.templates | selectattr('name', 'equalto', template.displayname) | map(attribute = 'description') | list | first %}
+{% if description is defined %}
+{{ description }}
 {% endif %}
+
+Certificate template
+~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: General information
    :widths: 2 3
    :header-rows: 0
 
-   * - Name of the certificate template in AD
-     - {{ template.name }}
+   * - Display name of the certificate template in AD
+     - {{ template.displayname }}
    * - Domain
      - {{ template.distinguishedname.dc | join('.') }}
    * - Certificate template OID
@@ -26,7 +32,7 @@ Certificates
 {% if loop.index0 == 0 %}
        | {{ oid_part }}
 {% else %}
-       | {{ loop.index0 * '...' ~ ' .' ~ oid_part }}
+       | {{ loop.index0 * '--' ~ '> .' ~ oid_part }}
 {% endif %}
 {% endfor %}
 
@@ -69,4 +75,46 @@ Certificates
      - The private key of this certificate may be exported.
 {% endif %}
 
+Certificate structure
+~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table:: X.509 certificate structure
+   :widths: 4 4
+   :header-rows: 1
+
+   * - Field
+     - Value
+   * - Version
+     - 3 (0x2)
+   * - Serial number
+     - According to issuer policy.
+   * - Signature Algorithm
+     - According to issuer policy.
+   * - Issuers
+     - TODO
+   * - Validity
+     - {{ template.pkiexpirationperiod.value ~ ' ' ~ template.pkiexpirationperiod.unit }}
+   * - Subject DN
+     - TODO
+   * - Subject Public Key Info
+     - {{ template.mspki_ra_application_policies.mspki_asymmetric_algorithm }}
+   * - Certificate Extensions
+     -
+{% if 'CT_FLAG_IS_CA' in template.flags %}
+   * - --> Basic Contraints (2.5.29.19)
+     - CA:TRUE
+{% elif 'CT_FLAG_INCLUDE_BASIC_CONSTRAINTS_FOR_EE_CERTS' in template.mspki_enrollment_flag %}
+   * - --> Basic Contraints (2.5.29.19)
+     - CA:FALSE
+{% endif %}
+   * - --> Key Usage (2.5.29.15)
+     - {{ template.pkikeyusage | join(', ') }}
+   * - --> Extended Key Usage (2.5.29.37)
+     - {{ template.pkiextendedkeyusage | join(', ') }}
+   * - --> Authority Key Identifier
+     - Generated from the issuer's public key
+   * - --> Subject Key Identifier (2.5.29.14)
+     - Generated from the subject's public key
+   * - --> Subject Alternative Name (2.5.29.17)
+     - TODO
 {% endfor %}

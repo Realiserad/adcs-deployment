@@ -21,10 +21,16 @@ servers:
     name: app-RootCA
     ip: 192.168.56.100
     os: Windows Server 2022
+    policy:
+      high_serial: 0xFFFFFFFF
+      keep_expired_certificates_on_crl: No
   issuing_ca:
     name: app-IssuingCA
     ip: 192.168.56.101
     os: Windows Server 2022
+    policy:
+      high_serial: 0xFFFFFFFF
+      keep_expired_certificates_on_crl: No
   repositories:
     - name: app-Repository
       ip: 192.168.56.102
