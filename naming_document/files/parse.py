@@ -319,21 +319,36 @@ for dn, records in parser.parse():
                 continue
             key_usage_bits = records[key][0][0]
             if  key_usage_bits & (0b1 << 7):
-                key_usages.append('digitalSignature')
+                key_usages.append('Digital Signature')
             if key_usage_bits & (0b1 << 6):
-                key_usages.append('contentCommitment')
+                key_usages.append('Content Commitment')
             if key_usage_bits & (0b1 << 5):
-                key_usages.append('keyEncipherment')
+                key_usages.append('Key Encipherment')
             if key_usage_bits & (0b1 << 4):
-                key_usages.append('dataEncipherment')
+                key_usages.append('Data Encipherment')
             if key_usage_bits & (0b1 << 3):
-                key_usages.append('keyAgreement')
+                key_usages.append('Key Agreement')
             if key_usage_bits & (0b1 << 2):
-                key_usages.append('keyCertSign')
+                key_usages.append('Key Certificate Signing')
             if key_usage_bits & (0b1 << 1):
-                key_usages.append('cRLSign')
+                key_usages.append('CRL Signing')
             # TODO: Handle encryptOnly and decryptOnly KU
             template[key] = key_usages
+            continue
+        if key == 'pKIExtendedKeyUsage':
+            extended_key_usages = []
+            for eku_oid in records[key]:
+                if eku_oid == '1.3.6.1.5.5.7.3.1':
+                    extended_key_usages.append('TLS Server Authentication')
+                elif eku_oid == '1.3.6.1.5.5.7.3.2':
+                    extended_key_usages.append('TLS Client Authentication')
+                elif eku_oid == '1.3.6.1.4.1.311.10.3.4':
+                    extended_key_usages.append('EFS File System Encryption')
+                elif eku_oid == '1.3.6.1.5.5.7.3.4':
+                    extended_key_usages.append('Email Protection')
+                else:
+                    extended_key_usages.append(eku_oid)
+            template[key] = extended_key_usages
             continue
         # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-crtd/1192823c-d839-4bc3-9b6b-fa8c53507ae1
         if key == 'msPKI-Certificate-Name-Flag':

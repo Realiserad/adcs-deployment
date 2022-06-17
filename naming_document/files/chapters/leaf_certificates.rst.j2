@@ -151,7 +151,7 @@ Certificate structure
        | GUID = objectGUID attribute from the subcriber's user object in AD
 {% endif %}
 {% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_UPN' in template.mspki_certificate_name_flag %}
-       | msUPN=*UPN attribute from the subscribers's user object in AD>
+       | msUPN = UPN attribute from the subscribers's user object in AD
 {% endif %}
 {% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_EMAIL' in template.mspki_certificate_name_flag %}
        | rfc822Name = email attribute from the subscribers's user object in AD
