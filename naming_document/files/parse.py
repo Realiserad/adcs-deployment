@@ -1,6 +1,6 @@
 #
-# Script for parsing certificate templates for Active Directory
-# Certificate Services, exported from Active Directory as LDIF.
+# Script for parsing certificate templates and certificate authorities for
+# Active Directory Certificate Services, exported from Active Directory as LDIF.
 #
 # On a Windows machine, you can perform the export using ldifde.
 # For example, if you want to export a certificate template named
@@ -12,8 +12,7 @@
 #        ↪ DC=example,DC=com" -f MyTemplate.ldf
 #
 # You can also export everything under Public Key Services, including
-# certificate authorities. This will allow the tool to do some cross
-# referencing and include additional data in the output.
+# certificate authorities.
 #
 #    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,
 #        ↪ DC=example,DC=com" -f Configuration.ldf
@@ -132,7 +131,10 @@ ignored_attributes = [
     'uSNCreated'
 ]
 
-all_parsed_templates = []
+output = {
+    'templates': [],
+    'certificate_authorities': [],
+}
 
 if args.file.startswith('/') or args.file.startswith('~'):
     # Use absolute path
@@ -405,9 +407,9 @@ for dn, records in parser.parse():
 
     # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
     template = { k.lower().replace('-', '_'): v for k, v in template.items() }
-    all_parsed_templates.append(template)
+    output['templates'].append(template)
 
-json_data = json.dumps(all_parsed_templates, cls = HexEncoder)
+json_data = json.dumps(output, cls = HexEncoder)
 yaml_data = yaml.dump(yaml.load(json_data,
     Loader = yaml.SafeLoader),
     default_flow_style = False)

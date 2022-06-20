@@ -38,7 +38,7 @@
     - name: Parse LDIF configuration
       shell:
         cmd: python3 files/parse.py --file customer/Configuration.ldf
-      register: parsed_templates
+      register: public_key_services_configuration
       tags:
         - always
     - name: Extract certificate templates from configuration
