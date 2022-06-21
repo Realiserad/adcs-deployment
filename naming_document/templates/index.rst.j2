@@ -1,0 +1,16 @@
+Naming and Profile Document
+===========================
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   chapters/about
+   chapters/certificate_authorities
+   chapters/subscriber_certificates
+{% if extras.naming_and_profile_document.include_ldif | default(false) %}
+   chapters/source_files
+{% endif %}
+{% if extras.naming_and_profile_document.include_ca_certificates | default(false) %}
+   chapters/ca_certificates
+{% endif %}

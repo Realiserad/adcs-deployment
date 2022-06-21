@@ -21,6 +21,11 @@ servers:
       log: C:\Log
       database: C:\Database
     policy:
+      high_serial: 0xFFFFFFFF
+      keep_expired_certificates_on_crl: No
+      # Possible choices are:
+      #  - RSA4096
+      #  - P256
       key_specification: P256
       key_storage_provider: Microsoft Software Key Storage Provider
   issuing_ca:
@@ -32,6 +37,11 @@ servers:
       log: C:\Log
       database: C:\Database
     policy:
+      high_serial: 0xFFFFFFFF
+      keep_expired_certificates_on_crl: No
+      # Possible choices are:
+      #  - RSA4096
+      #  - P256
       key_specification: P256
       key_storage_provider: Microsoft Software Key Storage Provider
   repositories:

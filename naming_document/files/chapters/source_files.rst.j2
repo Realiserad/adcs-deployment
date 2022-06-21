@@ -1,0 +1,22 @@
+Appendix A - Source files
+=========================
+
+This appendix lists the LDIF files for the certificate templates.
+
+{% set configuration = public_key_services_configuration.stdout | from_yaml %}
+
+{% for template in configuration.templates %}
+
+{{ template.displayname }}
+{{ '-' * template.displayname | length }}
+
+To import this certificate template to AD, copy and paste the LDIF shown below to a file ``{{ template.name }}.ldf`` on one of the domain controllers, and run the following PowerShell command::
+
+   ldifde -i -k -f {{ template.name }}.ldf
+
+.. literalinclude:: ../../customer/ldif/{{ template.name }}.ldf
+   :language: ldif
+   :linenos:
+   :caption: LDIF representation of {{ template.displayname }}.
+
+{% endfor %}
