@@ -23,7 +23,7 @@ How to use
 
 4. Install the necessary dependencies.
     ```
-    pip3 install ldif pyyaml pygments-ldif
+    pip3 install ldif pyyaml pygments-ldif cryptography
     ```
 
 5. Adjust ``group_vars/all.yml`` to fit the customer's needs.

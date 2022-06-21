@@ -1,0 +1,21 @@
+Appendix B - CA Certificates
+============================
+
+This appendix lists the CA certificates in PEM format.
+
+{% set configuration = public_key_services_configuration.stdout | from_yaml %}
+
+{% for ca in configuration.certificate_authorities %}
+
+{{ ca.name }}
+{{ '-' * ca.name | length }}
+
+.. code-block::
+
+{% filter indent(width = 4) %}
+   -----BEGIN CERTIFICATE-----
+{{ ca.cacertificate | wordwrap(80)}}
+-----END CERTIFICATE-----
+{% endfilter %}
+
+{% endfor %}

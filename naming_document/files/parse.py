@@ -39,6 +39,10 @@ import yaml
 from datetime import datetime
 import logging
 import logging.handlers
+import base64
+from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import rsa, ec
+from cryptography.x509.oid import ExtensionOID
 
 # Class for hex encoding all binary values we don't have
 # any special handling for.
@@ -113,7 +117,8 @@ def is_certificate_template(records):
     return 'pKICertificateTemplate' in records['objectClass']
 
 def is_certificate_authority(records):
-    return 'pKIEnrollmentService' in records['objectClass'] or 'certificationAuthority' in records['objectClass']
+    return ('pKIEnrollmentService' in records['objectClass'] or 'certificationAuthority' in records['objectClass']) \
+        and 'CN=AIA' not in records['distinguishedName'][0]
 
 log = logging.getLogger('syslog')
 if args.debug:
@@ -139,6 +144,9 @@ output = {
     'certificate_authorities': [],
 }
 
+aia_mapping = {}
+cdp_mapping = {}
+
 if args.file.startswith('/') or args.file.startswith('~'):
     # Use absolute path
     parser = LDIFParser(
@@ -155,15 +163,53 @@ for dn, records in parser.parse():
         log.info('Parsing certificate authority: %s', dn)
         certificate_authority = {}
         for key in records:
+            if key == 'cACertificate':
+                certificate_authority['cACertificate'] = base64.b64encode(records[key][0]).decode()
+                continue
+
             # Convert these values into human-readable dates
             if key in [ 'whenChanged', 'whenCreated' ]:
                 date = datetime.strptime(records[key][0], '%Y%m%d%H%M%S.0Z')
                 certificate_authority[key] = date.strftime('%Y-%m-%d %H:%M:%S')
                 continue
+
             if len(records[key]) == 1:
                 certificate_authority[key] = records[key][0]
             else:
                 certificate_authority[key] = records[key]
+
+        # Add additional attributes from the CA certificate
+        cert = x509.load_der_x509_certificate(records['cACertificate'][0])
+        certificate_authority['validity'] = {
+            'from': cert.not_valid_before.strftime('%Y-%m-%d %H:%M'),
+            'to': cert.not_valid_after.strftime('%Y-%m-%d %H:%M')
+        }
+        if isinstance(cert.public_key(), rsa.RSAPublicKey):
+            certificate_authority['key_specification'] = "RSA-" + cert.public_key().key_size
+        elif isinstance(cert.public_key(), ec.EllipticCurvePublicKey):
+            certificate_authority['key_specification'] = cert.public_key().curve.name
+        certificate_authority['subject_key_identifier'] = x509.AuthorityKeyIdentifier.from_issuer_public_key(cert.public_key()).key_identifier
+        certificate_authority['issuer_dn'] = cert.issuer.rfc4514_string()
+        certificate_authority['cacertificatedn'] = cert.subject.rfc4514_string()
+        try:
+            cdp_entries = []
+            for extension in cert.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS).value:
+                for cdp in extension.full_name:
+                    cdp_entries.append(cdp.value)
+            cdp_mapping[certificate_authority['issuer_dn']] = cdp_entries
+        except x509.ExtensionNotFound as e:
+            log.debug(e)
+        try:
+            aia_entries = {
+                'ca_issuers': [],
+            }
+            for extension in cert.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value:
+                if extension.access_method._name == 'caIssuers':
+                    aia_entries['ca_issuers'].append(extension.access_location.value)
+            aia_mapping[certificate_authority['issuer_dn']] = aia_entries
+        except x509.ExtensionNotFound as e:
+            log.debug(e)
+
         # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
         certificate_authority = { k.lower().replace('-', '_'): v for k, v in certificate_authority.items() }
         output['certificate_authorities'].append(certificate_authority)
@@ -425,6 +471,18 @@ for dn, records in parser.parse():
         # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
         template = { k.lower().replace('-', '_'): v for k, v in template.items() }
         output['templates'].append(template)
+
+for k, v in cdp_mapping.items():
+    # find i such that output['certificate_authorities'][i]['cacertificatedn'] == k and set output['certificate_authorities'][i]['crl_distribution_points'] = v
+    for i in range(len(output['certificate_authorities'])):
+        if output['certificate_authorities'][i]['cacertificatedn'] == k:
+            output['certificate_authorities'][i]['crl_distribution_points'] = v
+            break
+for k, v in aia_mapping.items():
+    for i in range(len(output['certificate_authorities'])):
+        if output['certificate_authorities'][i]['cacertificatedn'] == k:
+            output['certificate_authorities'][i]['authority_information_access'] = v
+            break
 
 json_data = json.dumps(output, cls = HexEncoder)
 yaml_data = yaml.dump(yaml.load(json_data,

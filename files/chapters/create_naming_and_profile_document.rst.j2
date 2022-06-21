@@ -1,14 +1,41 @@
 Create a Naming and Profile Document
 ====================================
 
-A *Naming and Profile Document* describes the certificates issued by AD CS. Such a document can be generated from the certificate templates stored in AD.
+A *Naming and Profile Document* describes the certificates issued by AD CS. Such a document can be generated from the configuration stored in AD.
+
+Collect data
+------------
 
 #. Log in to one of the domain controllers.
 
-#. Export the certificate templates as LDIF-files using PowerShell::
+#. Export the *Public Key Services* configuration as LDIF using PowerShell::
 
 {% for template in templates %}
-    ldifde -m -v -d "CN={{ template.name.replace(' ', '') }},CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC={{ customer.domain.split('.')[0] }},DC={{ customer.domain.split('.')[1] }}" -f {{ template.name.replace(' ', '') }}.ldf
+    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,DC={{ customer.domain.split('.') | join(',DC=') }}" -f Configuration.ldf
 {% endfor %}
 
-TODO
+Build the Naming and Profile Document
+-------------------------------------
+
+#. Download and install Docker. Refer to [the installation instructions](https://docs.docker.com/get-docker/) on the Docker website for details.
+
+#. Obtain a copy of the build container, e.g. by pulling it from the GitHub container repository::
+
+    docker pull ghcr.io/realiserad/adcs-deployment
+
+#. Create a folder which will contain the files provided to the container as a volume. In the example below, we name this folder ``customer-data``.
+
+#. Create a new file ``customer-data/all.yml`` with the following content
+
+    .. literalinclude:: ../../naming_document/group_vars/all.yml
+       :language: yml
+       :linenos:
+       :caption: Customer configuration used by the build container.
+
+#. Transfer the file ``Configuration.ldf`` on the domain controller to the ``customer-data`` folder.
+
+#. Build the Naming and Profile Document using the following command::
+
+    docker run -v customer-data:/build ghcr.io/realiserad/adcs-deployment
+
+#. The Naming and Profile Document is now available as ``naming-document.pdf`` in the ``customer-data`` folder.

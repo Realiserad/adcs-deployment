@@ -41,7 +41,10 @@ You can use the container to build the documentation on any system where you hav
 Build on Ubuntu
 ---------------
 
-1. Adjust ``group_vars/all.yml`` according to the customer's needs.
+1. Create ``group_vars/all.yml`` and adjust it according to the customer's needs.
+    ```
+    cp group_vars/sample.yml group_vars/all.yml
+    ```
 
 2. Replace the customer specific files in ``files/customer``.
 
@@ -58,6 +61,16 @@ Build on Ubuntu
     ```
 Contribute
 ==========
+
+List TODO items
+---------------
+
+Parts of the code which may be improved in the future are marked with *TODO* followed by a comment.
+
+You can use ``git-grep`` to search for these items.
+```
+git grep --untracked "TODO:" ./
+```
 
 Pull requests
 -------------

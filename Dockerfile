@@ -22,7 +22,7 @@ COPY .git /root/.git
 
 # extras.naming_and_profile_document
 COPY naming_document /root/naming_document
-RUN pip3 install ldif pyyaml pygments-ldif
+RUN pip3 install ldif pyyaml pygments-ldif cryptography
 
 COPY container/run.sh /root
 COPY container/ansible.cfg /etc/ansible
