@@ -1,0 +1,207 @@
+Subscriber certificates
+=======================
+
+This chapter describes the leaf certificates issued to subscribers.
+
+{% set configuration = public_key_services_configuration.stdout | from_yaml %}
+
+{% for template in configuration.templates %}
+
+{{ template.displayname }}
+{{ '-' * template.displayname | length }}
+
+{% set description = extras.naming_and_profile_document.templates | selectattr('name', 'equalto', template.displayname) | map(attribute = 'description') | list | first %}
+{% if description is defined %}
+{{ description }}
+{% endif %}
+
+Certificate template
+~~~~~~~~~~~~~~~~~~~~
+
+.. list-table:: General information
+   :widths: 3 2
+   :header-rows: 0
+
+   * - Display name of the certificate template in AD
+     - {{ template.displayname }}
+   * - Domain
+     - {{ template.distinguishedname.dc | join('.') }}
+   * - Schema version
+     - {{ template.mspki_template_schema_version }}
+   * - Issued to
+{% if 'CT_FLAG_MACHINE_TYPE' in template.flags %}
+     - Machines
+{% else %}
+     - Users
+{% endif %}
+
+.. list-table:: Storage and security settings
+   :widths: 3 2
+   :header-rows: 0
+
+   * - Store a copy of issued certificates
+{% if 'CT_FLAG_DONOTPERSISTINDB' in template.flags %}
+     - No
+{% else %}
+     - Yes
+{% endif %}
+   * - Publish certificates issued using this certificate template to Active Directory.
+{% if 'CT_FLAG_PUBLISH_TO_DS' in template.flags %}
+     - Yes
+{% else %}
+     - No
+{% endif %}
+   * - Allow the private key to be exported.
+{% if 'CT_FLAG_EXPORTABLE_KEY' in template.flags %}
+     - Yes
+{% else %}
+     - No
+{% endif %}
+
+.. list-table:: Enrollment settings
+   :widths: 3 2
+   :header-rows: 0
+
+   * - Autoenrollment
+{% if 'CT_FLAG_AUTO_ENROLLMENT' in template.mspki_enrollment_flag %}
+     - Enabled
+{% else %}
+     - Not enabled
+{% endif %}
+   * - Minimal key size
+     - {{ template.mspki_minimal_key_size ~ ' bits' }}
+   * - Renewal period
+     - {{ template.pkioverlapperiod.value ~ ' ' ~ template.pkioverlapperiod.unit }}
+   * - Requires approval before issuance
+{% if template.mspki_ra_signature > 0 %}
+     - | {{ 'Yes, by ' ~ template.mspki_ra_signature ~ ' administrators.' }}
+{% if 'CT_FLAG_PREVIOUS_APPROVAL_VALIDATE_REENROLLMENT' in template.mspki_enrollment_flag %}
+       | Reenrollment does not require approval by an administrator.
+{% endif %}
+{% else %}
+     - No
+{% endif %}
+   * - Requires user interaction
+{% if 'CT_FLAG_USER_INTERACTION_REQUIRED' in template.mspki_enrollment_flag %}
+     - Yes
+{% else %}
+     - No
+{% endif %}
+{% if 'CT_FLAG_OLD_CERT_SUPPLIES_SUBJECT_AND_ALT_NAME' in template.mspki_certificate_name_flag %}
+   * - Reuse subject DN and subject alternative name from any previously issued certificate during renewal.
+     - Yes
+{% endif %}
+
+Certificate structure
+~~~~~~~~~~~~~~~~~~~~~
+
+{% set issuers = configuration.certificate_authorities | selectattr('certificatetemplates', 'defined') | selectattr('certificatetemplates', 'issuperset', [ template.name ]) | list %}
+
+.. list-table:: X.509 certificate structure
+   :widths: 4 4
+   :header-rows: 1
+
+   * - Field
+     - Value
+   * - Version
+     - 3 (0x2)
+   * - Serial number
+     - According to issuer policy.
+   * - Signature Algorithm
+     - According to issuer policy.
+   * - Issuers
+     - |
+{% for issuer_name in issuers | map(attribute = 'displayname') | list %}
+       | {{ issuer_name }}
+{% endfor %}
+   * - Validity
+     - {{ template.pkiexpirationperiod.value ~ ' ' ~ template.pkiexpirationperiod.unit }}
+   * - Subject DN
+{% if 'CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT' in template.mspki_certificate_name_flag %}
+     - Supplied in CSR
+{% elif 'CT_FLAG_SUBJECT_REQUIRE_DIRECTORY_PATH' in template.mspki_certificate_name_flag %}
+     - Supplied from Active Directory
+{% else %}
+     - |
+{% if 'CT_FLAG_SUBJECT_REQUIRE_DNS_AS_CN' in template.mspki_certificate_name_flag %}
+       | CN = FQDN and NetBIOS name of the machine
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_REQUIRE_EMAIL' in template.mspki_certificate_name_flag %}
+       | CN = email attribute from the subscribers's user object in AD
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_REQUIRE_COMMON_NAME' in template.mspki_certificate_name_flag %}
+       | CN = CN attribute from the subscriber's user object in AD
+{% endif %}
+{% endif %}
+   * - Key Specification
+{% if template.mspki_ra_application_policies.mspki_asymmetric_algorithm.startswith('EC') %}
+     - {{ template.mspki_ra_application_policies.mspki_asymmetric_algorithm.split('_')[1] }}
+{% elif template.mspki_ra_application_policies.mspki_asymmetric_algorithm == 'RSA' %}
+     - {{ 'RSA-' ~ template.mspki_minimal_key_size }}'
+{% endif %}
+   * - **Certificate Extensions**
+     -
+{% if 'CT_FLAG_IS_CA' in template.flags %}
+   * - Basic Contraints (2.5.29.19)
+     - CA:TRUE
+{% elif 'CT_FLAG_INCLUDE_BASIC_CONSTRAINTS_FOR_EE_CERTS' in template.mspki_enrollment_flag %}
+   * - Basic Contraints (2.5.29.19)
+     - CA:FALSE
+{% endif %}
+   * -   Key Usage (2.5.29.15)
+     - {{ template.pkikeyusage | join(', ') }}
+   * - Extended Key Usage (2.5.29.37)
+     - {{ template.pkiextendedkeyusage | join(', ') }}
+   * - Authority Key Identifier (2.5.29.35)
+     - Generated from the issuer's public key
+   * - Subject Key Identifier (2.5.29.14)
+     - Generated from the subject's public key
+   * - Subject Alternative Name (2.5.29.17)
+{% if 'CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME' in template.mspki_certificate_name_flag %}
+     - Supplied in CSR
+{% else %}
+     - |
+{% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_DOMAIN_DNS' in template.mspki_certificate_name_flag %}
+       | dNSName = FQDN and NetBIOS name of the machine
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_SPN' in template.mspki_certificate_name_flag %}
+       | sPN = UPN attribute from the subscribers's user object in AD
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_DIRECTORY_GUID' in template.mspki_certificate_name_flag %}
+       | GUID = objectGUID attribute from the subcriber's user object in AD
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_UPN' in template.mspki_certificate_name_flag %}
+       | msUPN = UPN attribute from the subscribers's user object in AD
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_EMAIL' in template.mspki_certificate_name_flag %}
+       | rfc822Name = email attribute from the subscribers's user object in AD
+{% endif %}
+{% if 'CT_FLAG_SUBJECT_ALT_REQUIRE_DNS' in template.mspki_certificate_name_flag %}
+       | dNSName = DNS attribute from the subscribers's user object in AD
+{% endif %}
+{% endif %}
+{% if 'CT_FLAG_ADD_TEMPLATE_NAME' in template.flags %}
+   * - Certificate template name (1.3.6.1.4.1.311.20.2)
+{% for oid_part in template.mspki_cert_template_oid.split('.') %}
+{% if loop.index == 1 %}
+     - | {{ oid_part}}
+{% else %}
+       | {{ loop.index0 * '.. ' ~ oid_part }}
+{% endif %}
+{% if 'CT_FLAG_ADD_OCSP_NOCHECK' in template.mspki_enrollment_flag %}
+    * - OCSP No Check (1.3.6.1.5.5.7.48.1.5)
+      -
+{% endif %}
+{% endfor %}
+{#
+TODO: Pick caIssuers and CDPs from the CA settings in the registry.
+#}
+   * - Authority Information Access
+     - | caIssuers:
+       |
+       |     According to issuer policy.
+   * - CRL Distribution Points
+     - According to issuer policy.
+{% endif %}
+
+{% endfor %}
