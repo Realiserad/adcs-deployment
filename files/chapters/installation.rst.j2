@@ -29,10 +29,10 @@ Create a CSR for the issuing CA
 
 #. Create an issuing CA using PowerShell::
 
-{% if customer.key_specification == 'P256' %}
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#Microsoft Software Key Storage Provider" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ location.log }}" -DatabaseDirectory "{{ location.database }}" -Force
-{% elif customer.key_specification == 'RSA4096' %}
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ location.log }}" -DatabaseDirectory "{{ location.database }}" -Force
+{% if servers.issuing_ca.policy.key_specification == 'P256' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#{{ servers.issuing_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ servers.issuing_ca.location.log }}" -DatabaseDirectory "{{ servers.issuing_ca.location.database }}" -Force
+{% elif servers.issuing_ca.policy.key_specification == 'RSA4096' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#{{ servers.issuing_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ servers.issuing_ca.location.log }}" -DatabaseDirectory "{{ servers.issuing_ca.location.database }}" -Force
 {% else %}
     Unknown key specification '{{ customer.key_specification }}'.
 {% endif %}
@@ -112,12 +112,12 @@ Create the root CA
 
 #. Create a root CA using PowerShell::
 
-{% if customer.key_specification == 'P256' %}
-    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "ECDSA_P256#Microsoft Software Key Storage Provider" -KeyLength 256 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
-{% elif customer.key_specification == 'RSA4096' %}
-    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 4096 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+{% if servers.root_ca.policy.key_specification == 'P256' %}
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "ECDSA_P256#{{ servers.root_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+{% elif servers.root_ca.policy.key_specification == 'RSA4096' %}
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "RSA#{{ servers.root_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
 {% else %}
-    Unknown key specification '{{ customer.key_specification }}'.
+    Unknown key specification '{{ servers.root_ca.policy.key_specification }}'.
 {% endif %}
 
 #. Create and run the file ``C:\CASetup.bat``::
@@ -354,7 +354,7 @@ Enable certificate templates
 
 {% endfor %}
 
-{% if network.dcom_port is defined %}
+{% if servers.issuing_ca.dcom_port is defined %}
 Set a static DCOM port
 ----------------------
 
@@ -368,7 +368,7 @@ Set a static DCOM port
 
 #. Click on **Add**. The *DCOM Enpoint Properties* dialog is shown.
 
-#. Select the option **Use static endpoint** and type in the port number ``{{ network.dcom_port }}`` in the textbox, then click on **OK**.
+#. Select the option **Use static endpoint** and type in the port number ``{{ servers.issuing_ca.dcom_port }}`` in the textbox, then click on **OK**.
 
 #. Click on **OK** to close the *CertSrv Request Properties* dialog.
 
