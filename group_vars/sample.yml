@@ -21,6 +21,9 @@ servers:
   root_ca:
     name: app-RootCA
     ip: 192.168.56.100
+    vlan: VLAN0
+    netmask: 255.255.255.0
+    gateway: 192.168.56.1
     os: Windows Server 2022
     location:
       log: C:\Log
@@ -36,6 +39,9 @@ servers:
   issuing_ca:
     name: app-IssuingCA
     ip: 192.168.56.101
+    vlan: VLAN0
+    netmask: 255.255.255.0
+    gateway: 192.168.56.1
     os: Windows Server 2022
     dcom_port: 4000
     location:
@@ -52,7 +58,13 @@ servers:
   repositories:
     - name: app-Repository
       ip: 192.168.56.102
+      vlan: VLAN1
+      netmask: 255.255.255.0
+      gateway: 192.168.56.1
       os: Windows Server 2022
+  dns_servers:
+    - 192.168.56.10
+    - 192.168.56.11
   domain_controllers:
     - name: app-DC
       ip: 192.168.56.1

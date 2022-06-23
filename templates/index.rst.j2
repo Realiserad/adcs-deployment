@@ -7,6 +7,9 @@ Microsoft PKI
 
    chapters/prerequisites
    chapters/installation
+{% if extras is defined and 'naming_and_profile_document' is in extras %}
+   chapters/create_naming_and_profile_document
+{% endif %}
    chapters/operations
    chapters/network-configuration
    chapters/inventory
