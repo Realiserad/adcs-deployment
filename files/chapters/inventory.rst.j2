@@ -2,36 +2,64 @@ Appendix B - Inventory
 ======================
 
 .. list-table:: PKI machines
-   :widths: 2 2 2 1 2 1 2
+   :widths: 1 1 1 1 3
    :header-rows: 1
 
    * - Name
-     - IP
+     - Network
      - Operating system
-     - RAM
-     - Disk
-     - vCPU
+     - System requirements
      - Purpose
    * - {{ servers.root_ca.name }}
-     - {{ servers.root_ca.ip }}
+     - | IP: {{ servers.root_ca.ip }}
+       | VLAN: {{ servers.root_ca.vlan }}
+{% if servers.root_ca.netmask is defined %}
+       | Netmask: {{ servers.root_ca.netmask }}
+{% endif %}
+{% if servers.root_ca.gateway is defined %}
+       | Gateway: {{ servers.root_ca.gateway }}
+{% endif %}
+{% if servers.dns_servers is defined %}
+       | DNS servers: {{ servers.dns_servers | join(', ') }}
+{% endif %}
      - {{ servers.root_ca.os }}
-     - 2 GB
-     - 32 GB
-     - 2
+     - | RAM: 2 GB
+       | Disk: 32 GB
+       | vCPU: 2
      - Trust anchor for the ``{{ customer.domain }}`` domain.
    * - {{ servers.issuing_ca.name }}
-     - {{ servers.issuing_ca.ip }}
+     - | IP: {{ servers.issuing_ca.ip }}
+       | VLAN: {{ servers.issuing_ca.vlan }}
+{% if servers.issuing_ca.netmask is defined %}
+       | Netmask: {{ servers.issuing_ca.netmask }}
+{% endif %}
+{% if servers.issuing_ca.gateway is defined %}
+       | Gateway: {{ servers.issuing_ca.gateway }}
+{% endif %}
+{% if servers.dns_servers is defined %}
+       | DNS servers: {{ servers.dns_servers | join(', ') }}
+{% endif %}
      - {{ servers.issuing_ca.os }}
-     - 8 GB
-     - 32 GB (and a >128 GB network drive)
-     - 2
+     - | RAM: 8 GB
+       | Disk: 32 GB (and a >128 GB network drive)
+       | vCPU: 2
      - Issues certificates for users and computers in the ``{{ customer.domain }}`` domain.
 {% for server in servers.repositories %}
    * - {{ server.name }}
-     - {{ server.ip }}
+     - | IP: {{ server.ip }}
+       | VLAN: {{ server.vlan }}
+{% if servers.netmask is defined %}
+       | Netmask: {{ server.netmask }}
+{% endif %}
+{% if server.gateway is defined %}
+       | Gateway: {{ server.gateway }}
+{% endif %}
+{% if server.dns_servers is defined %}
+       | DNS servers: {{ server.dns_servers | join(', ') }}
+{% endif %}
      - {{ server.os }}
-     - 8 GB
-     - 32 GB
-     - 2
+     - | RAM: 8 GB
+       | Disk: 32 GB
+       | vCPU: 2
      - Distributes CA certificates and CRLs over HTTP.
 {% endfor %}
