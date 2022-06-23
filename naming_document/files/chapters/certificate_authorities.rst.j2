@@ -1,0 +1,73 @@
+Certificate authorities
+=======================
+
+This chapter describes the certificate authorities in the system.
+
+{% set configuration = public_key_services_configuration.stdout | from_yaml %}
+
+{% for ca in configuration.certificate_authorities %}
+
+{% set issuer_ca = configuration.certificate_authorities | selectattr('cacertificatedn', 'equalto', ca.issuer_dn) | list | first %}
+
+{{ ca.name }}
+{{ '-' * ca.name | length }}
+
+{% set description = extras.naming_and_profile_document.certificate_authorities | selectattr('name', 'equalto', ca.name) | map(attribute = 'description') | list | first %}
+{% if description is defined %}
+{{ description }}
+{% endif %}
+
+.. list-table:: CA information
+   :widths: 2 3
+   :header-rows: 0
+
+   * - Display name of the CA
+     - {{ ca.name }}
+   * - Subject DN of the CA
+     - {{ ca.cacertificatedn.replace(',', ', ') }}
+   * - Subject DN of the issuer
+     - {{ ca.issuer_dn.replace(',', ', ') }}
+{% if ca.dnshostname is defined %}
+   * - Name of the machine where the CA is running
+     - {{ ca.dnshostname }}
+{% endif %}
+{#
+TODO: We only support Microsoft Key Storage Provider at the moment, but if we want to add e.g. support for HSMs, we should probably look in
+group_vars/all.yml and pick the right value from there. The key storage provider in use can also be retrieved from the registry using
+``CertUtil -getreg ca\csp\Provider``.
+#}
+   * - Key storage provider
+     - Microsoft Key Storage Provider
+   * - Valid from
+     - {{ ca.validity.from }}
+   * - Valid to
+     - {{ ca.validity.to }}
+{% if ca.certificatetemplates is defined %}
+   * - Certificate templates used by the CA
+     - {{ ca.certificatetemplates | join(', ') }}
+{% endif %}
+   * - Key specification
+     - {{ ca.key_specification }}
+   * - Signature algorithm
+{#
+TODO: The installation instructions currently only support SHA256, and assuming those instructions were followed, we assume that this is the
+hash algorithm used by the CA. However, it is entirely possible that the CA uses a different hash algorithm, the actual value is stored in
+the registry and can be retrieved using ``CertUtil -getreg ca\csp\CNGHashAlgorithm``.
+#}
+{% if ca.key_specification.startswith('RSA') %}
+     - {{ 'SHA256 with RSA' }}
+{% else %}
+     - {{ 'SHA256 with ECDSA' }}
+{% endif %}
+   * - Subject Key Identifier
+     - {{ ca.subject_key_identifier }}
+{% if ca.authority_information_access is defined %}
+   * - Certificate Authority Issuer
+     - {{ ca.authority_information_access.ca_issuers | join(', ') }}
+{% endif %}
+{% if ca.crl_distribution_points is defined %}
+   * - CRL Distribution Point
+     - {{ ca.crl_distribution_points | join(', ') }}
+{% endif %}
+
+{% endfor %}

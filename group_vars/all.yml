@@ -10,19 +10,30 @@ customer:
   name: Atea Sverige AB
   simple_name: Atea
   country: SE
-  # Possible choices are:
-  #  - RSA4096
-  #  - P256
-  key_specification: P256
+extras:
+  naming_and_profile_document:
 servers:
   root_ca:
     name: app-RootCA
     ip: 192.168.56.100
     os: Windows Server 2022
+    location:
+      log: C:\Log
+      database: C:\Database
+    policy:
+      key_specification: P256
+      key_storage_provider: Microsoft Software Key Storage Provider
   issuing_ca:
     name: app-IssuingCA
     ip: 192.168.56.101
     os: Windows Server 2022
+    dcom_port: 4000
+    location:
+      log: C:\Log
+      database: C:\Database
+    policy:
+      key_specification: P256
+      key_storage_provider: Microsoft Software Key Storage Provider
   repositories:
     - name: app-Repository
       ip: 192.168.56.102
@@ -35,11 +46,6 @@ accounts:
     user: foo.foobarsson
   local:
     user: Administrator
-location:
-  log: C:\Log
-  database: C:\Database
-network:
-  dcom_port: 4000
 templates:
   - from: Computer
     name: Atea Computer

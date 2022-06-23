@@ -1,0 +1,98 @@
+- name: Build the Naming and Profile Document
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Check if an Ansible configuration file already exists
+      stat:
+        path: "{{ playbook_dir }}/group_vars/all.yml"
+      register: ansible_configuration
+    - name: Get shortened commit hash
+      command:
+        cmd: git rev-parse --short HEAD
+      register: short_commit_hash
+      tags:
+        - always
+    - name: Create directory structure
+      file:
+        state: directory
+        path: "{{ item }}"
+      with_items:
+        - "{{ playbook_dir }}/_docs/chapters"
+        - "{{ playbook_dir }}/_docs/graphics"
+        - "{{ playbook_dir }}/_docs/templates"
+        - "{{ playbook_dir }}/release"
+        - "{{ playbook_dir }}/customer"
+      tags:
+        - always
+    - name: Retrieve the Ansible configuration file
+      copy:
+        src: "{{ playbook_dir }}/../group_vars/all.yml"
+        dest: "{{ playbook_dir }}/group_vars/all.yml"
+      when: ansible_configuration.stat.exists == false
+    - name: Copy sample LDIF configuration
+      copy:
+        src: sample/Configuration.ldf
+        dest: customer/
+      tags:
+        - sample
+    - name: Parse LDIF configuration
+      shell:
+        cmd: python3 files/parse.py --file customer/Configuration.ldf
+      register: public_key_services_configuration
+      tags:
+        - always
+    - name: Extract certificate templates from configuration
+      shell:
+        cmd: python3 files/extract_templates.py --file customer/Configuration.ldf --output-directory customer/ldif
+      tags:
+        - always
+      when: extras.naming_and_profile_document.include_ldif | default(false)
+    - name: Create index from template
+      template:
+        src: index.rst.j2
+        dest: "{{ playbook_dir }}/_docs/index.rst"
+      tags:
+        - always
+    - name: Create chapters from template
+      template:
+        src: "{{ item }}"
+        dest: '{{ playbook_dir }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
+      with_fileglob:
+        - "chapters/*.rst.j2"
+      tags:
+        - always
+    - name: Perform RST linting
+      command:
+        cmd: doc8 --max-line-length 2000 "{{ playbook_dir }}/_docs/chapters"
+      tags:
+        - always
+    - name: Create Sphinx configuration
+      template:
+        src: conf.py.j2
+        dest: "{{ playbook_dir }}/_docs/conf.py"
+      tags:
+        - always
+    - name: Copy Sphinx files
+      copy:
+        src: "{{ item }}"
+        dest: "{{ playbook_dir }}/_docs"
+      with_items:
+        - Makefile
+        - mycustomstyle.sty
+        - atea.png
+        - atea_aligned.png
+      tags:
+        - always
+
+    - name: Build PDF
+      make:
+        chdir: "{{ playbook_dir }}/_docs"
+        target: latexpdf
+      tags:
+        - always
+    - name: Copy PDF to release folder
+      copy:
+        src: "{{ playbook_dir }}/_docs/_build/latex/naming-document.pdf"
+        dest: "{{ playbook_dir }}/release/naming-document.pdf"
+      tags:
+        - always

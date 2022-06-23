@@ -15,7 +15,7 @@ templates_path = [ '_templates' ]
 source_suffix = '.rst'
 master_doc = 'index'
 
-project = u'Active Directory Certificate Services'
+project = u'Naming and Profile Document'
 copyright = u'Atea Sverige AB'
 author = u'{{ consultant.name }}'
 
@@ -76,24 +76,24 @@ latex_elements = {
 latex_additional_files = [ 'mycustomstyle.sty' ]
 latex_documents = [
     (master_doc,
-     'system-documentation.tex',
-     u'{{ title }}\\\\{{ customer.name }}',
+     'naming-document.tex',
+     u'Naming and Profile Document\\\\{{ customer.name }}',
      author,
      'manual'),
 ]
 man_pages = [
     (master_doc,
-     u'{{ title }}',
-     u'{{ title }}',
+     u'Naming and Profile Document',
+     u'Naming and Profile Document',
      [ author ],
      1)
 ]
 texinfo_documents = [
     (master_doc,
-     'system-documentation',
-      u'{{ title }}',
+     'naming-document',
+      u'Naming and Profile Document',
       author,
-      'Active Directory Certificate Services',
-      'Documentation describing a PKI based on AD CS.',
+      'Naming and Profile Document',
+      'Documentation describing the certificates issued by the PKI.',
       'Miscellaneous'),
 ]
