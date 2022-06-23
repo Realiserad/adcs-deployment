@@ -1,0 +1,14 @@
+extras:
+  naming_and_profile_document:
+    include_ldif: Yes
+    include_ca_certs: Yes
+    templates:
+    - name: Atea Computer
+      description: Certificate used to authenticate workstations at Atea.
+    - name: Atea User
+      description: Certificate used to authenticate employees at Atea.
+    certificate_authorities:
+    - name: R1
+      description: Trust anchor for Atea's public key infrastructure.
+    - name: ICA1
+      description: Issuing CA for Atea's public key infrastructure.

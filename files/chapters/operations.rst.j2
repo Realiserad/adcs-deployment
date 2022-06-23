@@ -1,6 +1,29 @@
 Operations Manual
 =================
 
+This chapter describes how to operate the PKI on a daily basis by describing common maintenance tasks.
+
+These maintenance tasks should be carried out by the system owner in accordance with the maintenance schedule in Appendix C.
+
+.. note:: Failure to carry out any maintenance task within the timeframe stipulated in the maintenance schedule, can cause degradation of the system or a system outage. It is the responsibiliy of the system owner to carry out the maintenance tasks, and to make a note of any deviations to the maintenance schedule.
+
+{% if servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' or servers.issuing_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
+Limited protection of private keys
+----------------------------------
+
+The installation was done with limited protection of the private keys.
+
+As no *hardware security module (HSM)* is being used, the private key of the *certificate authority (CA)* is stored on disk and may be decrypted and/or copied by any personnel with logical access to the CA.
+
+As a consequence, it is important to restrict access to CA machines using logical and physical acccess control and be vigilant about any connection attempts.
+
+- The root CA machine ``{{ servers.root_ca.name }}`` should be turned off when not in use.
+- Access should only be given to vetted personnel according to the CP/CPS.
+- Access control lists and CA logs should be reviewed according to the maintenance schedule.
+- Any keys which are suspected or confirmed to be compromised should be revoked.
+
+{% endif %}
+
 Inspect the status of the PKI
 -----------------------------
 

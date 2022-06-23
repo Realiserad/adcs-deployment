@@ -1,0 +1,35 @@
+Introduction
+============
+
+This document describes the design, installation and operation of a *public key infrastructure (PKI)* for {{ customer.simple_name }}, based on Microsoft *Active Directory Certificate Services (AD CS)*.
+
+This is a technical document aimed towards personnel working with installation and maintenance of the system.
+
+Content
+-------
+
+The documentation consists of three chapters. The first chapter desribes the components and architecture of the PKI and related IT infrastructure such as domain controllers, load balancers and firewalls. The purpose of this chapter is to give the reader an overview of the system.
+
+The second chapter describes the installation of the system. The purpose of this chapter is to give the reader a detailed understanding of how the system was set up, and assist personnel during a reinstallation, e.g. during an upgrade of Windows Server.
+
+The third chapter describes how to operate the PKI on a daily basis, and contains step by step instructions for common maintenance tasks.
+
+System information
+------------------
+
+.. list-table:: System information
+   :widths: 1 2
+   :header-rows: 0
+
+   * - Implemented system
+     - Active Directory Certificate Services (AD CS)
+   * - Purpose of the system
+{% if system_description is defined %}
+     - {{ system_description }}
+{% else %}
+     - Provide X.509 certificates for Windows workstations and employees at {{ customer.simple_name }}.
+{% endif %}
+   * - Implemented by
+     - {{ consultant.name }}, {{ consultant.company }}
+   * - System owner
+     - {{ owner.name}}, {{ owner.company }}
