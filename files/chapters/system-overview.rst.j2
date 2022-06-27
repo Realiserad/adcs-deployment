@@ -51,12 +51,12 @@ The following accounts are used for administrating the PKI.
 
    * - Account name
      - Account description
-   * - {{ servers.root_ca.name.upper() }}\{{ accounts.local.user }}
+   * - ``{{ servers.root_ca.name.upper() }}\{{ accounts.local.user }}``
      - Local administrator account for ``{{ servers.root_ca.name }}``.
-   * - {{ customer.domain.split()[0].upper() }}\{{ accounts.domain.user }}
+   * - ``{{ customer.domain.split('.')[0].upper() }}\{{ accounts.domain.user }}``
      - Domain administrator for the {{ customer.domain }} domain. Used for administration of ``{{ servers.issuing_ca.name }}`` and Public Key Policies in Active Directory.
 {% for repository in servers.repositories %}
-   * - {{ repository.name.upper() }}\{{ accounts.local.user }}
+   * - ``{{ repository.name.upper() }}\{{ accounts.local.user }}``
      - Local administrator account for ``{{ repository.name }}``.
 {% endfor %}
 
