@@ -194,9 +194,9 @@ Activate the issuing CA
     CertUtil -setreg CA\CRLDeltaPeriodUnits 0
     CertUtil -setreg CA\CRLDeltaPeriod Days
 
-    :: https://nolanrumble.com/security/crl-option-numbers-and-variables-what-do-they-mean
+    :: https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/hh831574(v=ws.11)#configure-the-ca
     CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ customer.domain }}/%%3-%%8.crl"
-    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3-%%8.crt"
+    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%4.crt"
 
     CertUtil -setreg CA\ValidityPeriodUnits 2
     CertUtil -setreg CA\ValidityPeriod Years

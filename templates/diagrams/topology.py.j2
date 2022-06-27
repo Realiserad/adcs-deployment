@@ -1,7 +1,7 @@
 from diagrams import Diagram, Edge, Cluster
 from diagrams.generic.os import Windows
 
-with Diagram("PKI Server Architecture", show = False):
+with Diagram("PKI Topology", show = False, filename = "topology"):
     with Cluster("Network Zone - Tier 0"):
         root_ca = Windows("{{ servers.root_ca.name }}")
         issuing_ca = Windows("{{ servers.issuing_ca.name }}")
