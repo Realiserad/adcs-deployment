@@ -4,7 +4,7 @@
   tasks:
     - name: Check if an Ansible configuration file already exists
       stat:
-        path: "{{ playbook_dir }}/group_vars/all.yml"
+        path: "group_vars/all.yml"
       register: ansible_configuration
     - name: Get shortened commit hash
       command:
@@ -26,8 +26,8 @@
         - always
     - name: Retrieve the Ansible configuration file
       copy:
-        src: "{{ playbook_dir }}/../group_vars/all.yml"
-        dest: "{{ playbook_dir }}/group_vars/all.yml"
+        src: "../group_vars/all.yml"
+        dest: "group_vars/all.yml"
       when: ansible_configuration.stat.exists == false
     - name: Copy sample LDIF configuration
       copy:

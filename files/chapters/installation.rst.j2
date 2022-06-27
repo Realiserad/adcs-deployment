@@ -34,7 +34,7 @@ Create a CSR for the issuing CA
 {% elif servers.issuing_ca.policy.key_specification == 'RSA4096' %}
     Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#{{ servers.issuing_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ servers.issuing_ca.location.log }}" -DatabaseDirectory "{{ servers.issuing_ca.location.database }}" -Force
 {% else %}
-    Unknown key specification '{{ customer.key_specification }}'.
+    Unknown key specification '{{ servers.issuing_ca.policy.key_specification }}'.
 {% endif %}
 
 #. Transfer the file ``C:\ICA1.csr`` to {{ servers.root_ca.name }}.
