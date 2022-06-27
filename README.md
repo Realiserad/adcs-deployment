@@ -13,7 +13,7 @@ After building, the result is put in the ``release`` folder:
 
 - ``system-documentation.zip`` contains the system documentation for AD CS in HTML and PDF format.
 - ``pki-assessment-bundle.zip`` contains *AD CS Collector* and instructions for how to use it.
-- ``proposal-new-adcs-installation.docx`` describes a proposal for a new installation of AD CS with an optional Luna 7 HSM.
+- ``proposal-new-adcs-installation-with-luna.docx`` describes a proposal for a new installation of AD CS with a Luna 7 HSM.
 - ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on AD CS.
 
 Build

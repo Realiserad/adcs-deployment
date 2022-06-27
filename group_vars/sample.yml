@@ -20,6 +20,7 @@ extras:
 servers:
   root_ca:
     name: app-RootCA
+    description: Hosting the trust anchor.
     ip: 192.168.56.100
     vlan: VLAN0
     netmask: 255.255.255.0
@@ -38,6 +39,7 @@ servers:
       key_storage_provider: Microsoft Software Key Storage Provider
   issuing_ca:
     name: app-IssuingCA
+    description: Hosting the CA issuing certificates to subscribers.
     ip: 192.168.56.101
     vlan: VLAN0
     netmask: 255.255.255.0
@@ -57,6 +59,7 @@ servers:
       key_storage_provider: Microsoft Software Key Storage Provider
   repositories:
     - name: app-Repository
+      description: Distributing CA certificates and CRLs over HTTP.
       ip: 192.168.56.102
       vlan: VLAN1
       netmask: 255.255.255.0

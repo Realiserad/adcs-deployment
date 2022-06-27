@@ -16,14 +16,14 @@ def render_files(directory):
 # Renders a single file using Jinja2.
 def render_file(file_name):
     document = DocxTemplate(file_name)
-    context = yaml.load(open('../../group_vars/all.yml'), Loader=yaml.FullLoader)
+    context = yaml.load(open('../../group_vars/all.yml'), Loader = yaml.FullLoader)
 
     context['__datestring'] = date.today().strftime('%B %d, %Y')
     context['__logo'] = InlineImage(
-        document, 
-        image_descriptor='../customer/logo.png', 
-        width=Mm(20), 
-        height=Mm(10))
+        document,
+        image_descriptor = '../customer/logo.png',
+        width = Mm(20),
+        height = Mm(10))
 
     document.render(context)
     document.save('../../release/' + file_name)

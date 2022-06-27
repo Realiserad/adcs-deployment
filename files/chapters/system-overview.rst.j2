@@ -1,3 +1,123 @@
-Architecture
-============
+System Overview
+===============
 
+This chapter gives an overview of the system, as it is installed at {{ customer.simple_name }}.
+
+Servers
+-------
+
+The following servers are a part of the PKI. For details, refer to *Appendix B*.
+
+.. list-table:: Servers
+   :widths: 1 1 2
+   :header-rows: 1
+
+   * - Server name
+     - IP address
+     - Description
+   * - {{ servers.root_ca.name }}
+     - {{ servers.root_ca.ip }}
+     - {{ servers.root_ca.description }}
+   * - {{ servers.issuing_ca.name }}
+     - {{ servers.issuing_ca.ip }}
+     - {{ servers.issuing_ca.description }}
+{% for repository in servers.repositories %}
+   * - {{ repository.name }}
+     - {{ repository.ip }}
+     - {{ repository.description }}
+{% endfor %}
+
+Topology
+--------
+
+The PKI has been implemented as a two-tier CA hierachy with one root CA and one issuing CA.
+
+The root CA signs the CA certificate for the issuing CA, and is stored offline when not in use. If the private key for the issuing CA is compromised, it is possible to revoke the issuing CA using the root CA without having to create a new CA hierarchy.
+
+To ensure high availability for revocation functions and avoid exposing the issuing CA to the internet, CRLs and CA certificates are published to a separate set of servers (known as a repository).
+
+.. figure:: ../diagrams/topology.png
+
+        Explanation of the components in the PKI and how they communicate with each other.
+
+Accounts
+--------
+
+The following accounts are used for administrating the PKI.
+
+.. list-table:: Accounts
+   :widths: 1 1
+   :header-rows: 1
+
+   * - Account name
+     - Account description
+   * - {{ servers.root_ca.name.upper() }}\{{ accounts.local.user }}
+     - Local administrator account for ``{{ servers.root_ca.name }}``.
+   * - {{ customer.domain.split()[0].upper() }}\{{ accounts.domain.user }}
+     - Domain administrator for the {{ customer.domain }} domain. Used for administration of ``{{ servers.issuing_ca.name }}`` and Public Key Policies in Active Directory.
+{% for repository in servers.repositories %}
+   * - {{ repository.name.upper() }}\{{ accounts.local.user }}
+     - Local administrator account for ``{{ repository.name }}``.
+{% endfor %}
+
+CRL distribution points
+-----------------------
+
+The following endpoints are used for distribution of *Certificate Revocation Lists (CRLs)*.
+
+.. list-table:: CRL Distribution Points
+   :widths: 1 3
+   :header-rows: 1
+
+   * - Certificate Authority
+     - CRL Distribution Point
+   * - R1
+     - ``http://pki.{{ customer.domain }}/R1.crl``
+   * - ICA1
+     - ``http://pki.{{ customer.domain }}/ICA1-<CRLNameSuffix>.crt``
+
+The appropriate URLs are put in the *CRL Distribution Points certificate extension* (2.5.29.31) of issued certificates.
+
+Certificate authority issuers
+-----------------------------
+
+The following endpoints are used for distribution of CA certificates.
+
+.. list-table:: CRL Distribution Points
+   :widths: 1 3
+   :header-rows: 1
+
+   * - R1
+     - ``http://pki.{{ customer.domain }}/R1.crt``
+   * - ICA1
+     - ``http://pki.{{ customer.domain }}/<CertificateName>.crt``
+
+The appropriate URLs are put in the *Authority Information Access certificate extension* (1.3.6.1.5.5.7.1.1) of issued certificates.
+
+Certificate templates
+---------------------
+
+The following certificate templates are used for certificate issuance.
+
+.. list-table:: Certificate templates
+   :widths: 1 2
+   :header-rows: 1
+
+   * - Display name
+     - Description
+{% for template in templates %}
+   * - {{ template.name }}
+     - {{ template.description }}
+{% endfor %}
+
+Publication of CA certificates
+------------------------------
+
+Machines connected to the {{ customer.domain }} domain trusts the CA hierarchy automatically, as the CA certificates are published to Active Directory.
+
+Machines not a part of the {{ customer.domain }} domain may need to have the root CA certificate manually added to their truststore. Refer to the manufacturer's documentation for guidance.
+
+Autoenrollment
+--------------
+
+To ensure that clients and servers connected to the {{ customer.domain }} domain can receive certificates automatically, Microsoft Autoenrollment has been enabled for the GPO *Default Domain Policy*.
