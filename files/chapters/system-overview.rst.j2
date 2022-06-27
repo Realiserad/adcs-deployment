@@ -74,7 +74,7 @@ The following endpoints are used for distribution of *Certificate Revocation Lis
    * - R1
      - ``http://pki.{{ customer.domain }}/R1.crl``
    * - ICA1
-     - ``http://pki.{{ customer.domain }}/ICA1-<CRLNameSuffix>.crt``
+     - ``http://pki.{{ customer.domain }}/ICA1-<CRLNameSuffix>.crl``
 
 The appropriate URLs are put in the *CRL Distribution Points certificate extension* (2.5.29.31) of issued certificates.
 
