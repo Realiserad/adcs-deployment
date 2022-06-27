@@ -1,7 +1,7 @@
 name: publish
 on:
   push:
-    branches:    
+    branches:
       - 'main'
 jobs:
   publish-container:
@@ -19,5 +19,5 @@ jobs:
     - name: Build the container image
       run: |
         docker build -t ghcr.io/realiserad/adcs-deployment .
-        docker run -v $(pwd)/group_vars/all.yml:/build/all.yml ghcr.io/realiserad/adcs-deployment
+        docker run -v $(pwd)/group_vars/sample.yml:/build/all.yml ghcr.io/realiserad/adcs-deployment
         docker push ghcr.io/realiserad/adcs-deployment
