@@ -5,11 +5,13 @@
 # available options.
 #
 
-{% if  theme == 'guzzle_sphinx_theme' %}
+{% if theme == 'guzzle_sphinx_theme' %}
 import guzzle_sphinx_theme
 {% endif %}
 
-extensions = []
+extensions = [
+    'docxbuilder'
+]
 
 templates_path = [ '_templates' ]
 source_suffix = '.rst'
@@ -18,6 +20,7 @@ master_doc = 'index'
 project = u'Active Directory Certificate Services'
 copyright = u'Atea Sverige AB'
 author = u'{{ consultant.name }}'
+subject = 'Documentation describing a PKI based on AD CS.'
 
 version = "{{ short_commit_hash.stdout }}"
 release = "{{ short_commit_hash.stdout }}"
@@ -26,6 +29,18 @@ language = None
 exclude_patterns = [ ' _build', 'Thumbs.db', '.DS_Store' ]
 pygments_style = 'sphinx'
 todo_include_todos = False
+
+docx_documents = [
+    ('index', 'system-documentation.docx', {
+         'title': project,
+         'creator': author,
+         'subject': subject,
+     }, True),
+]
+{% if docx_style is defined %}
+docx_style = {{ docx_style }}
+{% endif %}
+docx_pagebreak_before_section = 1
 
 html_theme = "{{ theme }}"
 
@@ -94,6 +109,6 @@ texinfo_documents = [
       u'{{ title }}',
       author,
       'Active Directory Certificate Services',
-      'Documentation describing a PKI based on AD CS.',
+      subject,
       'Miscellaneous'),
 ]

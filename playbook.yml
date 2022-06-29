@@ -69,11 +69,16 @@
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: html
+    - name: Build DOCX
+      make:
+        chdir: "{{ playbook_dir }}/_docs"
+        target: docx
     - name: Create installation package
       community.general.archive:
         path:
           - "{{ playbook_dir }}/_docs/_build/html"
           - "{{ playbook_dir }}/_docs/_build/latex/system-documentation.pdf"
+          - "{{ playbook_dir }}/_docs/_build/docx/system-documentation.docx"
         format: zip
         dest: "{{ playbook_dir }}/release/system-documentation.zip"
     - name: Build assessment bundle
