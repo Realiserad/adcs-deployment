@@ -37,9 +37,7 @@ docx_documents = [
          'subject': subject,
      }, True),
 ]
-{% if docx_style is defined %}
-docx_style = {{ docx_style }}
-{% endif %}
+docx_style = 'style.docx'
 docx_pagebreak_before_section = 1
 
 html_theme = "{{ theme }}"
