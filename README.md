@@ -24,7 +24,7 @@ Build using the container
 
 You can use the container to build the documentation on any system where you have Docker installed. The container can be built locally or pulled directly from GitHub's container registry at ``ghcr.io``.
 
-1. Adjust ``group_vars/all.yml`` according to the customer's needs.
+1. Create an Abnsible configuration file named ``all.yml``, and adjust it according to the customer's needs. You can use ``group_vars/sample.yml`` as a template.
 
 2. Build and run the container. The configuration file ``all.yml`` must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
     ```
