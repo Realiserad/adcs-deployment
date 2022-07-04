@@ -1,0 +1,64 @@
+@echo off
+
+set emailfrom="{{ smtp_exit_module.email.from }}"
+set emailto="{{ smtp_exit_module.email.to }}"
+
+CertUtil -setreg exit\smtp\SMTPServer "{{ smtp_exit_module.smtp_server }}"
+{% if smtp_exit_module.authentication.method == 'Basic' %}
+CertUtil -setreg exit\smtp\SMTPAuthenticate 0
+{% elif smtp_exit_module.authentication.method == 'NTLM' %}
+CertUtil -setreg exit\smtp\SMTPAuthenticate 1
+{% elif smtp_exit_module.authentication.method == 'Kerberos' %}
+CertUtil -setreg exit\smtp\SMTPAuthenticate 2
+{% else %}
+CertUtil -setreg exit\smtp\SMTPAuthenticate "{{ smtp_exit_module.authentication.method }}"
+{% endif %}
+
+{% if smtp_exit_module.authentication.credential is defined %}
+CertUtil -setsmtpinfo -p "{{ smtp_exit_module.authentication.credential.password }}" "{{ smtp_exit_module.authentication.credential.account }}"
+{% endif %}
+
+{% for event in smtp_exit_module.events %}
+{% if event == 'CRLISSUED' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CRLISSUED
+CertUtil -setreg exit\smtp\CRLissued\To %emailto%
+CertUtil -setreg exit\smtp\CRLissued\From %emailfrom%
+{% elif event == 'CERTDENIED' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CERTDENIED
+CertUtil -setreg exit\smtp\templates\default\Denied\From %emailfrom%
+CertUtil -setreg exit\smtp\templates\default\Denied\To %emailto%
+{% elif event == 'CERTISSUED' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CERTISSUED
+CertUtil -setreg exit\smtp\templates\default\Issued\From %emailfrom%
+CertUtil -setreg exit\smtp\templates\default\Issued\To %emailto%
+{% elif event == 'CERTPENDING' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CERTPENDING
+CertUtil -setreg exit\smtp\templates\default\Pending\To %emailto%
+CertUtil -setreg exit\smtp\templates\default\Pending\From %emailfrom%
+{% elif event == 'CERTUNREVOKED' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CERTUNREVOKED
+CertUtil -setreg exit\smtp\templates\default\unRevoked\From %emailfrom%
+CertUtil -setreg exit\smtp\templates\default\unRevoked\To %emailto%
+{% elif event == 'CERTRETRIEVEPENDING' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CERTRETRIEVEPENDING
+CertUtil -setreg exit\smtp\templates\default\retrievepending\From %emailfrom%
+CertUtil -setreg exit\smtp\templates\default\retrievepending\To %emailto%
+{% elif event == 'CERTREVOKED' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_CERTREVOKED
+CertUtil -setreg exit\smtp\templates\default\Revoked\From %emailfrom%
+CertUtil -setreg exit\smtp\templates\default\Revoked\To %emailto%
+{% elif event == 'SHUTDOWN' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_SHUTDOWN
+CertUtil -setreg exit\smtp\Shutdown\To %emailto%
+CertUtil -setreg exit\smtp\Shutdown\From %emailfrom%
+{% elif event == 'STARTUP' %}
+CertUtil -setreg exit\smtp\eventfilter +EXITEVENT_STARTUP
+CertUtil -setreg exit\smtp\Startup\To %emailto%
+CertUtil -setreg exit\smtp\Startup\From %emailfrom%
+{% endif %}
+{% endfor %}
+
+net stop certsvc
+net start certsvc
+CertUtil -ping 30
+echo SMTP exit module for AD CS has been configured.
