@@ -23,6 +23,10 @@ smtp_exit_module:
     from: noreply@pki.atea.se
     to: admin@pki.atea.se
   authentication:
+    # Possible choices are:
+    #   - Basic
+    #   - NTLM
+    #   - Kerberos
     method: Basic
     use_tls: Yes
     port: 465
