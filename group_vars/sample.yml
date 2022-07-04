@@ -24,8 +24,10 @@ smtp_exit_module:
     to: admin@pki.atea.se
   authentication:
     method: Basic
-    credential:
-      account: account1
+    use_tls: Yes
+    port: 465
+    account:
+      username: user
       password: foo123
   events:
     - CRLISSUED

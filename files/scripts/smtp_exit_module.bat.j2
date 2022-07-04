@@ -14,9 +14,16 @@ CertUtil -setreg exit\smtp\SMTPAuthenticate 2
 CertUtil -setreg exit\smtp\SMTPAuthenticate "{{ smtp_exit_module.authentication.method }}"
 {% endif %}
 
-{% if smtp_exit_module.authentication.credential is defined %}
-CertUtil -setsmtpinfo -p "{{ smtp_exit_module.authentication.credential.password }}" "{{ smtp_exit_module.authentication.credential.account }}"
+{% if smtp_exit_module.authentication.account is defined %}
+CertUtil -setsmtpinfo -p "{{ smtp_exit_module.authentication.account.password }}" "{{ smtp_exit_module.authentication.account.username }}"
 {% endif %}
+{% if smtp_exit_module.authentication.use_tls %}
+CertUtil -setreg exit\smtp\smtpusessl 1
+{% endif %}
+{% if smtp_exit_module.authentication.port is defined %}
+CertUtil -setreg exit\smtp\smtpserverport {{ smtp_exit_module.authentication.port }}
+CertUtil -setreg exit\smtp\sendusing 2
+{% endif%}
 
 {% for event in smtp_exit_module.events %}
 {% if event == 'CRLISSUED' %}
