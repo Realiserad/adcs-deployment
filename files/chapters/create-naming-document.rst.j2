@@ -33,14 +33,14 @@ Transfer the file ``Configuration.ldf`` to the ``customer-data`` folder.
 
     $CaName = (CertUtil -cainfo name | Select-String 'CA name: (.+)').Matches.Groups[1].Value
     reg save HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration $CaName.dat
-
+    
 Transfer the registry hive to the '`customer-data`` folder.
 
 #. Log in to {{ servers.root_ca.name }} and run the following command to export the CA settings for the root CA stored in the registry::
-
+    
     $CaName = (CertUtil -cainfo name | Select-String 'CA name: (.+)').Matches.Groups[1].Value
     reg save HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration $CaName.dat
-
+    
 Transfer the registry hive to the '`customer-data`` folder.
 
 Build the Naming and Profile Document

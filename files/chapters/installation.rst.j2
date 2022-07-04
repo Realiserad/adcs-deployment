@@ -133,7 +133,7 @@ Create the root CA
     CertUtil –setreg ca\CRLFlags +CRLF_PUBLISH_EXPIRED_CERT_CR
 {% endif %}
 
-    :: https://nolanrumble.com/security/crl-option-numbers-and-variables-what-do-they-mean
+    :: https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/hh831574(v=ws.11)#configure-the-ca
     CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n2:http://pki.{{ customer.domain }}/%%3.crl"
     CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3.crt"
 
