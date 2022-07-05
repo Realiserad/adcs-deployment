@@ -3,7 +3,7 @@
 About
 =====
 
-This repository contains the documentation needed to successfully deploy a PKI based on Active Directory Certificate Services (AD CS).
+This repository contains the documentation and scripts needed to successfully deploy and operate a PKI based on Microsoft Active Directory Certificate Services (AD CS).
 
 The documentation is supposed to be *reusable*, all customer specific data should go into ``group_vars/all.yml`` which is rendered using Jinja2 templating.
 
