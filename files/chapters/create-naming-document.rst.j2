@@ -17,7 +17,7 @@ Collect data
 Build the Naming and Profile Document
 -------------------------------------
 
-#. Download and install Docker. Refer to [the installation instructions](https://docs.docker.com/get-docker/) on the Docker website for details.
+#. Download and install a container runtime, such as Docker. Refer to `the installation instructions <https://docs.docker.com/get-docker>`_ on the Docker website for details.
 
 #. Obtain a copy of the build container, e.g. by pulling it from the GitHub container repository::
 
@@ -25,12 +25,9 @@ Build the Naming and Profile Document
 
 #. Create a folder which will contain the files provided to the container as a volume. In the example below, we name this folder ``customer-data``.
 
-#. Create a new file ``customer-data/all.yml`` with the following content
+#. Create a new Ansible configuration file ``customer-data/all.yml``.
 
-    .. literalinclude:: ../../naming_document/group_vars/all.yml
-       :language: yml
-       :linenos:
-       :caption: Customer configuration used by the build container.
+    .. note:: You can obtain this file from an Atea consultant.
 
 #. Transfer the file ``Configuration.ldf`` on the domain controller to the ``customer-data`` folder.
 
