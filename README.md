@@ -1,4 +1,4 @@
-[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml)
+[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml) [![Team code](https://img.shields.io/badge/Microsoft%20Teams-%205jgml78-blue)](https://teams.microsoft.com/l/team/19%3aBKDkg5ijTYApAkIk9B6KicipJoOAlNAHMa0yUT8x5Kw1%40thread.tacv2/conversations?groupId=4ab59700-06cf-4c80-a1a9-9534f549513d&tenantId=65f51067-7d65-4aa9-b996-4cc43a0d7111)
 
 About
 =====
