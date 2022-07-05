@@ -1,0 +1,36 @@
+from diagrams import Diagram, Edge
+from diagrams.generic.os import Windows
+from diagrams.generic.device import Tablet
+
+{% set configuration = public_key_services_configuration.stdout | from_yaml %}
+
+with Diagram("CA Hierarchy", show = False, filename = "ca-hierarchy"):
+{% for ca in configuration.certificate_authorities %}
+{% set ca_var = ca.name.lower().replace(' ', '_') %}
+    {{ ca_var }} = Windows("{{ ca.cacertificatedn }}")
+{% endfor %}
+{% for ca in configuration.certificate_authorities %}
+{% set ca_var = ca.name.lower().replace(' ', '_') %}
+{% set issuer_obj = configuration.certificate_authorities | selectattr('cacertificatedn', 'equalto', ca.issuer_dn) | list | first %}
+{% set issuer_var = issuer_obj.name.lower().replace(' ', '_') %}
+    {{ ca_var }} << \
+        Edge(color = "black",
+             style = "solid",
+             label = "signs a CA certificate for") << \
+        {{ issuer_var }}
+{% endfor %}
+{% for template in configuration.templates %}
+{% set template_var = template.name.lower() %}
+    {{ template_var }} = Tablet("{{ template.displayname }}")
+{% endfor %}
+{% for ca in configuration.certificate_authorities %}
+{% set ca_var = ca.name.lower().replace(' ', '_') %}
+{% for template in configuration.templates %}
+{% set template_var = template.name.lower() %}
+    {{ template_var }} << \
+            Edge(color = "black",
+                style = "solid",
+                label = "signs subscriber certificates for") << \
+            {{ ca_var }}
+{% endfor %}
+{% endfor %}
