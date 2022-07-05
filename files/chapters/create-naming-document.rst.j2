@@ -3,23 +3,12 @@ Create a Naming and Profile Document
 
 A *Naming and Profile Document* describes the certificates issued by AD CS. Such a document can be generated from the configuration stored in AD.
 
-Collect data
+Preparations
 ------------
 
-#. Log in to one of the domain controllers.
+#. Download and install Docker. Refer to ``the installation instructions <https://docs.docker.com/get-docker>`_ on the Docker website for details.`
 
-#. Export the *Public Key Services* configuration as LDIF using PowerShell::
-
-{% for template in templates %}
-    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,DC={{ customer.domain.split('.') | join(',DC=') }}" -f Configuration.ldf
-{% endfor %}
-
-Build the Naming and Profile Document
--------------------------------------
-
-#. Download and install a container runtime, such as Docker. Refer to `the installation instructions <https://docs.docker.com/get-docker>`_ on the Docker website for details.
-
-#. Obtain a copy of the build container, e.g. by pulling it from the GitHub container repository::
+#. Download a copy of the build container, e.g. by pulling it from the GitHub container repository::
 
     docker pull ghcr.io/realiserad/adcs-deployment
 
@@ -27,12 +16,38 @@ Build the Naming and Profile Document
 
 #. Create a new Ansible configuration file ``customer-data/all.yml``.
 
-    .. note:: You can obtain this file from an Atea consultant.
+    .. note:: You may obtain this file from an Atea consultant.
 
-#. Transfer the file ``Configuration.ldf`` on the domain controller to the ``customer-data`` folder.
+Collect data
+------------
+
+#. Log in to one of the domain controllers.
+
+#. Export the *Public Key Services* configuration as LDIF using PowerShell::
+
+    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,DC={{ customer.domain.split('.') | join(',DC=') }}" -f Configuration.ldf
+
+Transfer the file ``Configuration.ldf`` to the ``customer-data`` folder.
+
+#. Log in to {{ servers.issuing_ca.name }} and run the following command to export the CA settings for the issuing CA stored in the registry::
+
+    $CaName = (CertUtil -cainfo name | Select-String 'CA name: (.+)').Matches.Groups[1].Value
+    reg save HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration $CaName.dat
+
+Transfer the registry hive to the '`customer-data`` folder.
+
+#. Log in to {{ servers.root_ca.name }} and run the following command to export the CA settings for the root CA stored in the registry::
+
+    $CaName = (CertUtil -cainfo name | Select-String 'CA name: (.+)').Matches.Groups[1].Value
+    reg save HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration $CaName.dat
+
+Transfer the registry hive to the '`customer-data`` folder.
+
+Build the Naming and Profile Document
+-------------------------------------
 
 #. Build the Naming and Profile Document using the following command::
 
     docker run -v customer-data:/build ghcr.io/realiserad/adcs-deployment
 
-#. The Naming and Profile Document is now available as ``naming-document.pdf`` in the ``customer-data`` folder.
+#. The Naming and Profile Document is now available as ``naming-document.pdf`` in the ``customer-data/release`` folder.

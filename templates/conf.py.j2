@@ -5,7 +5,7 @@
 # available options.
 #
 
-{% if  theme == 'guzzle_sphinx_theme' %}
+{% if theme == 'guzzle_sphinx_theme' %}
 import guzzle_sphinx_theme
 {% endif %}
 
@@ -18,6 +18,7 @@ master_doc = 'index'
 project = u'Active Directory Certificate Services'
 copyright = u'Atea Sverige AB'
 author = u'{{ consultant.name }}'
+subject = 'Documentation describing a PKI based on AD CS.'
 
 version = "{{ short_commit_hash.stdout }}"
 release = "{{ short_commit_hash.stdout }}"
@@ -94,6 +95,6 @@ texinfo_documents = [
       u'{{ title }}',
       author,
       'Active Directory Certificate Services',
-      'Documentation describing a PKI based on AD CS.',
+      subject,
       'Miscellaneous'),
 ]

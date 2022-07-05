@@ -19,14 +19,20 @@ How to use
 
     > **NOTE** You need to use the filename ``Configuration.ldf`` for the playbook to detect it.
 
-3. Create a new folder called ``customer`` in this folder. Transfer ``Configuration.ldf`` to this directory.
-
-4. Install the necessary dependencies.
+3. Optionally log in to each one of the CA machines and export the local configuration from the registry.
     ```
-    pip3 install ldif pyyaml pygments-ldif cryptography
+    $CaName = (CertUtil -cainfo name | Select-String 'CA name: (.+)').Matches.Groups[1].Value
+    reg save HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration $CaName.dat
     ```
 
-5. Adjust ``group_vars/all.yml`` to fit the customer's needs.
+4. Create a new folder called ``customer`` in this folder. Transfer ``Configuration.ldf`` and any registry hives to this directory.
+
+5. Install the necessary dependencies.
+    ```
+    pip3 install ldif pyyaml pygments-ldif cryptography regipy
+    ```
+
+6. Adjust ``group_vars/all.yml`` to fit the customer's needs.
     ```
     npm install -g @alexlafroscia/yaml-merge
     yaml-merge ../group_vars/sample.yml group_vars/sample.yml > group_vars/all.yml
@@ -42,7 +48,7 @@ How to use
     >     - name: Certificate Template 2
     > ```
 
-6. Run the Ansible playbook to build the Naming and Profile Document.
+7. Run the Ansible playbook to build the Naming and Profile Document.
     ```
     ansible-playbook playbook.yml
     ```
