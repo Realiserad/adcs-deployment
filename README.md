@@ -11,7 +11,7 @@ To speed up the installation process, minimise the risk of making mistakes and m
 
 After building, the result is put in the ``release`` folder:
 
-- ``system-documentation.zip`` contains the system documentation for AD CS in HTML and PDF format.
+- ``system-documentation.zip`` contains the system documentation for AD CS in HTML and DOCX format.
 - ``pki-assessment-bundle.zip`` contains *AD CS Collector* and instructions for how to use it.
 - ``proposal-new-adcs-installation-with-luna.docx`` describes a proposal for a new installation of AD CS with a Luna 7 HSM.
 - ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on AD CS.
@@ -32,11 +32,12 @@ You can use the container to build the documentation on any system where you hav
     docker run -v (pwd)/group_vars/all.yml:/build/all.yml -v (pwd)/release:/build/release realiserad/adcs-deployment
     ```
 
-| File                     | Description                                                                      | Required |
-|--------------------------|----------------------------------------------------------------------------------|----------|
-| /build/all.yml           | Ansible configuration file.                                                      | Yes      |
-| /build/logo.png          | Customer logo.                                                                   | No       |
-| /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | No       |
+| File                     | Description                                                                      | Required                                  |
+|--------------------------|----------------------------------------------------------------------------------|-------------------------------------------|
+| /build/all.yml           | Ansible configuration file.                                                      | Yes                                       |
+| /build/logo.png          | Customer logo.                                                                   | No                                        |
+| /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | To create the Naming and Profile Document |
+| /build/<CA name>.dat     | Registry hive for <CA name> used to generate the Naming and Profile Document.    | No                                        |
 
 Build on Ubuntu
 ---------------

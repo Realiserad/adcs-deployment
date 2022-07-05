@@ -17,12 +17,23 @@
 #    ldifde -m -v -d "CN=Public Key Services,CN=Services,CN=Configuration,
 #        ↪ DC=example,DC=com" -f Configuration.ldf
 #
+# Microsoft stores some CA configuration locally in the registry. Optionally, you
+# may export this data and put it next to the configuration file for parsing.
+# The relevant entries from the registry can be exported like this:
+#
+#    $CaName = (CertUtil -cainfo name | Select-String 'CA name: (.+)').Matches.Groups[1].Value
+#    reg save HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\$CaName.dat
+#
+# Note that for the registry settings to be picked up by the script, the registry file must be named
+# ``<Name of CA>.dat`` where ``<Name of CA>`` is the name of the CA in Windows, as indicated by the
+# 'name' LDIF attribute.
+#
 # The parsed data is printed as a YAML list to stdout.
 #
 # Before you can run the script, you need to install a couple of
 # Python packages:
 #
-#     pip3 install ldif pyyaml
+#     pip3 install ldif pyyaml regipy2
 #
 # Usage:
 #
@@ -32,6 +43,7 @@
 # with the --debug flag.
 
 import argparse
+import re
 from ldif import LDIFParser
 import os
 import json
@@ -42,7 +54,7 @@ import logging.handlers
 import base64
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
-from cryptography.x509.oid import ExtensionOID
+from regipy.registry import RegistryHive
 
 # Class for hex encoding all binary values we don't have
 # any special handling for.
@@ -107,6 +119,17 @@ def dictionary_string_to_dict(dictionary_string):
             dict[_key.lower()].append(_value)
     return dict
 
+def open_registry(path, ca_name):
+    if path.startswith('/') or path.startswith('~'):
+        hive = os.path.join(os.path.dirname(path), ca_name + '.dat')
+    else:
+        hive = os.path.join(os.getcwd(), ca_name + '.dat')
+    if not os.path.isfile(hive):
+        return None
+    log.info("Loading registry hive from '" + hive + "'.")
+    return RegistryHive(hive)
+
+
 argparser = argparse.ArgumentParser(description = 'Parse certificate templates exported from Active Directory into human-readable YAML.')
 argparser.add_argument('--debug', help = 'Enable debug logging to syslog.', action = 'store_true')
 argparser.add_argument('--file', help = 'Path to a file with LDIF object(s) to parse.', required = True)
@@ -119,6 +142,20 @@ def is_certificate_template(records):
 def is_certificate_authority(records):
     return ('pKIEnrollmentService' in records['objectClass'] or 'certificationAuthority' in records['objectClass']) \
         and 'CN=AIA' not in records['distinguishedName'][0]
+
+def get_configuration_file(path):
+    if path.startswith('/') or path.startswith('~'):
+        # Use absolute path
+        return path
+    else:
+        # Use path relative to the current working directory
+        return os.path.join(os.getcwd(), path)
+
+def filter_included_in_certificate(entries):
+    """
+    Filter out URLs which are included in the certificate.
+    """
+    return [ re.split('\d+:', x)[1] for x in entries if int(x.split(':')[0]) & 0x2 ]
 
 log = logging.getLogger('syslog')
 if args.debug:
@@ -144,18 +181,8 @@ output = {
     'certificate_authorities': [],
 }
 
-aia_mapping = {}
-cdp_mapping = {}
-
-if args.file.startswith('/') or args.file.startswith('~'):
-    # Use absolute path
-    parser = LDIFParser(
-        input_file = open(args.file, "rb"),
-        ignored_attr_types = ignored_attributes)
-else:
-    # Assume path relative to the current working directory
-    parser = LDIFParser(
-        input_file = open(os.path.join(os.getcwd(), args.file), "rb"),
+parser = LDIFParser(
+        input_file = open(get_configuration_file(args.file), "rb"),
         ignored_attr_types = ignored_attributes)
 
 for dn, records in parser.parse():
@@ -191,27 +218,34 @@ for dn, records in parser.parse():
         certificate_authority['subject_key_identifier'] = x509.AuthorityKeyIdentifier.from_issuer_public_key(cert.public_key()).key_identifier
         certificate_authority['issuer_dn'] = cert.issuer.rfc4514_string()
         certificate_authority['cacertificatedn'] = cert.subject.rfc4514_string()
-        try:
-            cdp_entries = []
-            for extension in cert.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS).value:
-                for cdp in extension.full_name:
-                    cdp_entries.append(cdp.value)
-            cdp_mapping[certificate_authority['issuer_dn']] = cdp_entries
-        except x509.ExtensionNotFound as e:
-            log.debug(e)
-        try:
-            aia_entries = {
-                'ca_issuers': [],
+
+        # Load additional information from the corresponding registry export, if available
+        registry = open_registry(args.file, certificate_authority['name'])
+        if registry is not None:
+            # Example of how to inspect the hive using regipy and jq
+            # pip3 install regipy[cli]
+            # registry-dump CA.dat | grep -v "^INFO" | jq '.subkey_name'
+            # registry-dump CA.dat | grep -v "^INFO" | jq '. | select(.subkey_name == "CSP")'
+            csp_values = registry.get_key('\\' + certificate_authority['name'] + '\\CSP').get_values(as_json = True)
+            ca_values = registry.get_key('\\' + certificate_authority['name']).get_values(as_json = True)
+            certificate_authority['csp'] = {
+                'provider': next(x.value for x in csp_values if x.name == 'Provider'),
+                'hash_algorithm': next(x.value for x in csp_values if x.name == 'CNGHashAlgorithm'),
+                'signature_algorithm': next(x.value for x in csp_values if x.name == 'CNGPublicKeyAlgorithm')
             }
-            for extension in cert.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value:
-                if extension.access_method._name == 'caIssuers':
-                    aia_entries['ca_issuers'].append(extension.access_location.value)
-            aia_mapping[certificate_authority['issuer_dn']] = aia_entries
-        except x509.ExtensionNotFound as e:
-            log.debug(e)
+            certificate_authority['ca_issuers'] = filter_included_in_certificate(next(x.value for x in ca_values if x.name == 'CACertPublicationURLs'))
+            certificate_authority['crl_settings'] = {
+                'crl_period': {
+                    'unit': next(x.value.lower() for x in ca_values if x.name == 'CRLPeriod'),
+                    'value': next(x.value for x in ca_values if x.name == 'CRLPeriodUnits')
+                },
+                'crl_distribution_points': filter_included_in_certificate(next(x.value for x in ca_values if x.name == 'CRLPublicationURLs'))
+            }
+
 
         # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
         certificate_authority = { k.lower().replace('-', '_'): v for k, v in certificate_authority.items() }
+
         output['certificate_authorities'].append(certificate_authority)
     elif is_certificate_template(records):
         log.info('Parsing certificate template: %s' % dn)
@@ -471,18 +505,6 @@ for dn, records in parser.parse():
         # Normalise keys msPKI-Blah-Blah -> mspki_blah_blah
         template = { k.lower().replace('-', '_'): v for k, v in template.items() }
         output['templates'].append(template)
-
-for k, v in cdp_mapping.items():
-    # find i such that output['certificate_authorities'][i]['cacertificatedn'] == k and set output['certificate_authorities'][i]['crl_distribution_points'] = v
-    for i in range(len(output['certificate_authorities'])):
-        if output['certificate_authorities'][i]['cacertificatedn'] == k:
-            output['certificate_authorities'][i]['crl_distribution_points'] = v
-            break
-for k, v in aia_mapping.items():
-    for i in range(len(output['certificate_authorities'])):
-        if output['certificate_authorities'][i]['cacertificatedn'] == k:
-            output['certificate_authorities'][i]['authority_information_access'] = v
-            break
 
 json_data = json.dumps(output, cls = HexEncoder)
 yaml_data = yaml.dump(yaml.load(json_data,

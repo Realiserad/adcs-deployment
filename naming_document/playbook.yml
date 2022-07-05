@@ -30,10 +30,13 @@
         src: "../group_vars/all.yml"
         dest: "group_vars/all.yml"
       when: ansible_configuration.stat.exists == false
-    - name: Copy sample LDIF configuration
+    - name: Copy sample files
       copy:
-        src: sample/Configuration.ldf
+        src: "{{ item }}"
         dest: customer/
+      with_items:
+        - sample/Configuration.ldf
+        - sample/ICA1.dat
       tags:
         - sample
     - name: Copy graphics
@@ -44,7 +47,7 @@
         - "graphics/*.png"
     - name: Parse LDIF configuration
       shell:
-        cmd: python3 files/parse.py --file customer/Configuration.ldf
+        cmd: python3 files/parse.py --file "{{ playbook_dir }}/customer/Configuration.ldf"
       register: public_key_services_configuration
       tags:
         - always
