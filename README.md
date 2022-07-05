@@ -11,7 +11,7 @@ To speed up the installation process, minimise the risk of making mistakes and m
 
 After building, the result is put in the ``release`` folder:
 
-- ``system-documentation.zip`` contains the system documentation for AD CS in HTML, PDF and DOCX format.
+- ``system-documentation.zip`` contains the system documentation for AD CS in HTML and DOCX format.
 - ``pki-assessment-bundle.zip`` contains *AD CS Collector* and instructions for how to use it.
 - ``proposal-new-adcs-installation-with-luna.docx`` describes a proposal for a new installation of AD CS with a Luna 7 HSM.
 - ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on AD CS.
@@ -52,7 +52,7 @@ Build on Ubuntu
 3. Install dependencies.
     ```
     sudo apt install texlive-full python3 python3-pip zip pandoc git graphviz
-    pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams docxbuilder guzzle_sphinx_theme
+    pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams guzzle_sphinx_theme
     ansible-galaxy collection install community.general
     ```
 
