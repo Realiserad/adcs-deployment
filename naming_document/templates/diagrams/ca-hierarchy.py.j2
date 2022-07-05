@@ -1,36 +1,63 @@
-from diagrams import Diagram, Edge
-from diagrams.generic.os import Windows
-from diagrams.generic.device import Tablet
+from diagrams import Diagram, Edge, Cluster
+from diagrams.custom import Custom
+{% if 'diagrams.onprem.compute.Server' not in (extras.naming_and_profile_document.templates | selectattr('class', 'defined') | map(attribute = 'class')) %}
+from diagrams.onprem.compute import Server
+{% endif %}
+{% for template in extras.naming_and_profile_document.templates %}
+{% if template.class is defined %}
+from {{ template.class.split('.')[:-1] | join('.') }} import {{ template.class.split('.')[-1:][0] }}
+{% endif %}
+{% endfor %}
 
 {% set configuration = public_key_services_configuration.stdout | from_yaml %}
 
-with Diagram("CA Hierarchy", show = False, filename = "ca-hierarchy"):
+certificate_logo = "../graphics/certificate.png"
+
+# https://www.graphviz.org/doc/info/attrs.html
+{% set rotate = '90' if (extras.naming_and_profile_document.templates | length) > 5 else '0' %}
+graph_attr = {
+    'rotate': "{{ rotate }}",
+    'pad': "0"
+}
+
+with Diagram("CA Hierarchy", show = False, filename = "ca-hierarchy", direction = "BT", graph_attr = graph_attr):
+    with Cluster("Certificate Authorities"):
 {% for ca in configuration.certificate_authorities %}
 {% set ca_var = ca.name.lower().replace(' ', '_') %}
-    {{ ca_var }} = Windows("{{ ca.cacertificatedn }}")
+        {{ ca_var }} = Custom("{{ ca.cacertificatedn }}", certificate_logo)
 {% endfor %}
 {% for ca in configuration.certificate_authorities %}
 {% set ca_var = ca.name.lower().replace(' ', '_') %}
 {% set issuer_obj = configuration.certificate_authorities | selectattr('cacertificatedn', 'equalto', ca.issuer_dn) | list | first %}
 {% set issuer_var = issuer_obj.name.lower().replace(' ', '_') %}
+{% if ca_var != issuer_var %}
     {{ ca_var }} << \
         Edge(color = "black",
-             style = "solid",
-             label = "signs a CA certificate for") << \
+            style = "solid",
+            label = "signs CA") << \
         {{ issuer_var }}
+{% endif %}
 {% endfor %}
+    with Cluster("Certificate Templates"):
 {% for template in configuration.templates %}
 {% set template_var = template.name.lower() %}
-    {{ template_var }} = Tablet("{{ template.displayname }}")
+{% set template_settings = extras.naming_and_profile_document.templates | selectattr('name', 'equalto', template.displayname) | list %}
+{% if (template_settings | first).class is defined %}
+        {{ template_var }} = {{ (template_settings | first).class.split('.')[-1:][0] }}("{{ template.displayname }}")
+{% else %}
+        {{ template_var }} = Custom("{{ template.displayname }}", certificate_logo)
+{% endif %}
 {% endfor %}
 {% for ca in configuration.certificate_authorities %}
 {% set ca_var = ca.name.lower().replace(' ', '_') %}
-{% for template in configuration.templates %}
-{% set template_var = template.name.lower() %}
+{% if ca.certificatetemplates is defined %}
+{% for template in ca.certificatetemplates %}
+{% set template_var = template.lower() %}
     {{ template_var }} << \
             Edge(color = "black",
                 style = "solid",
-                label = "signs subscriber certificates for") << \
+                label = "signs") << \
             {{ ca_var }}
 {% endfor %}
+{% endif %}
 {% endfor %}

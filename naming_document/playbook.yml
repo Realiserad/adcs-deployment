@@ -36,6 +36,12 @@
         dest: customer/
       tags:
         - sample
+    - name: Copy graphics
+      copy:
+        src: "{{ item }}"
+        dest: "{{ playbook_dir }}/_docs/graphics"
+      with_fileglob:
+        - "graphics/*.png"
     - name: Parse LDIF configuration
       shell:
         cmd: python3 files/parse.py --file customer/Configuration.ldf
