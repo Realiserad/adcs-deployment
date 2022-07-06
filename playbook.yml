@@ -60,7 +60,14 @@
         - mycustomstyle.sty
         - atea.png
         - atea_aligned.png
-
+    - name: Create style for Microsoft Word
+      shell: python3 render.py
+      args:
+        chdir: "{{ playbook_dir }}/files/docxbuilder"
+    - name: Copy style for Microsoft Word
+      copy:
+        src: style.docx
+        dest: "{{ playbook_dir }}/_docs"
     - name: Build PDF
       make:
         chdir: "{{ playbook_dir }}/_docs"
@@ -69,11 +76,16 @@
       make:
         chdir: "{{ playbook_dir }}/_docs"
         target: html
+    - name: Build DOCX
+      make:
+        chdir: "{{ playbook_dir }}/_docs"
+        target: docx
     - name: Create installation package
       community.general.archive:
         path:
           - "{{ playbook_dir }}/_docs/_build/html"
           - "{{ playbook_dir }}/_docs/_build/latex/system-documentation.pdf"
+          - "{{ playbook_dir }}/_docs/_build/docx/system-documentation.docx"
         format: zip
         dest: "{{ playbook_dir }}/release/system-documentation.zip"
     - name: Build assessment bundle
