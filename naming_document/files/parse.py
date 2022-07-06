@@ -35,12 +35,16 @@
 #
 #     pip3 install ldif pyyaml regipy2
 #
-# Usage:
+# Standard usage:
 #
-#     python3 parse.py --file <Template.ldif>
+#     python3 parse.py --file <Template.ldf>
 #
-# Log lines are written to the syslog. To enable debug logging, run the script
-# with the --debug flag.
+# Suppress log output and pipe the result to yq.
+#
+#     python3 parse.py --file <Template.ldf> 2> /dev/null | yq .
+#
+# Log lines are written to stderr. Additional debug messages can be enabled by running
+# the script with the --debug flag.
 
 import argparse
 import re
@@ -51,6 +55,7 @@ import yaml
 from datetime import datetime
 import logging
 import logging.handlers
+import sys
 import base64
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
@@ -157,12 +162,12 @@ def filter_included_in_certificate(entries):
     """
     return [ re.split('\d+:', x)[1] for x in entries if int(x.split(':')[0]) & 0x2 ]
 
-log = logging.getLogger('syslog')
+log = logging.getLogger()
 if args.debug:
     log.setLevel(logging.DEBUG)
 else:
     log.setLevel(logging.INFO)
-handler = logging.handlers.SysLogHandler(address = '/dev/log')
+handler = logging.StreamHandler(sys.stderr)
 log.addHandler(handler)
 
 # Remove these attributes from the output

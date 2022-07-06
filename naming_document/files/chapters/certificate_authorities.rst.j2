@@ -15,9 +15,11 @@ In case we need the issuer for some reason, we can get it like this:
 {{ ca.name }}
 {{ '-' * ca.name | length }}
 
+{% if extras.naming_and_profile_document.certificate_authorities is defined %}
 {% set description = extras.naming_and_profile_document.certificate_authorities | selectattr('name', 'equalto', ca.name) | map(attribute = 'description') | list | first %}
 {% if description is defined %}
 {{ description }}
+{% endif %}
 {% endif %}
 
 .. list-table:: CA information
