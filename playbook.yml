@@ -60,6 +60,10 @@
         - mycustomstyle.sty
         - atea.png
         - atea_aligned.png
+    - name: Create style for Microsoft Word
+      shell: python3 render.py
+      args:
+        chdir: "{{ playbook_dir }}/files/docxbuilder"
     - name: Copy style for Microsoft Word
       copy:
         src: style.docx
