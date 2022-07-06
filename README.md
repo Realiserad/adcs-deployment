@@ -37,7 +37,7 @@ You can use the container to build the documentation on any system where you hav
 | /build/all.yml           | Ansible configuration file.                                                      | Yes                                       |
 | /build/logo.png          | Customer logo.                                                                   | No                                        |
 | /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | To create the Naming and Profile Document |
-| /build/<CA name>.dat     | Registry hive for <CA name> used to generate the Naming and Profile Document.    | No                                        |
+| /build/*.dat             | Registry hive(s) used to generate parts of the Naming and Profile Document.      | No                                        |
 
 Build on Ubuntu
 ---------------
