@@ -1,5 +1,6 @@
 from diagrams import Diagram, Edge, Cluster
 from diagrams.custom import Custom
+{% if extras.naming_and_profile_document.templates is defined %}
 {% if 'diagrams.onprem.compute.Server' not in (extras.naming_and_profile_document.templates | selectattr('class', 'defined') | map(attribute = 'class')) %}
 from diagrams.onprem.compute import Server
 {% endif %}
@@ -8,13 +9,14 @@ from diagrams.onprem.compute import Server
 from {{ template.class.split('.')[:-1] | join('.') }} import {{ template.class.split('.')[-1:][0] }}
 {% endif %}
 {% endfor %}
+{% endif %}
 
 {% set configuration = public_key_services_configuration.stdout | from_yaml %}
 
 certificate_logo = "../graphics/certificate.png"
 
 # https://www.graphviz.org/doc/info/attrs.html
-{% set rotate = '90' if (extras.naming_and_profile_document.templates | length) > 5 else '0' %}
+{% set rotate = '90' if (extras.naming_and_profile_document.templates is defined and extras.naming_and_profile_document.templates | length) > 5 else '0' %}
 graph_attr = {
     'rotate': "{{ rotate }}",
     'pad': "0"
@@ -41,8 +43,8 @@ with Diagram("CA Hierarchy", show = False, filename = "ca-hierarchy", direction 
     with Cluster("Certificate Templates"):
 {% for template in configuration.templates %}
 {% set template_var = template.name.lower() %}
-{% set template_settings = extras.naming_and_profile_document.templates | selectattr('name', 'equalto', template.displayname) | list %}
-{% if (template_settings | first).class is defined %}
+{% set template_settings = extras.naming_and_profile_document.templates | default([]) | selectattr('name', 'equalto', template.displayname) | list %}
+{% if template_settings | length > 0 and (template_settings | first).class is defined %}
         {{ template_var }} = {{ (template_settings | first).class.split('.')[-1:][0] }}("{{ template.displayname }}")
 {% else %}
         {{ template_var }} = Custom("{{ template.displayname }}", certificate_logo)

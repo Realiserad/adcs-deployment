@@ -10,9 +10,11 @@ This chapter describes the leaf certificates issued to subscribers.
 {{ template.displayname }}
 {{ '-' * template.displayname | length }}
 
+{% if extras.naming_and_profile_document.templates is defined %}
 {% set description = extras.naming_and_profile_document.templates | selectattr('name', 'equalto', template.displayname) | map(attribute = 'description') | list | first %}
 {% if description is defined %}
 {{ description }}
+{% endif %}
 {% endif %}
 
 Certificate template
