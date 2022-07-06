@@ -7,6 +7,10 @@ classification: Konfidentiell
 consultant:
   name: Foo Foobarsson
   company: Atea Sverige AB
+  office:
+    street: Sverigegatan 1
+    zip_code: 123 45
+    city: Foostad
 owner:
   name: Foo Foobarsson
   company: Atea Managed Services

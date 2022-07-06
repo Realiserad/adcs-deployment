@@ -5,6 +5,13 @@ extras:
     templates:
     - name: Atea Computer
       description: Certificate used to authenticate workstations at Atea.
+      # https://diagrams.mingrammer.com/docs/nodes/generic
+      # For example:
+      #
+      #   Mobile: diagrams.generic.device.Mobile
+      #   Client: diagrams.onprem.client.Client
+      #   User: diagrams.onprem.client.User
+      class: diagrams.onprem.client.User
     - name: Atea User
       description: Certificate used to authenticate employees at Atea.
     certificate_authorities:
