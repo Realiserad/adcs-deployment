@@ -7,7 +7,10 @@ This chapter describes the certificate authorities in the system.
 
 {% for ca in configuration.certificate_authorities %}
 
+{#
+In case we need the issuer for some reason, we can get it like this:
 {% set issuer_ca = configuration.certificate_authorities | selectattr('cacertificatedn', 'equalto', ca.issuer_dn) | list | first %}
+#}
 
 {{ ca.name }}
 {{ '-' * ca.name | length }}
@@ -31,13 +34,10 @@ This chapter describes the certificate authorities in the system.
    * - Name of the machine where the CA is running
      - {{ ca.dnshostname }}
 {% endif %}
-{#
-TODO: We only support Microsoft Key Storage Provider at the moment, but if we want to add e.g. support for HSMs, we should probably look in
-group_vars/all.yml and pick the right value from there. The key storage provider in use can also be retrieved from the registry using
-``CertUtil -getreg ca\csp\Provider``.
-#}
+{% if ca.csp is defined %}
    * - Key storage provider
-     - Microsoft Key Storage Provider
+     - {{ ca.csp.provider }}
+{% endif %}
    * - Valid from
      - {{ ca.validity.from }}
    * - Valid to
@@ -48,26 +48,26 @@ group_vars/all.yml and pick the right value from there. The key storage provider
 {% endif %}
    * - Key specification
      - {{ ca.key_specification }}
+{% if ca.csp is defined %}
    * - Signature algorithm
-{#
-TODO: The installation instructions currently only support SHA256, and assuming those instructions were followed, we assume that this is the
-hash algorithm used by the CA. However, it is entirely possible that the CA uses a different hash algorithm, the actual value is stored in
-the registry and can be retrieved using ``CertUtil -getreg ca\csp\CNGHashAlgorithm``.
-#}
-{% if ca.key_specification.startswith('RSA') %}
-     - {{ 'SHA256 with RSA' }}
-{% else %}
-     - {{ 'SHA256 with ECDSA' }}
+     - {{ ca.csp.signature_algorithm }}
 {% endif %}
    * - Subject Key Identifier
      - {{ ca.subject_key_identifier }}
-{% if ca.authority_information_access is defined %}
-   * - Certificate Authority Issuer
-     - {{ ca.authority_information_access.ca_issuers | join(', ') }}
+{% if ca.ca_issuers is defined %}
+   * - Certificate Authority Issuers
+     - {{ ca.ca_issuers | join(', ') }}
 {% endif %}
-{% if ca.crl_distribution_points is defined %}
-   * - CRL Distribution Point
-     - {{ ca.crl_distribution_points | join(', ') }}
+
+{% if ca.crl_settings is defined %}
+.. list-table:: CRL information
+    :widths: 2 3
+    :header-rows: 0
+
+    * - CRL Issuance Interval
+      - Every {{ ca.crl_settings.crl_period.value ~ ' ' ~ ca.crl_settings.crl_period.unit }}
+    * - CRL Distribution Points
+      - {{ ca.crl_settings.crl_distribution_points | join(', ') }}
 {% endif %}
 
 {% endfor %}

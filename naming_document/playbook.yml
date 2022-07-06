@@ -20,6 +20,7 @@
         - "{{ playbook_dir }}/_docs/chapters"
         - "{{ playbook_dir }}/_docs/graphics"
         - "{{ playbook_dir }}/_docs/templates"
+        - "{{ playbook_dir }}/_docs/diagrams"
         - "{{ playbook_dir }}/release"
         - "{{ playbook_dir }}/customer"
       tags:
@@ -29,15 +30,24 @@
         src: "../group_vars/all.yml"
         dest: "group_vars/all.yml"
       when: ansible_configuration.stat.exists == false
-    - name: Copy sample LDIF configuration
+    - name: Copy sample files
       copy:
-        src: sample/Configuration.ldf
+        src: "{{ item }}"
         dest: customer/
+      with_items:
+        - sample/Configuration.ldf
+        - sample/ICA1.dat
       tags:
         - sample
+    - name: Copy graphics
+      copy:
+        src: "{{ item }}"
+        dest: "{{ playbook_dir }}/_docs/graphics"
+      with_fileglob:
+        - "graphics/*.png"
     - name: Parse LDIF configuration
       shell:
-        cmd: python3 files/parse.py --file customer/Configuration.ldf
+        cmd: python3 files/parse.py --file "{{ playbook_dir }}/customer/Configuration.ldf"
       register: public_key_services_configuration
       tags:
         - always
@@ -66,6 +76,16 @@
         cmd: doc8 --max-line-length 2000 "{{ playbook_dir }}/_docs/chapters"
       tags:
         - always
+    - name: Copy diagrams scripts
+      template:
+        src: "{{ item }}"
+        dest: '{{ playbook_dir }}/_docs/diagrams/{{ item | basename | regex_replace("\.j2$", "") }}'
+      with_fileglob: templates/diagrams/*.py.j2
+    - name: Render diagrams
+      shell: python3 {{ item }}
+      args:
+        chdir: "{{ playbook_dir }}/_docs/diagrams"
+      with_fileglob: "{{ playbook_dir }}/_docs/diagrams/*.py"
     - name: Create Sphinx configuration
       template:
         src: conf.py.j2

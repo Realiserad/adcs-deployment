@@ -1,9 +1,9 @@
-[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml)
+[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml) [![Team code](https://img.shields.io/badge/Microsoft%20Teams-%205jgml78-blue)](https://teams.microsoft.com/l/team/19%3aBKDkg5ijTYApAkIk9B6KicipJoOAlNAHMa0yUT8x5Kw1%40thread.tacv2/conversations?groupId=4ab59700-06cf-4c80-a1a9-9534f549513d&tenantId=65f51067-7d65-4aa9-b996-4cc43a0d7111)
 
 About
 =====
 
-This repository contains the documentation needed to successfully deploy a PKI based on Active Directory Certificate Services (AD CS).
+This repository contains the documentation and scripts needed to successfully deploy and operate a PKI based on Microsoft Active Directory Certificate Services (AD CS).
 
 The documentation is supposed to be *reusable*, all customer specific data should go into ``group_vars/all.yml`` which is rendered using Jinja2 templating.
 
@@ -24,7 +24,7 @@ Build using the container
 
 You can use the container to build the documentation on any system where you have Docker installed. The container can be built locally or pulled directly from GitHub's container registry at ``ghcr.io``.
 
-1. Adjust ``group_vars/all.yml`` according to the customer's needs.
+1. Create an Ansible configuration file named ``all.yml``, and adjust it according to the customer's needs. You can use ``group_vars/sample.yml`` as a template.
 
 2. Build and run the container. The configuration file ``all.yml`` must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
     ```
@@ -32,11 +32,12 @@ You can use the container to build the documentation on any system where you hav
     docker run -v (pwd)/group_vars/all.yml:/build/all.yml -v (pwd)/release:/build/release realiserad/adcs-deployment
     ```
 
-| File                     | Description                                                                      | Required |
-|--------------------------|----------------------------------------------------------------------------------|----------|
-| /build/all.yml           | Ansible configuration file.                                                      | Yes      |
-| /build/logo.png          | Customer logo.                                                                   | No       |
-| /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | No       |
+| File                     | Description                                                                      | Required                                  |
+|--------------------------|----------------------------------------------------------------------------------|-------------------------------------------|
+| /build/all.yml           | Ansible configuration file.                                                      | Yes                                       |
+| /build/logo.png          | Customer logo.                                                                   | No                                        |
+| /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | To create the Naming and Profile Document |
+| /build/<CA name>.dat     | Registry hive for <CA name> used to generate the Naming and Profile Document.    | No                                        |
 
 Build on Ubuntu
 ---------------
@@ -88,7 +89,7 @@ It is recommended to commit changes to a separate branch and create a pull reque
     git commit
     git push --set-upstream origin my-fancy-feature
     ```
-Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request ``Draft`` in the title to avoid an accidental merge of unfinished work.
+Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request with ``Draft`` in the beginning of the title to avoid an accidental merge of unfinished work.
 
 Squash commits before merging
 -----------------------------

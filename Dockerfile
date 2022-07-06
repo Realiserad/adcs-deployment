@@ -7,7 +7,7 @@ ENV TZ=Etc/UTC
 
 RUN apt update
 RUN apt install -y texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra latexmk texlive-luatex
-RUN apt install -y python3 python3-pip zip pandoc git graphviz
+RUN apt install -y python3 python3-pip zip pandoc git graphviz cowsay
 RUN pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams docxbuilder guzzle_sphinx_theme
 RUN ansible-galaxy collection install community.general
 
@@ -22,7 +22,7 @@ COPY .git /root/.git
 
 # extras.naming_and_profile_document
 COPY naming_document /root/naming_document
-RUN pip3 install ldif pyyaml pygments-ldif cryptography
+RUN pip3 install ldif pyyaml pygments-ldif cryptography regipy
 RUN ln -s /build/all.yml /root/naming_document/group_vars/all.yml
 
 COPY container/run.sh /root
