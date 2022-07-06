@@ -37,12 +37,11 @@
         dest: '{{ playbook_dir }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
       with_fileglob:
         - "chapters/*.rst.j2"
-    - name: Create scripts from templates
+    - name: Create SMTP exit module from templates
       template:
-        src: "{{ item }}"
+        src: templates/scripts/smtp_exit_module.bat.j2
         dest: '{{ playbook_dir }}/_docs/scripts/{{ item | basename | regex_replace("\.j2$", "") }}'
-      with_fileglob:
-        - "scripts/*.j2"
+      when: smtp_exit_module is defined
     - name: Perform RST linting
       command:
         cmd: doc8 --max-line-length 2000 "{{ playbook_dir }}/_docs/chapters"
