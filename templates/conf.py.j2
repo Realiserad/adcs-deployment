@@ -9,7 +9,9 @@
 import guzzle_sphinx_theme
 {% endif %}
 
-extensions = []
+extensions = [
+    'docxbuilder'
+]
 
 templates_path = [ '_templates' ]
 source_suffix = '.rst'
@@ -27,6 +29,16 @@ language = None
 exclude_patterns = [ ' _build', 'Thumbs.db', '.DS_Store' ]
 pygments_style = 'sphinx'
 todo_include_todos = False
+
+docx_documents = [
+    ('index', 'system-documentation.docx', {
+         'title': project,
+         'creator': author,
+         'subject': subject,
+     }, True),
+]
+docx_style = 'style.docx'
+docx_pagebreak_before_section = 1
 
 html_theme = "{{ theme }}"
 
