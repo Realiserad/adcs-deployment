@@ -207,6 +207,18 @@ Activate the issuing CA
     net start certsvc
     CertUtil -ping 30
 
+{% if smtp_exit_module is defined and servers.issuing_ca.smtp_exit_module %}
+Install the SMTP exit module
+----------------------------
+
+#. Create and run the file ``C:\ConfigureSMTPExitModule.bat``.
+
+    .. literalinclude:: ../scripts/smtp_exit_module.bat
+       :language: batch
+       :linenos:
+
+{% endif %}
+
 Publish a CRL from the issuing CA to the repository
 ---------------------------------------------------
 

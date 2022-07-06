@@ -2,6 +2,14 @@
   hosts: localhost
   gather_facts: False
   tasks:
+    - name: Check if we have an Ansible configuration file
+      stat:
+        path: "group_vars/all.yml"
+      register: ansible_configuration
+    - name: Fail if no Ansible configuration file was found
+      fail:
+        msg: Create the configuration file group_vars/all.yml and rerun the playbook
+      when: ansible_configuration.stat.exists == false
     - name: Get shortened commit hash
       command:
         cmd: git rev-parse --short HEAD
@@ -17,17 +25,24 @@
         - "{{ playbook_dir }}/_docs/chapters"
         - "{{ playbook_dir }}/_docs/graphics"
         - "{{ playbook_dir }}/_docs/diagrams"
+        - "{{ playbook_dir }}/_docs/scripts"
         - "{{ playbook_dir }}/release"
     - name: Create index from template
       template:
         src: index.rst.j2
         dest: "{{ playbook_dir }}/_docs/index.rst"
-    - name: Create chapters from template
+    - name: Create chapters from templates
       template:
         src: "{{ item }}"
         dest: '{{ playbook_dir }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
       with_fileglob:
         - "chapters/*.rst.j2"
+    - name: Create scripts from templates
+      template:
+        src: "{{ item }}"
+        dest: '{{ playbook_dir }}/_docs/scripts/{{ item | basename | regex_replace("\.j2$", "") }}'
+      with_fileglob:
+        - "scripts/*.j2"
     - name: Perform RST linting
       command:
         cmd: doc8 --max-line-length 2000 "{{ playbook_dir }}/_docs/chapters"

@@ -21,6 +21,32 @@ customer:
   country: SE
 extras:
   naming_and_profile_document:
+smtp_exit_module:
+  smtp_server: smtp.pki.atea.se
+  email:
+    from: noreply@pki.atea.se
+    to: admin@pki.atea.se
+  authentication:
+    # Possible choices are:
+    #   - Basic
+    #   - NTLM
+    #   - Kerberos
+    method: Basic
+    use_tls: Yes
+    port: 465
+    account:
+      username: user
+      password: foo123
+  events:
+    - CRLISSUED
+    - CERTDENIED
+    - CERTISSUED
+    - CERTPENDING
+    - CERTUNREVOKED
+    - CERTRETRIEVEPENDING
+    - CERTREVOKED
+    - SHUTDOWN
+    - STARTUP
 servers:
   root_ca:
     name: app-RootCA
@@ -50,6 +76,7 @@ servers:
     gateway: 192.168.56.1
     os: Windows Server 2022
     dcom_port: 4000
+    smtp_exit_module: Yes
     location:
       log: C:\Log
       database: C:\Database
