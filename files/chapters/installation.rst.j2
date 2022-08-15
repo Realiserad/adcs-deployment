@@ -110,6 +110,27 @@ Create the root CA
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
 
+{% if servers.root_ca.location.existing_backup is defined %}
+#. Restore the CA certificate and private key::
+
+    $BackupPassword = Read-Host -AsSecureString
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CertFile '{{ servers.root_ca.location.existing_backup }}' -CertFilePassword $BackupPassword -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+
+#. Restore the CA database using CertUtil::
+
+    Remove-Item C:\Windows\System32\CertLog\* -Force
+    CertUtil -restoreDB {{ servers.root_ca.location.existing_backup }}
+
+#. Import the registry keys::
+
+    reg import {{ servers.root_ca.location.existing_backup }}\backup.reg
+
+#. Restart AD CS::
+
+    net stop certsvc
+    net start certsvc
+
+{% else %}
 #. Create a root CA using PowerShell::
 
 {% if servers.root_ca.policy.key_specification == 'P256' %}
@@ -145,6 +166,7 @@ Create the root CA
     net stop certsvc
     net start certsvc
     CertUtil -ping 30
+{% endif %}
 
 Sign the issuing CA
 -------------------
