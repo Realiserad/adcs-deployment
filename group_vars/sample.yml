@@ -59,6 +59,7 @@ servers:
     location:
       log: C:\Log
       database: C:\Database
+      existing_backup: Z:\Root\Backup
     policy:
       high_serial: 0xFFFFFFFF
       keep_expired_certificates_on_crl: No
