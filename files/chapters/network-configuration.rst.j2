@@ -68,6 +68,12 @@ The firewall should only allow access to the ports as specified in the table bel
 {% endfor %}
      - http/80
      - Certificate validation
+{% if servers.issuing_ca.web_enrollment %}
+   * - All computers connected to the domain
+     - {{ servers.issuing_ca.name }}
+     - http/443
+     - Web enrollment
+{% endif %}
 
 {% if network.dcom_port is defined %}
 .. note:: After a certificate request has been successfully processed by ``{{ servers.issuing_ca.name }}``, all subsequent certificate requests can be sent to port {{ network.dcom_port }}. This means that the firewall may be locked down to only allow incoming connections to that port.
