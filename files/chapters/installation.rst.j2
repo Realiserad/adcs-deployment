@@ -15,7 +15,7 @@ Create a CSR for the issuing CA
     $NewPassword = Read-Host -AsSecureString
     Set-ADAccountPassword -Identity {{ accounts.domain.user }} -NewPassword $NewPassword -Reset
 
-#. Create the file ``C:\CAPolicy.inf``::
+#. Create the file ``%systemroot%\CAPolicy.inf``::
 
     [Version]
     Signature = "$Windows NT$"
