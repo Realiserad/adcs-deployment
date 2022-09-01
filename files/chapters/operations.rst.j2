@@ -131,11 +131,11 @@ Create a CSR
 
 #. Windows will ask if you want to stop AD CS. Click **Yes** to stop AD CS and continue with the renewal.
 
-#. You will now have the option to generate a new keypair. Pick **Yes** and click on **OK**.
+#. You will now have the option to generate a new keypair. Pick **No** if you want to keep the existing keypair and click on **OK**.
 
-#. Click on **Cancel** to save the CSR to disk and start AD CS again.
+#. Click on **Cancel** to save the CSR to disk and to start AD CS again.
 
-#. Transfer the file ``C:\ICA1.csr`` to ``{{ servers.root_ca.name }}``.
+#. Transfer the file ``C:\ICA1.req`` to ``{{ servers.root_ca.name }}``.
 
 Sign the CA certificate
 ~~~~~~~~~~~~~~~~~~~~~~~
