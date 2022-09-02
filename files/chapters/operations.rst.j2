@@ -115,10 +115,17 @@ Issue a new root CA CRL
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
-.. _renew issuing ca:
+.. _renew new keys:
 
-Renew an issuing CA
--------------------
+Replace an issuing CA and create a new keypair
+----------------------------------------------
+
+.. _renew reuse keys:
+
+TODO: Write instructions for how to renew using a new keypair
+
+Renew an issuing CA and reuse the existing keypair
+--------------------------------------------------
 
 Create a CSR
 ~~~~~~~~~~~~
@@ -127,11 +134,11 @@ Create a CSR
 
 #. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
 
-#. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate**.
+#. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
 
 #. Windows will ask if you want to stop AD CS. Click **Yes** to stop AD CS and continue with the renewal.
 
-#. You will now have the option to generate a new keypair. Pick **No** if you want to keep the existing keypair and click on **OK**.
+#. You will now have the option to generate a new keypair. Pick **No** to keep the existing keypair and click on **OK**.
 
 #. Click on **Cancel** to save the CSR to disk and to start AD CS again.
 
@@ -168,17 +175,21 @@ Install the CA certificate
     net stop certsvc
     net start certsvc
 
-#. Create a CRL using the new keypair and publish it to the repository::
+#. Create a CRL and publish it to the repository::
 
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
+
+{% for repository in servers.repositories %}
+#. Transfer the file ``C:\ICA1.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}. Replace the existing file.
+{% endfor %}
 
 Revoke an issuing CA
 --------------------
 
 You should only revoke an issuing CA certificate if you suspect that the private key may have been compromised, as revoking a CA will cause all certificates issued from it to be invalidated.
 
-#. If you are revoking the issuing CA currently being in use, you should :ref:`renew the issuing CA certificate <renew issuing ca>` first.
+#. If you are revoking the issuing CA currently being in use, you should :ref:`renew the issuing CA certificate <renew new keys>` first.
 
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
 
