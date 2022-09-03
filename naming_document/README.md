@@ -1,7 +1,7 @@
 About
 =====
 
-This directory contains files needed to build a Naming and Profile Document for an AD CS-installation.
+This directory contains files needed to build a Naming and Profile Document for an ADCS-installation.
 
 The content of the document is extracted from the Public Key Services configuration exported from AD as LDIF objects.
 

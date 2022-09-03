@@ -140,7 +140,7 @@ argparser.add_argument('--debug', help = 'Enable debug logging to syslog.', acti
 argparser.add_argument('--file', help = 'Path to a file with LDIF object(s) to parse.', required = True)
 args = argparser.parse_args()
 
-# Determine if an LDAP object represents an AD CS certificate template.
+# Determine if an LDAP object represents an ADCS certificate template.
 def is_certificate_template(records):
     return 'pKICertificateTemplate' in records['objectClass']
 

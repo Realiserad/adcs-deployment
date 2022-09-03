@@ -23,7 +23,7 @@ Create a CSR for the issuing CA
     [Certsrv_Server]
     LoadDefaultTemplates = 0
 
-#. Install the AD CS Windows feature::
+#. Install the ADCS Windows feature::
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
 
@@ -106,7 +106,7 @@ Create the root CA
     $UserAccount = Get-LocalUser -Name "{{ accounts.local.user }}"
     $UserAccount | Set-LocalUser -Password $NewPassword
 
-#. Install the AD CS Windows feature::
+#. Install the ADCS Windows feature::
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
 
@@ -125,7 +125,7 @@ Create the root CA
 
     reg import {{ servers.root_ca.location.existing_backup }}\backup.reg
 
-#. Restart AD CS::
+#. Restart ADCS::
 
     net stop certsvc
     net start certsvc
@@ -485,7 +485,7 @@ Set a static DCOM port
 
     certutil -setreg ca\interfaceflags +IF_NORPCICERTREQUEST
 
-#. Restart AD CS::
+#. Restart ADCS::
 
     net stop certsvc
     net start certsvc

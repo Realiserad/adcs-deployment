@@ -3,7 +3,7 @@
 About
 =====
 
-This repository contains the documentation and scripts needed to successfully deploy and operate a PKI based on Microsoft Active Directory Certificate Services (AD CS).
+This repository contains the documentation and scripts needed to successfully deploy and operate a PKI based on Microsoft Active Directory Certificate Services (ADCS).
 
 The documentation is supposed to be *reusable*, all customer specific data should go into ``group_vars/all.yml`` which is rendered using Jinja2 templating.
 
@@ -11,10 +11,10 @@ To speed up the installation process, minimise the risk of making mistakes and m
 
 After building, the result is put in the ``release`` folder:
 
-- ``system-documentation.zip`` contains the system documentation for AD CS in HTML, PDF and DOCX format.
-- ``pki-assessment-bundle.zip`` contains *AD CS Collector* and instructions for how to use it.
-- ``proposal-new-adcs-installation-with-luna.docx`` describes a proposal for a new installation of AD CS with a Luna 7 HSM.
-- ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on AD CS.
+- ``system-documentation.zip`` contains the system documentation for ADCS in HTML, PDF and DOCX format.
+- ``pki-assessment-bundle.zip`` contains *ADCS Collector* and instructions for how to use it.
+- ``proposal-new-adcs-installation-with-luna.docx`` describes a proposal for a new installation of ADCS with a Luna 7 HSM.
+- ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on ADCS.
 
 Build
 =====

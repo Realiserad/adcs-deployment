@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "🏁 Starting the AD CS build container!"
+echo "🏁 Starting the ADCS build container!"
 echo "ℹ️ Built from commit $(git rev-parse HEAD)."
 
 if [ ! -f "/build/all.yml" ]; then

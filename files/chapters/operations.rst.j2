@@ -39,7 +39,7 @@ To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
 
 .. figure:: ../graphics/pkiview.png
 
-      An example of what Enterprise PKI Viewer looks like for a fully-functional AD CS installation.
+      An example of what Enterprise PKI Viewer looks like for a fully-functional ADCS installation.
 
 Back up the root CA
 -------------------
@@ -73,7 +73,7 @@ When configuring Windows, configure the name of the server to be ``{{ servers.ro
 
 #. Transfer the latest backup directory ``C:\Backup`` to the root CA server.
 
-#. Install the AD CS Windows feature::
+#. Install the ADCS Windows feature::
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
 
@@ -91,7 +91,7 @@ When configuring Windows, configure the name of the server to be ``{{ servers.ro
 
     reg import C:\Backup\backup.reg
 
-#. Restart AD CS::
+#. Restart ADCS::
 
     net stop certsvc
     net start certsvc
@@ -136,11 +136,11 @@ Create a CSR
 
 #. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
 
-#. Windows will ask if you want to stop AD CS. Click **Yes** to stop AD CS and continue with the renewal.
+#. Windows will ask if you want to stop ADCS. Click **Yes** to stop ADCS and continue with the renewal.
 
 #. You will now have the option to generate a new keypair. Pick **No** to keep the existing keypair and click on **OK**.
 
-#. Click on **Cancel** to save the CSR to disk and to start AD CS again.
+#. Click on **Cancel** to save the CSR to disk and to start ADCS again.
 
 #. Transfer the file ``C:\ICA1.req`` to ``{{ servers.root_ca.name }}``.
 
@@ -170,7 +170,7 @@ Install the CA certificate
 
     CertUtil -installcert "C:\ICA1.crt"
 
-#. Restart AD CS::
+#. Restart ADCS::
 
     net stop certsvc
     net start certsvc
@@ -415,7 +415,7 @@ In a non-Microsoft environment it is recommended to create a new root CA and rei
 
 #. Expand **Certification Authority (Local)** the left pane, right-click on **R1** and choose **All Tasks → Renew CA Certificate...**.
 
-#. Click **Yes** to stop AD CS.
+#. Click **Yes** to stop ADCS.
 
 #. In the *Renew CA Certificate* dialog box, choose if you want to create a new keypair when renewing the root CA certificate, and click on **OK**.
 
