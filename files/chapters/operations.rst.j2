@@ -356,6 +356,29 @@ Manually enroll for a computer certificate
 
 #. Wait until the certificate has been issued och click on **Finish** to close the wizard.
 
+{% if servers.issuing_ca.web_enrollment %}
+Manually enroll using web enrollment
+------------------------------------
+
+#. Open Internet Explorer and navigate to ``https://{{ servers.issuing_ca.name }}/certsrv``.
+
+#. Log in with your domain account.
+
+#. Click on the link **Request a certificate**.
+
+#. Click on the link **Create and submit a request to this CA**.
+
+#. In the *Certificate Template* dropdown, choose what type of certificate you want to issue.
+
+#. In the *Identifying Information For Offline Template* section, fill in the information you want to incorporate into the certificate.
+
+#. Click on **Submit** to perform the enrollment.
+
+.. note:: If the browser asks if it can perform a digital signature on your behalf, click **Yes**.
+
+#. Click on the link **Install this certificate** to install the certificate to Windows certificate store.
+{% endif %}
+
 Renew a root CA certificate
 ---------------------------
 

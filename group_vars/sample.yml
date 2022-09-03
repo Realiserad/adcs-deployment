@@ -18,6 +18,8 @@ customer:
   domain: atea.se
   name: Atea Sverige AB
   simple_name: Atea
+  city: Kista
+  state: Stockholm
   country: SE
 extras:
   naming_and_profile_document:
@@ -77,6 +79,7 @@ servers:
     gateway: 192.168.56.1
     os: Windows Server 2022
     dcom_port: 4000
+    web_enrollment: Yes
     smtp_exit_module: Yes
     location:
       log: C:\Log

@@ -241,6 +241,77 @@ Install the SMTP exit module
 
 {% endif %}
 
+{% if servers.issuing_ca.web_enrollment %}
+Configure web enrollment
+------------------------
+
+#. Run the following commands in PowerShell to enable web enrollment::
+
+    Add-WindowsFeature Adcs-Web-Enrollment
+    Install-AdcsWebEnrollment
+
+#. IIS uses the built-in *WebServer* template to fetch certificates, and it must be temporarily enabled on the CA.
+
+    Add-CATemplate -Name WebServer -Force
+
+#. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
+
+#. Expand ``{{ servers.issuing_ca.name }}`` in the tree on the left.
+
+#. Double-click on **Server Certificates**.
+
+#. In the *Actions* pane on the right, click on **Create Domain Certificate...**.
+
+#. Fill in the subject DN attributes using the table below.
+
+.. list-table::
+   :widths: 1 1
+   :header-rows: 0
+
+   * - **Common name**
+     - ``{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}``
+   * - **Organisation**
+     - ``{{ customer.name }}``
+   * - **Organizational unit**
+     - ``IT``
+   * - **City/locality**
+     - ``{{ customer.city }}``
+   * - **State/province**
+     - ``{{ customer.state }}``
+   * - **Country/region**
+     - ``{{ customer.country }}``
+
+#. Click on **Next**.
+
+#. Click on **Select...**, select the certificate authority **ICA1** in the list and click on **OK**.
+
+#. In the *Friendly name** field, type ``{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}`` and click on **Finish** to issue the web server certificate.
+
+#. Run the following PowerShell command to disable the *WebServer* template on the CA::
+
+    Remove-CATemplate -Name WebServer -Force
+
+#. Expand **Sites** in the tree on the left, right-click on **Default Web Site** and click **Edit Bindings...**.
+
+#. Click on **Add...** to add a new binding, and make the following adjustments:
+
+    #. In the *Type* dropdown, pick **https**.
+
+    #. In the *Host name* field, type ``{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}``.
+
+    #. In the *SSL certificate* dropdown, select **{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}**.
+
+#. Click on **OK** to add the new binding.
+
+#. Click on **Close** to close the *Site Bindings* dialog window.
+
+#. Expand **Default Web Site** in the tree on the left, and click on **CertSrv**.
+
+#. Click on **SSL Settings**.
+
+#. Tick the checkbox **Require SSL** and click on **Apply** in the pane on the right.
+{% endif %}
+
 Publish a CRL from the issuing CA to the repository
 ---------------------------------------------------
 
