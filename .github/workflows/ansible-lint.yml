@@ -6,9 +6,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Perform linting
-      uses: ansible/ansible-lint-action@151b9a2
-      with:
-        targets: "./"
-        args: "-q"
+      - uses: actions/checkout@v2
+      - name: Perform linting
+        uses: ansible-community/ansible-lint-action@main
