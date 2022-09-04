@@ -15,7 +15,11 @@ jobs:
         docker build -t ghcr.io/realiserad/adcs-deployment .
     - name: Run the container with the sample configuration
       run: |
-        docker run -v $(pwd)/group_vars/sample.yml:/build/all.yml ghcr.io/realiserad/adcs-deployment
+        docker run \
+          -v (pwd)/group_vars/all.yml:/build/all.yml \
+          -v (pwd)/files:/build/files \
+          -v /tmp/release:/build/release \
+          ghcr.io/realiserad/adcs-deployment
     - name: Log in to the GitHub Container Registry
       uses: docker/login-action@v1
       with:
