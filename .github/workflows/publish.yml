@@ -1,4 +1,4 @@
-name: publish
+name: Publish
 on:
   push:
     branches:
@@ -16,8 +16,8 @@ jobs:
     - name: Run the container with the sample configuration
       run: |
         docker run \
-          -v (pwd)/group_vars/all.yml:/build/all.yml \
-          -v (pwd)/files:/build/files \
+          -v $(pwd)/group_vars/all.yml:/build/all.yml \
+          -v $(pwd)/files:/build/files \
           -v /tmp/release:/build/release \
           ghcr.io/realiserad/adcs-deployment
     - name: Log in to the GitHub Container Registry
@@ -26,6 +26,6 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Push the container to GitHub's container registry
+    - name: Push the container to ghcr.io
       run: |
         docker push ghcr.io/realiserad/adcs-deployment
