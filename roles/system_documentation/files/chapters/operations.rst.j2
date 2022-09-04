@@ -115,20 +115,127 @@ Issue a new root CA CRL
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
+Renewal
+-------
+
+In a Microsoft environment, you can renew the CA certificate with a new CA certificate. This makes it possible to replace a compromised keypair, add extensions to the CA certificate or extend the validity if the CA is about to expire.
+
+If you renew a CA certificate on a standalone CA machine, you need to manually publish it to Active Directory. Windows devices connected to the domain will obtain the new CA certificate automatically when they restart or after the Group Policy Refresh Interval (8 hours by default).
+
+Clients can use the propritary Microsoft certificate extension ``1.3.6.1.4.1.311.21.2`` to link the new CA certificate to the old CA certificate.
+
+In a non-Microsoft environment it is recommended to create a new CA with a new keypair and subject DN and reissue any active certificates. If you are creating a new root CA you may have to manually distribute the new root CA certificate to the truststore of any machines which require it.
+
+Replace a root CA
+~~~~~~~~~~~~~~~~~
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. If you want to extend the lifetime of your root CA, create or edit the file ``%systemroot%\CAPolicy.inf`` and make sure the following sections are present::
+
+    [Version]
+    Signature = "$Windows NT$"
+
+    [CertSrv_Server]
+    RenewalValidityPeriodUnits = 30
+    RenewalValidityPeriod = Years
+
+.. note:: Adjust ``RenewalValidityPeriodUnits`` to fit your needs. The ``NotBefore`` date in the new root CA certificate is set to the local clock and the ``NotAfter`` date is set to the local clock + the number of years specified in ``RenewalValidityPeriodUnits``.
+
+.. note:: You cannot decrease the validity time of the root CA.
+
+#. Check the local time against a reliable watch, and adjust it if necessary.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M**, double-click on the **Certificate Authority** snap-in and click on **Finish**.
+
+#. Click on **OK** to add the snap-in.
+
+#. Expand **Certification Authority (Local)** the left pane, right-click on **R1** and choose **All Tasks → Renew CA Certificate...**.
+
+#. Click **Yes** to stop ADCS.
+
+#. In the *Renew CA Certificate* dialog box, choose if you want to create a new keypair when renewing the root CA certificate, and click on **OK**.
+
+#. Issue a CRL from the root CA::
+
+    CertUtil -crl
+
+#. Export the new root CA certificate to a file::
+
+    CertUtil "-ca.cert" "C:\R1.crt"
+
+{% for server in servers.repositories %}
+#. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+
+#. Transfer the file `C:\R1.crt`` to {{ servers.issuing_ca.name }} and publish the root CA certificate to AD::
+
+    CertUtil -dspublish -f C:\R1.crt
+
 .. _renew new keys:
 
 Replace an issuing CA and create a new keypair
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _renew reuse keys:
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
 
-TODO: Write instructions for how to renew using a new keypair
+#. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
+
+#. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
+
+#. Windows will ask if you want to stop ADCS. Click **Yes** to stop ADCS and continue with the renewal.
+
+#. You will now have the option to generate a new keypair. Pick **Yes** to generate a new keypair and click on **OK**.
+
+#. Click on **Cancel** to save the CSR to disk and to start ADCS again.
+
+#. Transfer the file ``C:\ICA1.req`` to ``{{ servers.root_ca.name }}``.
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. Submit the CSR for the issuing CA and save the request ID::
+
+    $request = CertReq -submit -config - C:\ICA1.req | Out-String | Select-String 'RequestId: (\d+)'
+    $requestId = $request.Matches[0].Groups[1].Value.Trim()
+
+#. Accept the request and retrieve a copy of the new issuing CA certificate::
+
+    CertUtil -resubmit $requestId
+    CertReq -retrieve -config - $requestId C:\ICA1-G2.crt
+
+.. note:: Replace the ``G2`` postfix appropriately if you have previously renewed the CA.
+
+#. Transfer the file ``C:\ICA1-G2.crt`` to ``{{ servers.issuing_ca.name }}``.
+
+#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+
+#. Install the CA certificate::
+
+    CertUtil -installcert "C:\ICA1-G2.crt"
+
+{% for repository in servers.repositories %}
+#. Transfer the file ``C:\ICA1-G2.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}.
+{% endfor %}
+
+#. Update the CDP and AIA paths to point to the new CRL and CA certificate::
+
+    CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n1:C:\%%3-G2.crl\n2:http://pki.{{ customer.domain }}/%%3-G2.crl"
+    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3-G2.crt"
+
+#. Restart ADCS::
+
+    net stop certsvc
+    net start certsvc
+
+#. Create a CRL and publish it to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
 
 Renew an issuing CA and reuse the existing keypair
---------------------------------------------------
-
-Create a CSR
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
 
@@ -144,14 +251,11 @@ Create a CSR
 
 #. Transfer the file ``C:\ICA1.req`` to ``{{ servers.root_ca.name }}``.
 
-Sign the CA certificate
-~~~~~~~~~~~~~~~~~~~~~~~
-
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
 
 #. Submit the CSR for the issuing CA and save the request ID::
 
-    $request = CertReq -submit -config - C:\ICA1.csr | Out-String | Select-String 'RequestId: (\d+)'
+    $request = CertReq -submit -config - C:\ICA1.req | Out-String | Select-String 'RequestId: (\d+)'
     $requestId = $request.Matches[0].Groups[1].Value.Trim()
 
 #. Accept the request and retrieve a copy of the new issuing CA certificate::
@@ -160,9 +264,6 @@ Sign the CA certificate
     CertReq -retrieve -config - $requestId C:\ICA1.crt
 
 #. Transfer the file ``C:\ICA1.crt`` to ``{{ servers.issuing_ca.name }}``.
-
-Install the CA certificate
-~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
 
@@ -378,59 +479,3 @@ Manually enroll using web enrollment
 
 #. Click on the link **Install this certificate** to install the certificate to Windows certificate store.
 {% endif %}
-
-Renew a root CA certificate
----------------------------
-
-In a Microsoft environment, you can renew the root CA certificate with a new validity date if the root CA is about to expire, or if the private key of the root CA has been compromised.
-
-Once you have renewed the root CA certificate, you need to publish it to Active Directory. Windows devices connected to the domain will obtain the new root CA certificate automatically when they restart or after the Group Policy Refresh Interval (8 hours by default).
-
-Clients can use the propritary Microsoft certificate extension ``1.3.6.1.4.1.311.21.2`` to link the new root CA certificate to the old CA certificate.
-
-In a non-Microsoft environment it is recommended to create a new root CA and reissue any certificates from this root. You may have to manually distribute the new root CA to the truststore of any machines which require it.
-
-#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
-
-#. If you want to extend the lifetime of your root CA, create or edit the file ``%systemroot%\CAPolicy.inf`` and make sure the following sections are present::
-
-    [Version]
-    Signature = "$Windows NT$"
-
-    [CertSrv_Server]
-    RenewalValidityPeriodUnits = 30
-    RenewalValidityPeriod = Years
-
-.. note:: Adjust ``RenewalValidityPeriodUnits`` to fit your needs. The ``NotBefore`` date in the new root CA certificate is set to the local clock and the ``NotAfter`` date is set to the local clock + the number of years specified in ``RenewalValidityPeriodUnits``.
-
-.. note:: You cannot decrease the validity time of the root CA.
-
-#. Check the local time against a reliable watch, and adjust it if necessary.
-
-#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
-
-#. Press **Ctrl + M**, double-click on the **Certificate Authority** snap-in and click on **Finish**.
-
-#. Click on **OK** to add the snap-in.
-
-#. Expand **Certification Authority (Local)** the left pane, right-click on **R1** and choose **All Tasks → Renew CA Certificate...**.
-
-#. Click **Yes** to stop ADCS.
-
-#. In the *Renew CA Certificate* dialog box, choose if you want to create a new keypair when renewing the root CA certificate, and click on **OK**.
-
-#. Issue a CRL from the root CA::
-
-    CertUtil -crl
-
-#. Export the new root CA certificate to a file::
-
-    CertUtil "-ca.cert" "C:\R1.crt"
-
-{% for server in servers.repositories %}
-#. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
-{% endfor %}
-
-#. Transfer the file `C:\R1.crt`` to {{ servers.issuing_ca.name }} and publish the root CA certificate to AD::
-
-    CertUtil -dspublish -f C:\R1.crt
