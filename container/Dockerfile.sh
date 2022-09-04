@@ -1,3 +1,4 @@
+cat << EOF
 FROM ubuntu:jammy
 
 LABEL org.opencontainers.image.source https://github.com/Realiserad/adcs-deployment
@@ -20,13 +21,17 @@ COPY .git /root/.git
 RUN apt update --fix-missing
 RUN apt install python3 python3-pip zip git -y
 
+EOF
 
-RUN pip3 install ldif pyyaml pygments-ldif cryptography regipy
-RUN apt install -y texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra latexmk texlive-luatex graphviz cowsay && \
-    pip3 install sphinx ansible restructuredtext-lint doc8 diagrams docxbuilder guzzle_sphinx_theme docxtpl && \
-    ansible-galaxy collection install community.general
+for snippet in roles/*/container/Dockerfile.snippet; do
+    echo ""
+    cat "$snippet"
+done
+
+cat << EOF
 
 RUN rm -rf /var/lib/apt/lists/*
 WORKDIR /root
 
 CMD /bin/sh run.sh
+EOF

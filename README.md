@@ -12,54 +12,40 @@ To speed up the installation process, minimise the risk of making mistakes and m
 After building, the result is put in the ``release`` folder:
 
 - ``system-documentation.zip`` contains the system documentation for ADCS in HTML, PDF and DOCX format.
-- ``pki-assessment-bundle.zip`` contains *ADCS Collector* and instructions for how to use it.
-- ``proposal-new-adcs-installation-with-luna.docx`` describes a proposal for a new installation of ADCS with a Luna 7 HSM.
-- ``proposal-pki-assessment.docx`` describes a proposal for assessing an existing PKI based on ADCS.
 
 Build
 =====
 
-Build using the container
--------------------------
+You can a container to build the documentation on any system where you have Docker installed. The container can be built locally or pulled directly from GitHub's container registry at ``ghcr.io``.
 
-You can use the container to build the documentation on any system where you have Docker installed. The container can be built locally or pulled directly from GitHub's container registry at ``ghcr.io``.
+1. Adjust the Ansible configuration file ``group_vars/all.yml`` according to the customer's needs.
 
-1. Create an Ansible configuration file named ``all.yml``, and adjust it according to the customer's needs. You can use ``group_vars/sample.yml`` as a template.
+2. Optionally replace the files in ``files`` to customise the output according to the table below.
 
-2. Build and run the container. The configuration file ``all.yml`` must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
-    ```
-    docker build -t realiserad/adcs-deployment .
-    docker run -v (pwd)/group_vars/all.yml:/build/all.yml -v (pwd)/release:/build/release realiserad/adcs-deployment
-    ```
+| File                    | Description                                                 | Can remove?     |
+|-------------------------|-------------------------------------------------------------|-----------------|
+| files/                  | Folder containing customisation files                       |                 |
+|   all.yml               | Ansible configuration file.                                 |                 |
+|   logo.png              | Customer logo.                                              |                 |
+|   atea.png              | Logo used for PDF headers.                                  |                 |
+|   atea_aligned.png      | Logo used for PDF headers.                                  |                 |
+|   naming_document/      |                                                             | Yes             |
+|     Configuration.ldf   | Configuration exported from AD.                             |                 |
+|     *.dat               | Registry hive(s).                                           | Yes             |
 
-| File                     | Description                                                                      | Required                                  |
-|--------------------------|----------------------------------------------------------------------------------|-------------------------------------------|
-| /build/all.yml           | Ansible configuration file.                                                      | Yes                                       |
-| /build/logo.png          | Customer logo.                                                                   | No                                        |
-| /build/Configuration.ldf | Configuration exported from AD used to generate the Naming and Profile Document. | To create the Naming and Profile Document |
-| /build/*.dat             | Registry hive(s) used to generate parts of the Naming and Profile Document.      | No                                        |
+3. Generate a ``Dockerfile`` and build the container.
+```
+./build.sh
+```
 
-Build on Ubuntu
----------------
-
-1. Create ``group_vars/all.yml`` and adjust it according to the customer's needs.
-    ```
-    cp group_vars/sample.yml group_vars/all.yml
-    ```
-
-2. Replace the customer specific files in ``files/customer``.
-
-3. Install dependencies.
-    ```
-    sudo apt install texlive-full python3 python3-pip zip pandoc git graphviz
-    pip3 install sphinx ansible restructuredtext-lint doc8 docxtpl diagrams docxbuilder guzzle_sphinx_theme
-    ansible-galaxy collection install community.general
-    ```
-
-4. Build the documentation and installation files using Ansible.
-    ```
-    ansible-playbook playbook.yml
-    ```
+4. Run the container. The Ansible configuration file and a directory with customisations  must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
+```
+docker run \
+  -v (pwd)/group_vars/all.yml:/build/all.yml \
+  -v (pwd)/files:/build/files \
+  -v /tmp/release:/build/release \
+  realiserad/adcs-deployment
+```
 Contribute
 ==========
 
@@ -91,10 +77,10 @@ It is recommended to commit changes to a separate branch and create a pull reque
     ```
 Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request with ``Draft`` in the beginning of the title to avoid an accidental merge of unfinished work.
 
-Squash commits before merging
------------------------------
+Pull requests are squashed
+--------------------------
 
-Consider squashing the commits into one commit when merging to ``main`` to keep the history clean. In GitHub, this is done by selecting the option "Squash and merge" when accepting the pull request.
+When a pull request is accepted, all commits are being squashed into one commit to keep the history of the ``main`` branch as clean as possible. In GitHub, this is done by selecting the option "Squash and merge" when accepting the pull request.
 
 Automatic builds
 ----------------
