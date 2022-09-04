@@ -1,4 +1,4 @@
-name: compress images
+name: Compress Images
 on:
   pull_request:
     paths:
@@ -12,9 +12,9 @@ jobs:
     name: calibreapp/image-actions
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout the code from GitHub
         uses: actions/checkout@v2
-      - name: Compress Images
+      - name: Compress images using Calibre
         uses: calibreapp/image-actions@main
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
