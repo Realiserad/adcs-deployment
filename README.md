@@ -25,13 +25,13 @@ You can a container to build the documentation on any system where you have Dock
 | File                    | Description                                                 | Can remove?     |
 |-------------------------|-------------------------------------------------------------|-----------------|
 | files/                  | Folder containing customisation files                       |                 |
-|   all.yml               | Ansible configuration file.                                 |                 |
-|   logo.png              | Customer logo.                                              |                 |
-|   atea.png              | Logo used for PDF headers.                                  |                 |
-|   atea_aligned.png      | Logo used for PDF headers.                                  |                 |
-|   naming_document/      |                                                             | Yes             |
-|     Configuration.ldf   | Configuration exported from AD.                             |                 |
-|     *.dat               | Registry hive(s).                                           | Yes             |
+| ├── all.yml             | Ansible configuration file.                                 |                 |
+| ├── logo.png            | Customer logo.                                              |                 |
+| ├── atea.png            | Logo used for PDF headers.                                  |                 |
+| ├── atea_aligned.png    | Logo used for PDF headers.                                  |                 |
+| naming_document/        |                                                             | Yes             |
+| ├── Configuration.ldf   | Configuration exported from AD.                             |                 |
+| ├── *.dat               | Registry hive(s).                                           | Yes             |
 
 3. Generate a ``Dockerfile`` and build the container.
 ```
