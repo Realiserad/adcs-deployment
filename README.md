@@ -75,7 +75,7 @@ It is recommended to commit changes to a separate branch and create a pull reque
     git commit
     git push --set-upstream origin my-fancy-feature
     ```
-Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request with ``Draft`` in the beginning of the title to avoid an accidental merge of unfinished work.
+Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request as a "Draft" in GitHub to prevent an accidental merge of unfinished work.
 
 Pull requests are squashed
 --------------------------
