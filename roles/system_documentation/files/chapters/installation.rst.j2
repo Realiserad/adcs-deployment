@@ -1,10 +1,11 @@
 Installation Manual
 ===================
 
-Create a CSR for the issuing CA
--------------------------------
+{% for issuing_ca in servers.issuing_cas %}
+Create a CSR for {{ issuing_ca.cn }}
+-----------------{{ issuing_ca.cn | length * '-' }}
 
-#. Log in to {{ servers.issuing_ca.name }} using RDP.
+#. Log in to {{ issuing_ca.name }} using RDP.
 
 #. Optionally adjust the keyboard layout using PowerShell::
 
@@ -29,15 +30,16 @@ Create a CSR for the issuing CA
 
 #. Create an issuing CA using PowerShell::
 
-{% if servers.issuing_ca.policy.key_specification == 'P256' %}
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#{{ servers.issuing_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ servers.issuing_ca.location.log }}" -DatabaseDirectory "{{ servers.issuing_ca.location.database }}" -Force
-{% elif servers.issuing_ca.policy.key_specification == 'RSA4096' %}
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#{{ servers.issuing_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ servers.issuing_ca.location.log }}" -DatabaseDirectory "{{ servers.issuing_ca.location.database }}" -Force
+{% if issuing_ca.policy.key_specification == 'P256' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#{{ issuing_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ issuing_ca.location.log }}" -DatabaseDirectory "{{ issuing_ca.location.database }}" -Force
+{% elif issuing_ca.policy.key_specification == 'RSA4096' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#{{ issuing_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ issuing_ca.location.log }}" -DatabaseDirectory "{{ issuing_ca.location.database }}" -Force
 {% else %}
-    Unknown key specification '{{ servers.issuing_ca.policy.key_specification }}'.
+    Unknown key specification '{{ issuing_ca.policy.key_specification }}'.
 {% endif %}
 
-#. Transfer the file ``C:\ICA1.csr`` to {{ servers.root_ca.name }}.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to {{ servers.root_ca.name }}.
+{% endfor %}
 
 Create repositories
 -------------------
@@ -168,10 +170,34 @@ Create the root CA
     CertUtil -ping 30
 {% endif %}
 
-Sign the issuing CA
--------------------
+Publish root CA artefacts
+-------------------------
 
-#. Submit the CSR for the issuing CA and save the request ID::
+#. Export a copy of the root CA certificate::
+
+    CertUtil "-ca.cert" "C:\R1.crt"
+
+#. Issue a CRL from the root CA::
+
+    CertUtil -crl
+
+{% for server in servers.repositories %}
+#. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+
+#. Transfer ``C:\R1.crt`` to servers.issuing_cas[0] and log in to servers.issuing_cas[0] using RDP.
+
+#. Publish the root CA certificate to AD::
+
+    CertUtil -dspublish -f C:\R1.crt
+
+{% for issuing_ca in servers.issuing_cas %}
+Sign the CA certificate for {{ issuing_ca.cn }}
+----------------------------{{ issuing_ca.cn | length * '-' }}
+
+#. Log in to {{ servers.root_ca.name }} using RDP.
+
+#. Submit the CSR for {{ issuing_ca.cn }} and save the request ID::
 
     $request = CertReq -submit -config - C:\ICA1.csr | Out-String | Select-String 'RequestId: (\d+)'
     $requestId = $request.Matches[0].Groups[1].Value.Trim()
@@ -179,39 +205,27 @@ Sign the issuing CA
 #. Accept the request and retrieve a copy of the issuing CA certificate::
 
     CertUtil -resubmit $requestId
-    CertReq -retrieve -config - $requestId C:\ICA1.crt
-
-#. Issue a CRL from the root CA::
-
-    CertUtil -crl
-
-#. Export a copy of the root CA certificate::
-
-    CertUtil "-ca.cert" "C:\R1.crt"
+    CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}.crt
 
 {% for server in servers.repositories %}
-#. Transfer the files ``C:\ICA1.crt``, ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+#. Transfer the files ``C:\ICA1.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
 {% endfor %}
 
-#. Transfer the file ``C:\ICA1.crt`` and ``C:\R1.crt`` to {{ servers.issuing_ca.name }}.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` and ``C:\R1.crt`` to {{ issuing_ca.name }}.
 
-Activate the issuing CA
------------------------
+Activate {{ issuing_ca.cn }}
+---------{{ issuing_ca.cn | length * '-' }}
 
-#. Log in to {{ servers.issuing_ca.name }} using RDP.
-
-#. Publish the root CA certificate to AD::
-
-    CertUtil -dspublish -f C:\R1.crt
+#. Log in to {{ issuing_ca.name }} using RDP.
 
 #. Install the CA certificate chain::
 
     Import-Certificate -FilePath C:\R1.crt -CertStoreLocation Cert:\LocalMachine\Root
-    CertUtil -installcert "C:\ICA1.crt"
+    CertUtil -installcert "C:\{{ issuing_ca.cn }}.crt"
 
 #. Create and run the file ``C:\CASetup.bat``::
 
-    CertUtil -setreg CA\CRLPeriodUnits 7
+    CertUtil -setreg CA\CRLPeriodUnits {{ issuing_ca.crl_period | default(7) }}
     CertUtil -setreg CA\CRLPeriod Days
     CertUtil -setreg CA\CRLDeltaPeriodUnits 0
     CertUtil -setreg CA\CRLDeltaPeriod Days
@@ -229,7 +243,7 @@ Activate the issuing CA
     net start certsvc
     CertUtil -ping 30
 
-{% if smtp_exit_module is defined and servers.issuing_ca.smtp_exit_module %}
+{% if smtp_exit_module is defined and issuing_ca.smtp_exit_module %}
 Install the SMTP exit module
 ----------------------------
 
@@ -241,7 +255,7 @@ Install the SMTP exit module
 
 {% endif %}
 
-{% if servers.issuing_ca.web_enrollment %}
+{% if issuing_ca.web_enrollment %}
 Configure web enrollment
 ------------------------
 
@@ -256,7 +270,7 @@ Configure web enrollment
 
 #. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
 
-#. Expand ``{{ servers.issuing_ca.name }}`` in the tree on the left.
+#. Expand ``{{ issuing_ca.name }}`` in the tree on the left.
 
 #. Double-click on **Server Certificates**.
 
@@ -269,7 +283,7 @@ Configure web enrollment
    :header-rows: 0
 
    * - **Common name**
-     - ``{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}``
+     - ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}``
    * - **Organisation**
      - ``{{ customer.name }}``
    * - **Organizational unit**
@@ -285,7 +299,7 @@ Configure web enrollment
 
 #. Click on **Select...**, select the certificate authority **ICA1** in the list and click on **OK**.
 
-#. In the *Friendly name** field, type ``{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}`` and click on **Finish** to issue the web server certificate.
+#. In the *Friendly name** field, type ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}`` and click on **Finish** to issue the web server certificate.
 
 #. Run the following PowerShell command to disable the *WebServer* template on the CA::
 
@@ -297,9 +311,9 @@ Configure web enrollment
 
     #. In the *Type* dropdown, pick **https**.
 
-    #. In the *Host name* field, type ``{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}``.
+    #. In the *Host name* field, type ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}``.
 
-    #. In the *SSL certificate* dropdown, select **{{ servers.issuing_ca.name.lower() }} ~ {{ customer.domain }}**.
+    #. In the *SSL certificate* dropdown, select **{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}**.
 
 #. Click on **OK** to add the new binding.
 
@@ -312,8 +326,8 @@ Configure web enrollment
 #. Tick the checkbox **Require SSL** and click on **Apply** in the pane on the right.
 {% endif %}
 
-Publish a CRL from the issuing CA to the repository
----------------------------------------------------
+Publish a CRL from {{ issuing_ca.cn }} to the repository
+-------------------{{ issuing_ca.cn | length * '-' }}------------------
 
 #. Create the file ``C:\CopyCRL.bat``::
 
@@ -337,6 +351,8 @@ Publish a CRL from the issuing CA to the repository
 
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
+
+{% endfor %}
 
 Configure certificate templates
 -------------------------------
@@ -446,7 +462,8 @@ Enable autoenrollment
 Enable certificate templates
 ----------------------------
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+{% for issuing_ca in servers.issuing_cas %}
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
 #. Pull the GPO changes from the domain controller::
 
@@ -458,10 +475,14 @@ Enable certificate templates
     Add-CATemplate -Name "{{ template.name | replace(' ', '') }}" -Force
 
 {% endfor %}
+{% endfor %}
 
-{% if servers.issuing_ca.dcom_port is defined %}
+{% for issuing_ca in servers.issuing_cas %}
+{% if issuing_ca.dcom_port is defined %}
 Set a static DCOM port
 ----------------------
+
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
 #. Click on the start button, type ``Component Services`` and press **Enter**.
 
@@ -473,7 +494,7 @@ Set a static DCOM port
 
 #. Click on **Add**. The *DCOM Enpoint Properties* dialog is shown.
 
-#. Select the option **Use static endpoint** and type in the port number ``{{ servers.issuing_ca.dcom_port }}`` in the textbox, then click on **OK**.
+#. Select the option **Use static endpoint** and type in the port number ``{{ issuing_ca.dcom_port }}`` in the textbox, then click on **OK**.
 
 #. Click on **OK** to close the *CertSrv Request Properties* dialog.
 
@@ -499,3 +520,4 @@ Set a static DCOM port
         netstat -anob | Select-String -Pattern certsrv.exe -Context 1,0
 
 {% endif %}
+{% endfor %}

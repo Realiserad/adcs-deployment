@@ -4,9 +4,10 @@ Appendix A - Network Configuration
 Firewall configuration
 ----------------------
 
-The firewall should only allow access to the ports as specified in the table below.
+The firewall should only allow access to the ports as specified in the tables below.
 
-.. list-table:: Firewall rules
+{% for issuing_ca in servers.issuing_cas %}
+.. list-table:: Firewall rules for {{ issuing_ca.name }}
    :widths: 1 1 1 1
    :header-rows: 1
 
@@ -16,68 +17,80 @@ The firewall should only allow access to the ports as specified in the table bel
      - Description
    * - Jumphost
      - | {{ servers.root_ca.name }}
-       | {{ servers.issuing_ca.name }}
+       | {{ issuing_ca.name }}
 {% for server in servers.repositories %}
        | {{ server.name }}
 {% endfor %}
        | Domain controllers
      - tcp/3389
      - RDP
-   * - {{ servers.issuing_ca.name }}
+   * - {{ issuing_ca.name }}
      - Domain controllers
      - tcp/135
      - RPC Endpoint Mapper
-   * - {{ servers.issuing_ca.name }}
+   * - {{ issuing_ca.name }}
      - Domain controllers
      - tcp/1024-65535
      - RPC
-   * - {{ servers.issuing_ca.name }}
+   * - {{ issuing_ca.name }}
      - Domain controllers
      - tcp/389 and udp/389
      - LDAP
-   * - {{ servers.issuing_ca.name }}
+   * - {{ issuing_ca.name }}
      - Domain controllers
      - tcp/636
      - LDAP over TLS
-   * - | {{ servers.issuing_ca.name }}
+   * - | {{ issuing_ca.name }}
 {% for server in servers.repositories %}
        | {{ server.name }}
 {% endfor %}
      - DNS servers
      - tcp/53 and udp/53
      - DNS
-   * - {{ servers.issuing_ca.name }}
+   * - {{ issuing_ca.name }}
      - Domain controllers
      - 88/tcp
      - Kerberos
-   * - {{ servers.issuing_ca.name }}
+   * - {{ issuing_ca.name }}
      - DNS server
      - 88/udp
      - Kerberos
    * - All computers connected to the domain
-     - {{ servers.issuing_ca.name }}
+     - {{ issuing_ca.name }}
      - tcp/135
      - RPC Endpoint Mapper
    * - All computers connected to the domain
-     - {{ servers.issuing_ca.name }}
+     - {{ issuing_ca.name }}
      - tcp/1024-65535
      - CertSrv requests over DCOM
+{% if issuing_ca.web_enrollment %}
+   * - All computers connected to the domain
+     - {{ issuing_ca.name }}
+     - http/443
+     - Web enrollment
+{% endif %}
+{% endfor %}
+
+.. list-table:: Firewall rules for CRL distribution
+   :widths: 1 1 1 1
+   :header-rows: 1
+
+   * - Src
+     - Dst
+     - Dst proto/port
+     - Description
    * - Internet
 {% for server in servers.repositories %}
      - {{ server.name }}
 {% endfor %}
      - http/80
      - Certificate validation
-{% if servers.issuing_ca.web_enrollment %}
-   * - All computers connected to the domain
-     - {{ servers.issuing_ca.name }}
-     - http/443
-     - Web enrollment
-{% endif %}
 
-{% if network.dcom_port is defined %}
-.. note:: After a certificate request has been successfully processed by ``{{ servers.issuing_ca.name }}``, all subsequent certificate requests can be sent to port {{ network.dcom_port }}. This means that the firewall may be locked down to only allow incoming connections to that port.
+{% for issuing_ca in servers.issuing_cas %}
+{% if issuing_ca.dcom_port is defined %}
+.. note:: After a certificate request has been successfully processed by ``{{ issuing_ca.cn }}``, all subsequent certificate requests can be sent to port {{ issuing_ca.dcom_port }}. This means that the firewall may be locked down to only allow incoming connections to that port.
 {% endif %}
+{% endfor %}
 
 DNS configuration
 -----------------
@@ -96,10 +109,12 @@ The records specified in the table below should be added manually to the DNS ser
      - {{ servers.root_ca.ip }}
      - A
      - N/A
-   * - {{ servers.issuing_ca.name ~ '.' ~ customer.domain }}
-     - {{ servers.issuing_ca.ip }}
+{% for issuing_ca in servers.issuing_cas %}
+   * - {{ issuing_ca.name ~ '.' ~ customer.domain }}
+     - {{ issuing_ca.ip }}
      - A
      - N/A
+{% endfor %}
 {% for server in servers.repositories %}
    * - {{ server.name ~ '.' ~ customer.domain }}
      - {{ server.ip }}
