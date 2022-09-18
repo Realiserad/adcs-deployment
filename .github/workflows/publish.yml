@@ -12,7 +12,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Build the container image
       run: |
-        docker build -t ghcr.io/realiserad/adcs-deployment .
+        ./build.sh && \
+        docker tag $(docker images -q realiserad/adcs-deployment) ghcr.io/realiserad/adcs-deployment
     - name: Run the container with the sample configuration
       run: |
         docker run \

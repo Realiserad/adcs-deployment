@@ -25,13 +25,13 @@ You can a container to build the documentation on any system where you have Dock
 | File                    | Description                                                 | Can remove?     |
 |-------------------------|-------------------------------------------------------------|-----------------|
 | files/                  | Folder containing customisation files                       |                 |
-|   all.yml               | Ansible configuration file.                                 |                 |
-|   logo.png              | Customer logo.                                              |                 |
-|   atea.png              | Logo used for PDF headers.                                  |                 |
-|   atea_aligned.png      | Logo used for PDF headers.                                  |                 |
-|   naming_document/      |                                                             | Yes             |
-|     Configuration.ldf   | Configuration exported from AD.                             |                 |
-|     *.dat               | Registry hive(s).                                           | Yes             |
+| ├── all.yml             | Ansible configuration file.                                 |                 |
+| ├── logo.png            | Customer logo.                                              |                 |
+| ├── atea.png            | Logo used for PDF headers.                                  |                 |
+| ├── atea_aligned.png    | Logo used for PDF headers.                                  |                 |
+| naming_document/        |                                                             | Yes             |
+| ├── Configuration.ldf   | Configuration exported from AD.                             |                 |
+| ├── *.dat               | Registry hive(s).                                           | Yes             |
 
 3. Generate a ``Dockerfile`` and build the container.
 ```
@@ -75,7 +75,7 @@ It is recommended to commit changes to a separate branch and create a pull reque
     git commit
     git push --set-upstream origin my-fancy-feature
     ```
-Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request with ``Draft`` in the beginning of the title to avoid an accidental merge of unfinished work.
+Sometimes, it is convenient to keep a pull request open while working on a feature. Mark the pull request as a "Draft" in GitHub to prevent an accidental merge of unfinished work.
 
 Pull requests are squashed
 --------------------------
