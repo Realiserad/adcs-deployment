@@ -27,23 +27,25 @@ Appendix B - Inventory
        | Disk: 32 GB
        | vCPU: 2
      - Trust anchor for the ``{{ customer.domain }}`` domain.
-   * - {{ servers.issuing_ca.name }}
-     - | IP: {{ servers.issuing_ca.ip }}
-       | VLAN: {{ servers.issuing_ca.vlan }}
-{% if servers.issuing_ca.netmask is defined %}
-       | Netmask: {{ servers.issuing_ca.netmask }}
+{% for issuing_ca in servers.issuing_cas %}
+   * - {{ issuing_ca.name }}
+     - | IP: {{ issuing_ca.ip }}
+       | VLAN: {{ issuing_ca.vlan }}
+{% if issuing_ca.netmask is defined %}
+       | Netmask: {{ issuing_ca.netmask }}
 {% endif %}
-{% if servers.issuing_ca.gateway is defined %}
-       | Gateway: {{ servers.issuing_ca.gateway }}
+{% if issuing_ca.gateway is defined %}
+       | Gateway: {{ issuing_ca.gateway }}
 {% endif %}
 {% if servers.dns_servers is defined %}
        | DNS servers: {{ servers.dns_servers | join(', ') }}
 {% endif %}
-     - {{ servers.issuing_ca.os }}
+     - {{ issuing_ca.os }}
      - | RAM: 8 GB
        | Disk: 32 GB (and a >128 GB network drive)
        | vCPU: 2
      - Issues certificates for users and computers in the ``{{ customer.domain }}`` domain.
+{% endfor %}
 {% for server in servers.repositories %}
    * - {{ server.name }}
      - | IP: {{ server.ip }}

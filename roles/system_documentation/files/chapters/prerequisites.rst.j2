@@ -7,9 +7,11 @@ Prerequisites
 
 #. Create machines according to *Appendix B*.
 
-#. Join the server ``{{ servers.issuing_ca.name }}`` to the domain ``{{ customer.domain }}``.
+{% for issuing_ca in servers.issuing_cas %}
+#. Join the server ``{{ issuing_ca.name }}`` to the domain ``{{ customer.domain }}``.
 
-#. Ensure that there is a network drive mapped to ``{{ servers.issuing_ca.name }}`` with at least 128 GB of free storage available for storing the CA logs and certificate database.
+#. Ensure that there is a network drive mapped to ``{{ issuing_ca.name }}`` with at least 128 GB of free storage available for storing the CA logs and certificate database.
+{% endfor %}
 
 #. Create a local administrator account ``{{ accounts.local.user }}`` on the following servers:
 

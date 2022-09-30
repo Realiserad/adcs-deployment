@@ -70,28 +70,52 @@ servers:
       #  - P256
       key_specification: P256
       key_storage_provider: Microsoft Software Key Storage Provider
-  issuing_ca:
-    name: app-IssuingCA
-    description: Hosting the CA issuing certificates to subscribers.
-    ip: 192.168.56.101
-    vlan: VLAN0
-    netmask: 255.255.255.0
-    gateway: 192.168.56.1
-    os: Windows Server 2022
-    dcom_port: 4000
-    web_enrollment: Yes
-    smtp_exit_module: Yes
-    location:
-      log: C:\Log
-      database: C:\Database
-    policy:
-      high_serial: 0xFFFFFFFF
-      keep_expired_certificates_on_crl: No
-      # Possible choices are:
-      #  - RSA4096
-      #  - P256
-      key_specification: P256
-      key_storage_provider: Microsoft Software Key Storage Provider
+      crl_period: 14
+  issuing_cas:
+    - name: app-IssuingCA1
+      cn: ICA1
+      description: Hosting the first CA issuing certificates to subscribers.
+      ip: 192.168.56.101
+      vlan: VLAN0
+      netmask: 255.255.255.0
+      gateway: 192.168.56.1
+      os: Windows Server 2022
+      dcom_port: 4000
+      web_enrollment: Yes
+      smtp_exit_module: Yes
+      location:
+        log: C:\Log
+        database: C:\Database
+      policy:
+        high_serial: 0xFFFFFFFF
+        keep_expired_certificates_on_crl: No
+        # Possible choices are:
+        #  - RSA4096
+        #  - P256
+        key_specification: P256
+        key_storage_provider: Microsoft Software Key Storage Provider
+    - name: app-IssuingCA2
+      cn: ICA2
+      description: Hosting the second CA issuing certificates to subscribers.
+      ip: 192.168.56.102
+      vlan: VLAN0
+      netmask: 255.255.255.0
+      gateway: 192.168.56.1
+      os: Windows Server 2022
+      dcom_port: 4000
+      web_enrollment: Yes
+      smtp_exit_module: Yes
+      location:
+        log: C:\Log
+        database: C:\Database
+      policy:
+        high_serial: 0xFFFFFFFF
+        keep_expired_certificates_on_crl: No
+        # Possible choices are:
+        #  - RSA4096
+        #  - P256
+        key_specification: P256
+        key_storage_provider: Microsoft Software Key Storage Provider
   repositories:
     - name: app-Repository
       description: Distributing CA certificates and CRLs over HTTP.

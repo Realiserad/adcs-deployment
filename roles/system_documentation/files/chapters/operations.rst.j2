@@ -7,21 +7,20 @@ These maintenance tasks should be carried out by the system owner in accordance 
 
 .. note:: Failure to carry out any maintenance task within the timeframe stipulated in the maintenance schedule, can cause degradation of the system or a system outage. It is the responsibiliy of the system owner to carry out the maintenance tasks, and to make a note of any deviations to the maintenance schedule.
 
-{% if servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' or servers.issuing_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
-Limited protection of private keys
-----------------------------------
+{% if servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
+Limited protection of root CA private keys
+------------------------------------------
 
-The installation was done with limited protection of the private keys.
+The installation of the root CA was done with limited protection of the private keys.
 
-As no *hardware security module (HSM)* is being used, the private key of the *certificate authority (CA)* is stored on disk and may be decrypted and/or copied by any personnel with logical access to the CA.
+As no *hardware security module (HSM)* is being used, the private key of the *root certificate authority (root CA)* is stored on disk and may be decrypted and/or copied by any personnel with access to the CA.
 
-As a consequence, it is important to restrict access to CA machines using logical and physical acccess control and be vigilant about any connection attempts.
+As a consequence, it is important to restrict access to the root CA machine using logical and physical acccess control and be vigilant about access attempts.
 
-- The root CA machine ``{{ servers.root_ca.name }}`` should be turned off when not in use.
-- Access should only be given to vetted personnel according to the CP/CPS.
+- The root CA machine ``{{ servers.root_ca.name }}`` should be turned off and stored in a safe when not in use.
+- Access should only be given to vetted personnel according to the CP/CPS or applicable company policy.
 - Access control lists and CA logs should be reviewed according to the maintenance schedule.
-- Any keys which are suspected or confirmed to be compromised should be revoked.
-
+- Any keys which are suspected or confirmed to be compromised should be replaced.
 {% endif %}
 
 Inspect the status of the PKI
@@ -29,7 +28,11 @@ Inspect the status of the PKI
 
 To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to one of the issuing CAs listed below using RDP.
+
+{% for issuing_ca in servers.issuing_cas %}
+- ``{{ issuing_ca.name }} with IP address ``{{ issuing_ca.ip }}``
+{% endfor %}
 
 #. Click on the start button, type ``pkiview.msc`` and press **Enter**.
 
@@ -170,20 +173,21 @@ Replace a root CA
 #. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
 {% endfor %}
 
-#. Transfer the file `C:\R1.crt`` to {{ servers.issuing_ca.name }} and publish the root CA certificate to AD::
+#. Transfer the file `C:\R1.crt`` to {{ servers.issuing_cas[0].name }} and publish the root CA certificate to AD::
 
     CertUtil -dspublish -f C:\R1.crt
 
 .. _renew new keys:
 
-Replace an issuing CA and create a new keypair
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{% for issuing_ca in servers.issuing_cas %}
+Replace {{ issuing_ca.cn }} and create a new keypair
+~~~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
 #. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
 
-#. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
+#. Right-click on ``{{ issuing_ca.cn }}`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
 
 #. Windows will ask if you want to stop ADCS. Click **Yes** to stop ADCS and continue with the renewal.
 
@@ -191,32 +195,32 @@ Replace an issuing CA and create a new keypair
 
 #. Click on **Cancel** to save the CSR to disk and to start ADCS again.
 
-#. Transfer the file ``C:\ICA1.req`` to ``{{ servers.root_ca.name }}``.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to ``{{ servers.root_ca.name }}``.
 
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
 
 #. Submit the CSR for the issuing CA and save the request ID::
 
-    $request = CertReq -submit -config - C:\ICA1.req | Out-String | Select-String 'RequestId: (\d+)'
+    $request = CertReq -submit -config - C:\{{ issuing_ca.cn }}.req | Out-String | Select-String 'RequestId: (\d+)'
     $requestId = $request.Matches[0].Groups[1].Value.Trim()
 
 #. Accept the request and retrieve a copy of the new issuing CA certificate::
 
     CertUtil -resubmit $requestId
-    CertReq -retrieve -config - $requestId C:\ICA1-G2.crt
+    CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}-G2.crt
 
 .. note:: Replace the ``G2`` postfix appropriately if you have previously renewed the CA.
 
-#. Transfer the file ``C:\ICA1-G2.crt`` to ``{{ servers.issuing_ca.name }}``.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}-G2.crt`` to ``{{ issuing_ca.name }}``.
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
 #. Install the CA certificate::
 
-    CertUtil -installcert "C:\ICA1-G2.crt"
+    CertUtil -installcert "C:\{{ issuing_ca.cn }}-G2.crt"
 
 {% for repository in servers.repositories %}
-#. Transfer the file ``C:\ICA1-G2.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}-G2.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}.
 {% endfor %}
 
 #. Update the CDP and AIA paths to point to the new CRL and CA certificate::
@@ -234,14 +238,14 @@ Replace an issuing CA and create a new keypair
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
 
-Renew an issuing CA and reuse the existing keypair
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Renew {{ issuing_ca.cn }} reuse the existing keypair
+~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
 #. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
 
-#. Right-click on ``ICA1`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
+#. Right-click on ``{{ issuing_ca.cn }}`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
 
 #. Windows will ask if you want to stop ADCS. Click **Yes** to stop ADCS and continue with the renewal.
 
@@ -249,27 +253,27 @@ Renew an issuing CA and reuse the existing keypair
 
 #. Click on **Cancel** to save the CSR to disk and to start ADCS again.
 
-#. Transfer the file ``C:\ICA1.req`` to ``{{ servers.root_ca.name }}``.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to ``{{ servers.root_ca.name }}``.
 
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
 
 #. Submit the CSR for the issuing CA and save the request ID::
 
-    $request = CertReq -submit -config - C:\ICA1.req | Out-String | Select-String 'RequestId: (\d+)'
+    $request = CertReq -submit -config - C:\{{ issuing_ca.cn }}.req | Out-String | Select-String 'RequestId: (\d+)'
     $requestId = $request.Matches[0].Groups[1].Value.Trim()
 
 #. Accept the request and retrieve a copy of the new issuing CA certificate::
 
     CertUtil -resubmit $requestId
-    CertReq -retrieve -config - $requestId C:\ICA1.crt
+    CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}.crt
 
-#. Transfer the file ``C:\ICA1.crt`` to ``{{ servers.issuing_ca.name }}``.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``{{ issuing_ca.name }}``.
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
 #. Install the CA certificate::
 
-    CertUtil -installcert "C:\ICA1.crt"
+    CertUtil -installcert "C:\{{ issuing_ca.cn }}.crt"
 
 #. Restart ADCS::
 
@@ -282,7 +286,9 @@ Renew an issuing CA and reuse the existing keypair
     Start-ScheduledTask -TaskName "CopyCRL"
 
 {% for repository in servers.repositories %}
-#. Transfer the file ``C:\ICA1.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}. Replace the existing file.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}. Replace the existing file.
+{% endfor %}
+
 {% endfor %}
 
 Revoke an issuing CA
@@ -307,7 +313,7 @@ You should only revoke an issuing CA certificate if you suspect that the private
 Revoke the certificate for a domain computer
 --------------------------------------------
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to the CA machine that issued the certificate using RDP.
 
 #. Make a note of the serial number of the certificate you want to revoke.
 
@@ -337,7 +343,7 @@ Revoke the certificate for a domain computer
 Revoke the certificate for a domain user
 ----------------------------------------
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to the CA machine that issued the certificate using RDP.
 
 #. Make a note of the serial number of the certificate you want to revoke.
 
@@ -369,7 +375,7 @@ Reenroll all certificate holders
 
 Reenrollment of a certificate occurrs when the certificate is about to expire, or when the schema version of the certificate template used to issue the certificate has been updated.
 
-#. Log in to ``{{ servers.issuing_ca.name }}`` using RDP.
+#. Log in to one of the issuing CA machines from where you want to reissue certificates using RDP.
 
 #. Click on the Start button, type ``mmc.exe`` and press **Enter**.
 
@@ -457,11 +463,12 @@ Manually enroll for a computer certificate
 
 #. Wait until the certificate has been issued och click on **Finish** to close the wizard.
 
-{% if servers.issuing_ca.web_enrollment %}
+{% for issuing_ca in servers.issuing_cas %}
+{% if issuing_ca.web_enrollment %}
 Manually enroll using web enrollment
 ------------------------------------
 
-#. Open Internet Explorer and navigate to ``https://{{ servers.issuing_ca.name }}/certsrv``.
+#. Open Internet Explorer and navigate to ``https://{{ issuing_ca.name }}/certsrv``.
 
 #. Log in with your domain account.
 
@@ -479,3 +486,4 @@ Manually enroll using web enrollment
 
 #. Click on the link **Install this certificate** to install the certificate to Windows certificate store.
 {% endif %}
+{% endfor %}

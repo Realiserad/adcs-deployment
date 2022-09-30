@@ -4,31 +4,39 @@ from diagrams.generic.os import Windows
 with Diagram("PKI Topology", show = False, filename = "topology"):
     with Cluster("Network Zone - Tier 0"):
         root_ca = Windows("{{ servers.root_ca.name }}")
-        issuing_ca = Windows("{{ servers.issuing_ca.name }}")
+        with Cluster("Issuing CAs"):
+{% for issuing_ca in servers.issuing_cas %}
+            {{ issuing_ca.cn.lower().replace(' ', '_') }} = Windows("{{ issuing_ca.name }}")
+{% endfor %}
+{% for issuing_ca in servers.issuing_cas %}
+            {{ issuing_ca.cn.lower().replace(' ', '_') }} << \
+                Edge(color = "black",
+                    style = "dashed",
+                    label = "Signing CA certificates for") << \
+                root_ca
+{% endfor %}
         with Cluster("Domain controllers"):
             domain_controllers = [
 {% for dc in servers.domain_controllers %}
                 Windows("{{ dc.name }}"),
 {% endfor %}
             ]
-    with Cluster("Network Zone - Tier 1"):
-        repositories = [
-{% for repository in servers.repositories %}
-            Windows("{{ repository.name }}"),
+{% for issuing_ca in servers.issuing_cas %}
+            domain_controllers << \
+                Edge(color = "blue",
+                    style = "solid",
+                    label = "Fetches GPOs from") << \
+                {{ issuing_ca.cn.lower().replace(' ', '_') }}
 {% endfor %}
-        ]
-    issuing_ca << \
-        Edge(color = "black",
-             style = "dashed",
-             label = "Signing CA certificates for") << \
-        root_ca
-    repositories << \
-        Edge(color = "green",
-             style = "solid",
-             label = "Publishes CRLs to") << \
-        issuing_ca
-    domain_controllers << \
-        Edge(color = "blue",
-             style = "solid",
-             label = "Fetches GPOs from") << \
-        issuing_ca
+    with Cluster("Network Zone - Tier 1"):
+        with Cluster("Repositories"):
+            repositories = [
+    {% for repository in servers.repositories %}
+                Windows("{{ repository.name }}"),
+    {% endfor %}
+            ]
+            repositories << \
+                Edge(color = "green",
+                    style = "solid",
+                    label = "Publishes CRLs to") << \
+                {{ servers.issuing_cas[0].cn.lower().replace(' ', '_') }}
