@@ -29,7 +29,7 @@
 - name: Create SMTP exit modules from templates
   template:
     src: "{{ item }}"
-    dest: '{{ playbook_dir }}/_docs/scripts/{{ item | basename | regex_replace("\.j2$", "") }}'
+    dest: '{{ playbook_dir }}/_docs/scripts/smtp_exit_modules/{{ item | basename | regex_replace("\.j2$", "") }}'
   when: smtp_exit_module is defined
   with_fileglob:
     - templates/scripts/smtp_exit_modules/*.j2
