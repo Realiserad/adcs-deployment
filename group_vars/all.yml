@@ -95,6 +95,9 @@ servers:
         #  - P256
         key_specification: P256
         key_storage_provider: Microsoft Software Key Storage Provider
+      templates:
+        - Legacy Computer
+        - Legacy User
     - name: app-IssuingCA2
       cn: ICA2
       description: Hosting the second CA issuing certificates to subscribers.

@@ -530,18 +530,30 @@ Enable certificate templates
 ----------------------------
 
 {% for issuing_ca in servers.issuing_cas %}
+Enable certificate templates for {{ issuing_ca.cn }}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{{ issuing_ca.cn | length * '~' }}
+
 #. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
-#. Pull the GPO changes from the domain controller::
+#. Pull any GPO changes from the domain controller::
 
     gpupdate
 
+{% if issuing_ca.templates is defined %}
+{% for template in issuing_ca.templates %}
+#. Enable the template *{{ template }}* using PowerShell::
+
+    Add-CATemplate -Name "{{ template | replace(' ', '') }}" -Force
+
+{% endfor %}
+{% else %}
 {% for template in templates %}
 #. Enable the template *{{ template.name }}* using PowerShell::
 
     Add-CATemplate -Name "{{ template.name | replace(' ', '') }}" -Force
 
 {% endfor %}
+{% endif %}
 {% endfor %}
 
 {% for issuing_ca in servers.issuing_cas %}
