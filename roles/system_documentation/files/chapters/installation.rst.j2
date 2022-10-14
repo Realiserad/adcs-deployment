@@ -397,7 +397,7 @@ Publish a CRL from {{ issuing_ca.cn }} to the repository
 
 {% endfor %}
 
-{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
+{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | list | length > 0 %}
 Add URL redirects
 -----------------
 
@@ -421,6 +421,7 @@ If the old PKI uses AIA and CDP URLs which do not match the URLs used by this in
 
 {% endif %}
 
+{% if templates is defined and templates | selectattr('from', 'defined') | list | length > 0 %}
 Configure certificate templates
 -------------------------------
 
@@ -434,7 +435,7 @@ Configure certificate templates
 
 #. Double-click on **Certificate Templates** in the tree on the left. This will show all available certificate templates in a list on the right.
 
-{% for template in templates %}
+{% for template in templates | selectattr('from', 'defined') | list %}
 #. Right-click on **{{ template.from }}** and click on **Duplicate Template** in the context menu.
 
 #. Click on the **Compatibility** tab and make the following changes:
@@ -496,6 +497,7 @@ Configure certificate templates
 
 #. Click on **OK** to save the template.
 {% endfor %}
+{% endif %}
 
 Enable autoenrollment
 ---------------------

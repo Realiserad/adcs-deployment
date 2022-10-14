@@ -98,6 +98,7 @@ The following endpoints are used for distribution of CA certificates.
 
 The appropriate URLs are put in the *Authority Information Access certificate extension* (1.3.6.1.5.5.7.1.1) of issued certificates.
 
+{% if templates is defined %}
 Certificate templates
 ---------------------
 
@@ -113,6 +114,7 @@ The following certificate templates are used for certificate issuance.
    * - {{ template.name }}
      - {{ template.description }}
 {% endfor %}
+{% endif %}
 
 Publication of CA certificates
 ------------------------------
