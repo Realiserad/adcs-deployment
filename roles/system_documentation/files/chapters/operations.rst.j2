@@ -94,7 +94,7 @@ When configuring Windows, configure the name of the server to be ``{{ servers.ro
 
     reg import C:\Backup\backup.reg
 
-#. Restart ADCS::
+#. Restart ADCS and make sure it starts without errors::
 
     net stop certsvc
     net start certsvc

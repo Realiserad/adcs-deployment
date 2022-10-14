@@ -9,6 +9,9 @@ Microsoft PKI
    chapters/system-overview
    chapters/prerequisites
    chapters/installation
+{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
+   chapters/switchover
+{% endif %}
    chapters/operations
    chapters/network-configuration
    chapters/inventory

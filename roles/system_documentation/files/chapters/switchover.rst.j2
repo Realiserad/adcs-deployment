@@ -1,0 +1,53 @@
+Switchover to the new PKI
+=========================
+
+This chapter describes the switchover from the old to the new PKI environment.
+
+The switchover occurrs during a maintenance window. During the switchover, the following steps are performed:
+
+#. The old PKI is disconnected from the outside, e.g. by removing the corresponding records from the DNS server.
+#. A backup is performed of the PKI and transferred to the new PKI.
+#. The backup is restored on the new PKI.
+#. Traffic is redirected from the old PKI to the new PKI, e.g. by adding the corresponding records to the DNS server.
+
+No incoming certificate requests can be processed while the maintenance window is open.
+
+.. note:: The estimated downtime is 1 hour. It is recommended to time the instructions outlined in this chapter for a more reliable estimate.
+
+Start the maintenance window
+----------------------------
+
+#. Before starting the maintenance window, ensure no certificates or CRLs expire during the maintenance window, as this can cause disruption on the client.
+
+List any certificates expiring within the next eight hours using the following PowerShell command::
+
+    CertUtil -restrict "NotAfter<=now+00:08","NotAfter>now" -view -out "Requester Name","Certificate Expiration date" | More
+
+#. Begin the maintenance window by disconnecting the old PKI from the outside world. This can be done by removing the corresponding records from the DNS server. If possible, verify that new certificate requests are failing.
+
+#. Perform a fresh backup of the old PKI servers. It is only necessary to back up the CA database.
+
+{% for issuing_ca in servers.issuing_cas %}
+Restore the backup for {{ issuing_ca.cn }}
+-----------------------{{ issuing_ca.cn | length * '-'}}
+
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
+
+#. Restore the CA database using CertUtil::
+
+    Remove-Item C:\Windows\System32\CertLog\* -Force
+    CertUtil -restoreDB "{{ issuing_ca.location.existing_backup }}"
+
+#. Restart ADCS and make sure it starts without errors::
+
+    net stop certsvc
+    net start certsvc
+
+{% endfor %}
+
+Stop the maintenance window
+---------------------------
+
+#. Stop the maintenance window by redirecting traffic to the new PKI. This can be done by adding the corresponding records to the DNS server.
+
+#. Verify the operation of the new PKI according to the test protocol.

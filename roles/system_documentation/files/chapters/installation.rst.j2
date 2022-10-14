@@ -1,9 +1,11 @@
 Installation Manual
 ===================
 
+This chapter describes the installation of the PKI.
+
 {% for issuing_ca in servers.issuing_cas %}
-Create a CSR for {{ issuing_ca.cn }}
------------------{{ issuing_ca.cn | length * '-' }}
+Prepare {{ issuing_ca.cn }}
+--------{{ issuing_ca.cn | length * '-' }}
 
 #. Log in to {{ issuing_ca.name }} using RDP.
 
@@ -24,6 +26,7 @@ Create a CSR for {{ issuing_ca.cn }}
     [Certsrv_Server]
     LoadDefaultTemplates = 0
 
+{% if issuing_ca.location.existing_backup is undefined %}
 #. Install the ADCS Windows feature::
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
@@ -39,6 +42,37 @@ Create a CSR for {{ issuing_ca.cn }}
 {% endif %}
 
 #. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to {{ servers.root_ca.name }}.
+{% else %}
+Test {{ issuing_ca.cn }} backup integrity
+-----{{ issuing_ca.cn | length * '-' }}-----------------
+
+#. Restore the CA certificate and private key::
+
+    $BackupPassword = Read-Host -AsSecureString
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CertFile '{{ issuing_ca.location.existing_backup }}\{{ issuing_ca.cn}}.p12' -CertFilePassword $BackupPassword -DatabaseDirectory "{{ issuing_ca.location.database }}" -LogDirectory "{{ issuing_ca.location.log }}" -Force
+
+#. Restore the CA database using CertUtil::
+
+    CertUtil -restoreDB "{{ issuing_ca.location.existing_backup }}"
+
+#. Import the registry keys::
+
+    reg import "{{ issuing_ca.location.existing_backup }}\backup.reg"
+
+#. Restart ADCS and make sure it starts without errors::
+
+    net stop certsvc
+    net start certsvc
+
+#. Export the CA certificate using PowerShell::
+
+    CertUtil "-ca.cert" "C:\{{ issuing_ca.cn }}.crt"
+
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+
+{% endif %}
 {% endfor %}
 
 Create repositories
@@ -185,13 +219,17 @@ Publish root CA artefacts
 #. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
 {% endfor %}
 
+{% if servers.root_ca.location.existing_backup is not defined %}
 #. Transfer ``C:\R1.crt`` to servers.issuing_cas[0] and log in to servers.issuing_cas[0] using RDP.
 
 #. Publish the root CA certificate to AD::
 
     CertUtil -dspublish -f C:\R1.crt
 
+{% endif %}
+
 {% for issuing_ca in servers.issuing_cas %}
+{% if issuing_ca.location.existing_backup is not defined %}
 Sign the CA certificate for {{ issuing_ca.cn }}
 ----------------------------{{ issuing_ca.cn | length * '-' }}
 
@@ -207,11 +245,11 @@ Sign the CA certificate for {{ issuing_ca.cn }}
     CertUtil -resubmit $requestId
     CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}.crt
 
-{% for server in servers.repositories %}
-#. Transfer the files ``C:\ICA1.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
-{% endfor %}
+#. Transfer the files ``C:\{{ issuing_ca.cn }}.crt`` and ``C:\R1.crt`` to {{ issuing_ca.name }}.
 
-#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` and ``C:\R1.crt`` to {{ issuing_ca.name }}.
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
 
 Activate {{ issuing_ca.cn }}
 ---------{{ issuing_ca.cn | length * '-' }}
@@ -222,6 +260,9 @@ Activate {{ issuing_ca.cn }}
 
     Import-Certificate -FilePath C:\R1.crt -CertStoreLocation Cert:\LocalMachine\Root
     CertUtil -installcert "C:\{{ issuing_ca.cn }}.crt"
+
+Configure registry settings for {{ issuing_ca.cn }}
+--------------------------------{{ issuing_ca.cn | length * '-' }}
 
 #. Create and run the file ``C:\CASetup.bat``::
 
@@ -242,6 +283,8 @@ Activate {{ issuing_ca.cn }}
     net stop certsvc
     net start certsvc
     CertUtil -ping 30
+
+{% endif %}
 
 {% if smtp_exit_module is defined and issuing_ca.smtp_exit_module %}
 Install the SMTP exit module
@@ -353,6 +396,31 @@ Publish a CRL from {{ issuing_ca.cn }} to the repository
     Start-ScheduledTask -TaskName "CopyCRL"
 
 {% endfor %}
+
+{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
+Add URL redirects
+-----------------
+
+If the old PKI uses AIA and CDP URLs which do not match the URLs used by this installation, you need to add redirects in IIS to ensure that validation of existing certificates still work.
+
+#. To add a redirect in IIS, you must download and install the *URL Rewrite* module. You can download it from `here <https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi>`_.
+
+#. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
+
+#. Expand **Sites → PKI** in the tree on the left, and double-click on **URL Rewrite**.
+
+#. In the right pane, click on **Add Rule(s)...**.
+
+#. Select **Blank rule** and click on **OK**.
+
+#. Create the appropriate rewrite rule and click on **Apply** in the right pane.
+
+.. fig:: ../graphics/rewrite_rule.png
+   :alt: Example of a rewrite rule in IIS.
+
+   An example of a rewrite rule in IIS which redirects from ``/crl/R1.crl`` to ``/R1.crl``.
+
+{% endif %}
 
 Configure certificate templates
 -------------------------------
