@@ -1,8 +1,8 @@
 Appendix B - Inventory
 ======================
 
-.. list-table:: PKI machines
-   :widths: 1 1 1 1 3
+.. list-table:: Standalone root CA servers
+   :widths: 1 1 1 1 2
    :header-rows: 1
 
    * - Name
@@ -27,6 +27,16 @@ Appendix B - Inventory
        | Disk: 32 GB
        | vCPU: 2
      - Trust anchor for the ``{{ customer.domain }}`` domain.
+
+.. list-table:: Enterprise issuing CA servers
+   :widths: 1 1 1 1 2
+   :header-rows: 1
+
+   * - Name
+     - Network
+     - Operating system
+     - System requirements
+     - Purpose
 {% for issuing_ca in servers.issuing_cas %}
    * - {{ issuing_ca.name }}
      - | IP: {{ issuing_ca.ip }}
@@ -46,6 +56,16 @@ Appendix B - Inventory
        | vCPU: 2
      - Issues certificates for users and computers in the ``{{ customer.domain }}`` domain.
 {% endfor %}
+
+.. list-table:: Repositories
+   :widths: 1 1 1 1 2
+   :header-rows: 1
+
+   * - Name
+     - Network
+     - Operating system
+     - System requirements
+     - Purpose
 {% for server in servers.repositories %}
    * - {{ server.name }}
      - | IP: {{ server.ip }}
