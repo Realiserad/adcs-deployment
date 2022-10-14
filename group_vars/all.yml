@@ -2,7 +2,6 @@ title: Active Directory Certificate Services
 link: https://atea.se
 year: 2022
 theme: guzzle_sphinx_theme
-classification: Konfidentiell
 #system_description: Provide X.509 certificates for Windows workstations and employees at Atea.
 consultant:
   name: Foo Foobarsson
