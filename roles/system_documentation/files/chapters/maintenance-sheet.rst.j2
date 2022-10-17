@@ -2,106 +2,29 @@ Appendix C - Maintenance Schedule
 =================================
 
 .. list-table:: Maintenance items
-   :widths: 1 3 3 3
+   :widths: 3 1 3
    :header-rows: 1
 
-   * -
-     - Review ACL/logs of root CA
-     - Issue new root CA CRL
-     - Renew issuing CA
-   * - {{ year + 1 }}
-     - X
-     - X
+   * - Description of maintenance task
+     - Interval
+     - Notes
+   * - Review logical and physical access to PKI.
+     - Quartely.
      -
-   * - {{ year + 2 }}
-     - X
-     - X
+   * - Review root CA audit logs.
+     - Yearly
      -
-   * - {{ year + 3 }}
-     - X
-     - X
+   * - Test integrity of root CA backup.
+     - Yearly
+     - Perform a restore of the latest root CA backup to ensure the backup is functional.
+   * - Create a new root CA CRL.
+     - Yearly
      -
-   * - {{ year + 4 }}
-     - X
-     - X
-     - X
-   * - {{ year + 5 }}
-     - X
-     - X
+   * - Create a backup of the root CA.
+     - Yearly
      -
-   * - {{ year + 6 }}
-     - X
-     - X
+{% for issuing_ca in servers.issuing_cas %}
+   * - Renew {{ issuing_ca.cn }}
+     - In {{ now().year + 4 }}
      -
-   * - {{ year + 7 }}
-     - X
-     - X
-     -
-   * - {{ year + 8 }}
-     - X
-     - X
-     - X
-   * - {{ year + 9 }}
-     - X
-     - X
-     -
-   * - {{ year + 10 }}
-     - X
-     - X
-     -
-   * - {{ year + 11 }}
-     - X
-     - X
-     -
-   * - {{ year + 12 }}
-     - X
-     - X
-     - X
-   * - {{ year + 13 }}
-     - X
-     - X
-     -
-   * - {{ year + 14 }}
-     - X
-     - X
-     -
-   * - {{ year + 15 }}
-     - X
-     - X
-     -
-   * - {{ year + 16 }}
-     - X
-     - X
-     - X
-   * - {{ year + 17 }}
-     - X
-     - X
-     -
-   * - {{ year + 18 }}
-     - X
-     - X
-     -
-   * - {{ year + 19 }}
-     - X
-     - X
-     -
-   * - {{ year + 20 }}
-     - X
-     - X
-     - X
-   * - {{ year + 21 }}
-     - X
-     - X
-     -
-   * - {{ year + 22 }}
-     - X
-     - X
-     -
-   * - {{ year + 23 }}
-     - X
-     - X
-     -
-   * - {{ year + 24 }}
-     - X
-     - X
-     -
+{% endfor %}
