@@ -8,8 +8,8 @@ These maintenance tasks should be carried out by the system owner in accordance 
 .. note:: Failure to carry out any maintenance task within the timeframe stipulated in the maintenance schedule, can cause degradation of the system or a system outage. It is the responsibiliy of the system owner to carry out the maintenance tasks, and to make a note of any deviations to the maintenance schedule.
 
 {% if servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
-Limited protection of root CA private keys
-------------------------------------------
+Protection of root CA private keys
+----------------------------------
 
 The installation of the root CA was done with limited protection of the private keys.
 
@@ -23,8 +23,11 @@ As a consequence, it is important to restrict access to the root CA machine usin
 - Any keys which are suspected or confirmed to be compromised should be replaced.
 {% endif %}
 
+General
+-------
+
 Inspect the status of the PKI
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
 
@@ -44,8 +47,32 @@ To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
 
       An example of what Enterprise PKI Viewer looks like for a fully-functional ADCS installation.
 
-Back up the root CA
+Inspect the CA audit log
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to one of the CA machines.
+
+#. Click on the start button, type ``Eventvwr.exe`` and press **Enter** to open *Event Viewer*.
+
+#. In the left pane, expand **Windows logs** and click on **Security**. This shows all security events.
+
+#. In the *Actions* pane on the right, expand the *Security* category and click on **Filter Current Log...**
+
+#. In the *Event sources* dropdown, tick **Microsoft Windows security auditing**.
+
+#. In the *Task category* dropdown, tick **Certification Services**.
+
+#. Click on **OK** to apply the filter.
+
+.. figure:: ../graphics/filter_event_log.png
+
+      Applying a filter in Event Viewer allows you to see only events related to CA operations.
+
+Root CA maintenance
 -------------------
+
+Create a backup
+~~~~~~~~~~~~~~~
 
 Create a backup to disk using ``CertUtil``. The backup contains all issued certificates, the CA log, and the private key of the CA as a P12-file.
 
@@ -63,8 +90,8 @@ Create a backup to disk using ``CertUtil``. The backup contains all issued certi
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
-Restore a backup of the root CA
--------------------------------
+Restore a backup
+~~~~~~~~~~~~~~~~
 
 #. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
 
@@ -104,7 +131,7 @@ When configuring Windows, configure the name of the server to be ``{{ servers.ro
 .. _issue root ca crl:
 
 Issue a new root CA CRL
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
 
@@ -129,7 +156,7 @@ Clients can use the propritary Microsoft certificate extension ``1.3.6.1.4.1.311
 
 In a non-Microsoft environment it is recommended to create a new CA with a new keypair and subject DN and reissue any active certificates. If you are creating a new root CA you may have to manually distribute the new root CA certificate to the truststore of any machines which require it.
 
-Replace a root CA
+Renew the root CA
 ~~~~~~~~~~~~~~~~~
 
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
@@ -180,8 +207,8 @@ Replace a root CA
 .. _renew new keys:
 
 {% for issuing_ca in servers.issuing_cas %}
-Replace {{ issuing_ca.cn }} and create a new keypair
-~~~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~
+Renew {{ issuing_ca.cn }} and create a new keypair
+~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
@@ -238,8 +265,8 @@ Replace {{ issuing_ca.cn }} and create a new keypair
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
 
-Renew {{ issuing_ca.cn }} reuse the existing keypair
-~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Renew {{ issuing_ca.cn }} with an existing keypair
+~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
@@ -291,8 +318,11 @@ Renew {{ issuing_ca.cn }} reuse the existing keypair
 
 {% endfor %}
 
+Revoke certificates
+-------------------
+
 Revoke an issuing CA
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 You should only revoke an issuing CA certificate if you suspect that the private key may have been compromised, as revoking a CA will cause all certificates issued from it to be invalidated.
 
@@ -311,7 +341,7 @@ You should only revoke an issuing CA certificate if you suspect that the private
 #. Follow :ref:`the instructions to issue a new CRL from the root CA <issue root ca crl>`.
 
 Revoke the certificate for a domain computer
---------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to the CA machine that issued the certificate using RDP.
 
@@ -341,7 +371,7 @@ Revoke the certificate for a domain computer
     Start-ScheduledTask -TaskName "CopyCRL"
 
 Revoke the certificate for a domain user
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to the CA machine that issued the certificate using RDP.
 
@@ -370,8 +400,11 @@ Revoke the certificate for a domain user
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
 
+Issue certificates
+------------------
+
 Reenroll all certificate holders
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Reenrollment of a certificate occurrs when the certificate is about to expire, or when the schema version of the certificate template used to issue the certificate has been updated.
 
@@ -400,7 +433,7 @@ To trigger reenrollement of a user certificate, one of the following actions mus
     - The user must run ``CertUtil -user -pulse`` on their computer
 
 Manually enroll for a user certificate
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in with the user with whom you want to enroll.
 
@@ -437,7 +470,7 @@ Manually enroll for a user certificate
         What it looks like after a successful enrollment.
 
 Manually enroll for a computer certificate
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in as an administrator on the computer where you want to enroll.
 
@@ -463,12 +496,21 @@ Manually enroll for a computer certificate
 
 #. Wait until the certificate has been issued och click on **Finish** to close the wizard.
 
-{% for issuing_ca in servers.issuing_cas %}
-{% if issuing_ca.web_enrollment %}
+{% if servers.issuing_cas | selectattr('web_enrollment')| length > 0 %}
 Manually enroll using web enrollment
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Open Internet Explorer and navigate to ``https://{{ issuing_ca.name }}/certsrv``.
+#. Open Internet Explorer and navigate to ``https://<name of the CA server>/certsrv``.
+
+    .. note::
+
+        Replace **<name of the CA server>** with the name of the CA server you want to enroll for a certificate from.
+
+        The following CA servers are available for web enrollment:
+
+{% for ca in servers.issuing_cas | selectattr('web_enrollment') %}
+        - {{ ca.name }}
+{% endfor %}
 
 #. Log in with your domain account.
 
@@ -486,4 +528,3 @@ Manually enroll using web enrollment
 
 #. Click on the link **Install this certificate** to install the certificate to Windows certificate store.
 {% endif %}
-{% endfor %}
