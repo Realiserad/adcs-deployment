@@ -12,7 +12,11 @@ The documentation consists of three chapters. The first chapter describes the ar
 
 The second chapter describes the installation of the system. The purpose of this chapter is to give the reader a detailed understanding of how the system was set up, and assist personnel during a reinstallation, e.g. during an upgrade of Windows Server.
 
-The third chapter describes how to operate the PKI on a daily basis, and contains step by step instructions for common maintenance tasks.
+{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
+The third chapter describes the switchover procedure from the old PKI to the new PKI.
+{% endif %}
+
+Finally, the last chapter describes how to operate the PKI on a daily basis, and contains step by step instructions for common maintenance tasks.
 
 System information
 ------------------

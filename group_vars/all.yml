@@ -168,3 +168,9 @@ templates:
       email: Yes
       dnsname: No
       upn: Yes
+  - name: Legacy User
+    description: Legacy template for users.
+  - name: Legacy Computer
+    description: Legacy template for computers.
+autoenrollment:
+  gpo: PKI-GPO

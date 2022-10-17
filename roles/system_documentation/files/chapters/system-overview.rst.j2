@@ -80,7 +80,7 @@ The following endpoints are used for distribution of *Certificate Revocation Lis
    * - ICA1
      - ``http://pki.{{ customer.domain }}/ICA1-<CRLNameSuffix>.crl``
 
-The appropriate URLs are put in the *CRL Distribution Points certificate extension* (2.5.29.31) of issued certificates.
+The appropriate URLs are put in the *CRL Distribution Points* certificate extension (2.5.29.31) of issued certificates.
 
 Certificate authority issuers
 -----------------------------
@@ -96,7 +96,7 @@ The following endpoints are used for distribution of CA certificates.
    * - ICA1
      - ``http://pki.{{ customer.domain }}/<CertificateName>.crt``
 
-The appropriate URLs are put in the *Authority Information Access certificate extension* (1.3.6.1.5.5.7.1.1) of issued certificates.
+The appropriate URLs are put in the *Authority Information Access* certificate extension (1.3.6.1.5.5.7.1.1) of issued certificates.
 
 {% if templates is defined %}
 Certificate templates
@@ -104,15 +104,22 @@ Certificate templates
 
 The following certificate templates are used for certificate issuance.
 
+{% set all_templates = templates | map(attribute = 'name') | list | union(servers.issuing_cas | selectattr('templates', 'defined') | map(attribute = 'templates') | list | first) | unique %}
+
 .. list-table:: Certificate templates
    :widths: 1 2
    :header-rows: 1
 
    * - Display name
      - Description
-{% for template in templates %}
-   * - {{ template.name }}
-     - {{ template.description }}
+{% for template_name in all_templates %}
+{% set template_description = templates | selectattr('name', 'equalto', template_name) | map(attribute = 'description') %}
+   * - {{ template_name }}
+{% if template_description | length > 0 %}
+     - {{ template_description | first }}
+{% else %}
+     -
+{% endif %}
 {% endfor %}
 {% endif %}
 
@@ -126,4 +133,4 @@ Machines not a part of the {{ customer.domain }} domain may need to have the roo
 Autoenrollment
 --------------
 
-To ensure that clients and servers connected to the {{ customer.domain }} domain can receive certificates automatically, Microsoft Autoenrollment has been enabled for the GPO *Default Domain Policy*.
+To ensure that clients and servers connected to the {{ customer.domain }} domain can receive certificates automatically, Microsoft Autoenrollment has been enabled for the GPO *{{ autoenrollment.gpo | default('Default Domain Policy') }}*.

@@ -5,6 +5,10 @@ Prerequisites
 
 #. Ensure that the domain ``pki.{{ customer.domain }}`` can be resolved from the internet.
 
+{% if autoenrollment.gpo is defined %}
+#. Create a GPO called **{{ autoenrollment.gpo }}**.
+{% endif %}
+
 #. Create machines according to *Appendix B*.
 
 {% for issuing_ca in servers.issuing_cas %}

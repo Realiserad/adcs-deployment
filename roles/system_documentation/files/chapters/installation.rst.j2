@@ -3,78 +3,6 @@ Installation Manual
 
 This chapter describes the installation of the PKI.
 
-{% for issuing_ca in servers.issuing_cas %}
-Prepare {{ issuing_ca.cn }}
---------{{ issuing_ca.cn | length * '-' }}
-
-#. Log in to {{ issuing_ca.name }} using RDP.
-
-#. Optionally adjust the keyboard layout using PowerShell::
-
-    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
-
-#. Reset the password of the domain administrator account using PowerShell::
-
-    $NewPassword = Read-Host -AsSecureString
-    Set-ADAccountPassword -Identity {{ accounts.domain.user }} -NewPassword $NewPassword -Reset
-
-#. Create the file ``%systemroot%\CAPolicy.inf``::
-
-    [Version]
-    Signature = "$Windows NT$"
-
-    [Certsrv_Server]
-    LoadDefaultTemplates = 0
-
-{% if issuing_ca.location.existing_backup is undefined %}
-#. Install the ADCS Windows feature::
-
-    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
-
-#. Create an issuing CA using PowerShell::
-
-{% if issuing_ca.policy.key_specification == 'P256' %}
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#{{ issuing_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ issuing_ca.location.log }}" -DatabaseDirectory "{{ issuing_ca.location.database }}" -Force
-{% elif issuing_ca.policy.key_specification == 'RSA4096' %}
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#{{ issuing_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ issuing_ca.location.log }}" -DatabaseDirectory "{{ issuing_ca.location.database }}" -Force
-{% else %}
-    Unknown key specification '{{ issuing_ca.policy.key_specification }}'.
-{% endif %}
-
-#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to {{ servers.root_ca.name }}.
-{% else %}
-Test {{ issuing_ca.cn }} backup integrity
------{{ issuing_ca.cn | length * '-' }}-----------------
-
-#. Restore the CA certificate and private key::
-
-    $BackupPassword = Read-Host -AsSecureString
-    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CertFile '{{ issuing_ca.location.existing_backup }}\{{ issuing_ca.cn}}.p12' -CertFilePassword $BackupPassword -DatabaseDirectory "{{ issuing_ca.location.database }}" -LogDirectory "{{ issuing_ca.location.log }}" -Force
-
-#. Restore the CA database using CertUtil::
-
-    CertUtil -restoreDB "{{ issuing_ca.location.existing_backup }}"
-
-#. Import the registry keys::
-
-    reg import "{{ issuing_ca.location.existing_backup }}\backup.reg"
-
-#. Restart ADCS and make sure it starts without errors::
-
-    net stop certsvc
-    net start certsvc
-
-#. Export the CA certificate using PowerShell::
-
-    CertUtil "-ca.cert" "C:\{{ issuing_ca.cn }}.crt"
-
-{% for server in servers.repositories %}
-#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
-{% endfor %}
-
-{% endif %}
-{% endfor %}
-
 Create repositories
 -------------------
 
@@ -125,8 +53,42 @@ Create {{ server.name }}
     Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ server.name ~ '.' ~ customer.domain }}\PKIUser" -AccessRight Full -Force
 {% endfor %}
 
+{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | list | length > 0 %}
+Add URL redirects
+~~~~~~~~~~~~~~~~~
+
+If the old PKI uses AIA and CDP URLs which do not match the URLs used by this installation, you need to add redirects in IIS to ensure that validation of existing certificates still work.
+
+#. To add a redirect in IIS, you must download and install the *URL Rewrite* module. You can download it from `here <https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi>`_.
+
+#. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
+
+#. Expand **Sites → PKI** in the tree on the left, and double-click on **URL Rewrite**.
+
+#. In the right pane, click on **Add Rule(s)...**.
+
+#. Select **Blank rule** and click on **OK**.
+
+#. Create the appropriate rewrite rule and click on **Apply** in the right pane.
+
+.. figure:: ../graphics/url_rewrite.png
+
+   An example of a rewrite rule in IIS which redirects from ``/crl/R1.crl`` to ``/R1.crl``.
+
+#. Add additional rewrite rules as needed. Typically, you need at least two rewrites, one for the AIA URL and one for the CDP URL. You can list the AIA and CDP URLs configured for a CA using the following PowerShell commands::
+
+    (CertUtil -getReg "CA\CRLPublicationURLs" | Select-String "http(s)?://(.+)").Matches.Value
+    (CertUtil -getReg "CA\CACertPublicationURLs" | Select-String "http(s)?://(.+)").Matches.Value
+
+{% endif %}
+
+{% if servers.root_ca.location.existing_backup is defined %}
+Migrate the root CA
+-------------------
+{% else %}
 Create the root CA
 -------------------
+{% endif %}
 
 #. Log in to {{ servers.root_ca.name }} using RDP.
 
@@ -228,12 +190,93 @@ Publish root CA artefacts
 
 {% endif %}
 
+Prepare issuing CA machines
+---------------------------
+
 {% for issuing_ca in servers.issuing_cas %}
-{% if issuing_ca.location.existing_backup is not defined %}
-Sign the CA certificate for {{ issuing_ca.cn }}
-----------------------------{{ issuing_ca.cn | length * '-' }}
+Prepare {{ issuing_ca.cn }}
+~~~~~~~~{{ issuing_ca.cn | length * '~' }}
+
+#. Log in to {{ issuing_ca.name }} using RDP.
+
+#. Optionally adjust the keyboard layout using PowerShell::
+
+    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+
+#. Reset the password of the domain administrator account using PowerShell::
+
+    $NewPassword = Read-Host -AsSecureString
+    Set-ADAccountPassword -Identity {{ accounts.domain.user }} -NewPassword $NewPassword -Reset
+
+#. Create the file ``%systemroot%\CAPolicy.inf``::
+
+    [Version]
+    Signature = "$Windows NT$"
+
+    [Certsrv_Server]
+    LoadDefaultTemplates = 0
+
+{% if issuing_ca.location.existing_backup is undefined %}
+#. Install the ADCS Windows feature::
+
+    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+
+#. Create an issuing CA using PowerShell::
+
+{% if issuing_ca.policy.key_specification == 'P256' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "ECDSA_P256#{{ issuing_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ issuing_ca.location.log }}" -DatabaseDirectory "{{ issuing_ca.location.database }}" -Force
+{% elif issuing_ca.policy.key_specification == 'RSA4096' %}
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CryptoProviderName "RSA#{{ issuing_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -CACommonName "ICA1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -OutputCertRequestFile "C:\ICA1.csr" -LogDirectory "{{ issuing_ca.location.log }}" -DatabaseDirectory "{{ issuing_ca.location.database }}" -Force
+{% else %}
+    Unknown key specification '{{ issuing_ca.policy.key_specification }}'.
+{% endif %}
+
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to {{ servers.root_ca.name }}.
+{% else %}
+Test {{ issuing_ca.cn }} backup integrity
+~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~
+
+#. Restore the CA certificate and private key::
+
+    $BackupPassword = Read-Host -AsSecureString
+    Install-AdcsCertificationAuthority -CAType EnterpriseSubordinateCa -CertFile '{{ issuing_ca.location.existing_backup }}\{{ issuing_ca.cn}}.p12' -CertFilePassword $BackupPassword -DatabaseDirectory "{{ issuing_ca.location.database }}" -LogDirectory "{{ issuing_ca.location.log }}" -Force
+
+#. Restore the CA database using CertUtil::
+
+    CertUtil -restoreDB "{{ issuing_ca.location.existing_backup }}"
+
+#. Import the registry keys::
+
+    reg import "{{ issuing_ca.location.existing_backup }}\backup.reg"
+
+#. Restart ADCS and make sure it starts without errors::
+
+    net stop certsvc
+    net start certsvc
+
+#. Export the CA certificate using PowerShell::
+
+    CertUtil "-ca.cert" "C:\{{ issuing_ca.cn }}.crt"
+
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+
+{% endif %}
+{% endfor %}
+
+{% for issuing_ca in servers.issuing_cas %}
+Finalise the configuration of {{ issuing_ca.cn }}
+------------------------------{{ issuing_ca.cn | length * '-' }}
+
+Log in to {{ issuing_ca.cn }}
+~~~~~~~~~~{{ issuing_ca.cn | length * '-' }}
 
 #. Log in to {{ servers.root_ca.name }} using RDP.
+
+{% if issuing_ca.location.existing_backup is not defined %}
+Sign the CA certificate
+~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Submit the CSR for {{ issuing_ca.cn }} and save the request ID::
 
@@ -251,18 +294,16 @@ Sign the CA certificate for {{ issuing_ca.cn }}
 #. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
 {% endfor %}
 
-Activate {{ issuing_ca.cn }}
----------{{ issuing_ca.cn | length * '-' }}
-
-#. Log in to {{ issuing_ca.name }} using RDP.
+Import the CA certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Install the CA certificate chain::
 
     Import-Certificate -FilePath C:\R1.crt -CertStoreLocation Cert:\LocalMachine\Root
     CertUtil -installcert "C:\{{ issuing_ca.cn }}.crt"
 
-Configure registry settings for {{ issuing_ca.cn }}
---------------------------------{{ issuing_ca.cn | length * '-' }}
+Configure registry settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Create and run the file ``C:\CASetup.bat``::
 
@@ -288,7 +329,7 @@ Configure registry settings for {{ issuing_ca.cn }}
 
 {% if smtp_exit_module is defined and issuing_ca.smtp_exit_module %}
 Install the SMTP exit module
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Create and run the file ``C:\ConfigureSMTPExitModule.bat``.
 
@@ -298,9 +339,50 @@ Install the SMTP exit module
 
 {% endif %}
 
+{% if issuing_ca.dcom_port is defined %}
+Set a static DCOM port
+~~~~~~~~~~~~~~~~~~~~~~
+
+#. Click on the start button, type ``Component Services`` and press **Enter**.
+
+#. In the tree on the left, expand **Component Services → Computers → My Computer** and click on **DCOM Config**.
+
+#. In the panel on the right, right-click on **CertSrv Request** on click on **Properties**.
+
+#. Click on the **Endpoints** tab.
+
+#. Click on **Add**. The *DCOM Enpoint Properties* dialog is shown.
+
+#. Select the option **Use static endpoint** and type in the port number ``{{ issuing_ca.dcom_port }}`` in the textbox, then click on **OK**.
+
+#. Click on **OK** to close the *CertSrv Request Properties* dialog.
+
+.. figure:: ../graphics/dcom_configuration.png
+
+        DCOM configuration for *CertSrv Request* with a static endpoint for port 4000.
+
+#. Disable RPC for the *ICertPassage* interface::
+
+    certutil -setreg ca\interfaceflags +IF_NORPCICERTREQUEST
+
+#. Restart ADCS::
+
+    net stop certsvc
+    net start certsvc
+
+.. note:: The CA will not change listening ports until the first certificate request comes in. This means that you must send a certificate request to the CA before making adjustments to the firewall rules.
+
+    Check which port is being used by running something like:
+
+    .. code-block:: powershell
+
+        netstat -anob | Select-String -Pattern certsrv.exe -Context 1,0
+
+{% endif %}
+
 {% if issuing_ca.web_enrollment %}
 Configure web enrollment
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Run the following commands in PowerShell to enable web enrollment::
 
@@ -369,8 +451,8 @@ Configure web enrollment
 #. Tick the checkbox **Require SSL** and click on **Apply** in the pane on the right.
 {% endif %}
 
-Publish a CRL from {{ issuing_ca.cn }} to the repository
--------------------{{ issuing_ca.cn | length * '-' }}------------------
+Schedule publication of CRLs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Create the file ``C:\CopyCRL.bat``::
 
@@ -397,33 +479,12 @@ Publish a CRL from {{ issuing_ca.cn }} to the repository
 
 {% endfor %}
 
-{% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | list | length > 0 %}
-Add URL redirects
------------------
-
-If the old PKI uses AIA and CDP URLs which do not match the URLs used by this installation, you need to add redirects in IIS to ensure that validation of existing certificates still work.
-
-#. To add a redirect in IIS, you must download and install the *URL Rewrite* module. You can download it from `here <https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi>`_.
-
-#. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
-
-#. Expand **Sites → PKI** in the tree on the left, and double-click on **URL Rewrite**.
-
-#. In the right pane, click on **Add Rule(s)...**.
-
-#. Select **Blank rule** and click on **OK**.
-
-#. Create the appropriate rewrite rule and click on **Apply** in the right pane.
-
-.. figure:: ../graphics/url_rewrite.png
-
-   An example of a rewrite rule in IIS which redirects from ``/crl/R1.crl`` to ``/R1.crl``.
-
-{% endif %}
+Configure Active Directory
+--------------------------
 
 {% if templates is defined and templates | selectattr('from', 'defined') | list | length > 0 %}
-Configure certificate templates
--------------------------------
+Create certificate templates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Log in to one of the domain controllers using RDP.
 
@@ -500,11 +561,11 @@ Configure certificate templates
 {% endif %}
 
 Enable autoenrollment
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 #. Click on the start button, type **Group Policy Management** and press **Enter**.
 
-#. Right-click on **Domains → {{ customer.domain }} → Group Policy Objects → Default Domain Policy** and click on **Edit** to open *Group Policy Management Editor*.
+#. Right-click on **Domains → {{ customer.domain }} → Group Policy Objects → {{ autoenrollment.gpo | default('Default Domain Policy') }}** and click on **Edit** to open *Group Policy Management Editor*.
 
 #. Expand **Computer Configuration → Policies → Windows Settings → Security Settings** and click on **Public Key Policies**. The public key policies is shown on the right. Double-click on **Certificate Services Client - Auto-enrollment** to open *Certificate Services Client - Auto-enrollment Properties*.
 
@@ -555,50 +616,5 @@ Enable certificate templates for {{ issuing_ca.cn }}
     Add-CATemplate -Name "{{ template.name | replace(' ', '') }}" -Force
 
 {% endfor %}
-{% endif %}
-{% endfor %}
-
-{% for issuing_ca in servers.issuing_cas %}
-{% if issuing_ca.dcom_port is defined %}
-Set a static DCOM port
-----------------------
-
-#. Log in to ``{{ issuing_ca.name }}`` using RDP.
-
-#. Click on the start button, type ``Component Services`` and press **Enter**.
-
-#. In the tree on the left, expand **Component Services → Computers → My Computer** and click on **DCOM Config**.
-
-#. In the panel on the right, right-click on **CertSrv Request** on click on **Properties**.
-
-#. Click on the **Endpoints** tab.
-
-#. Click on **Add**. The *DCOM Enpoint Properties* dialog is shown.
-
-#. Select the option **Use static endpoint** and type in the port number ``{{ issuing_ca.dcom_port }}`` in the textbox, then click on **OK**.
-
-#. Click on **OK** to close the *CertSrv Request Properties* dialog.
-
-.. figure:: ../graphics/dcom_configuration.png
-
-        DCOM configuration for *CertSrv Request* with a static endpoint for port 4000.
-
-#. Disable RPC for the *ICertPassage* interface::
-
-    certutil -setreg ca\interfaceflags +IF_NORPCICERTREQUEST
-
-#. Restart ADCS::
-
-    net stop certsvc
-    net start certsvc
-
-.. note:: The CA will not change listening ports until the first certificate request comes in. This means that you must send a certificate request to the CA before making adjustments to the firewall rules.
-
-    Check which port is being used by running something like:
-
-    .. code-block:: powershell
-
-        netstat -anob | Select-String -Pattern certsrv.exe -Context 1,0
-
 {% endif %}
 {% endfor %}
