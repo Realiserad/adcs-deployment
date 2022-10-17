@@ -78,11 +78,11 @@ Create a backup to disk using ``CertUtil``. The backup contains all issued certi
 
 #. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
 
-#. Run the backup command and type in the password used to protect the private key::
+#. Open PowerShell and run the following command. When prompted, type in the password which will be used to encrypt the private key::
 
     CertUtil -backup C:\Backup
 
-#. Backup keys in the registry::
+#. Backup the keys in the registry::
 
     reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\Backup\backup.reg
 

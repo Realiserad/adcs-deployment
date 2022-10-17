@@ -3,6 +3,47 @@ Installation Manual
 
 This chapter describes the installation of the PKI.
 
+{% if servers.root_ca.location.existing_backup is defined or servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
+Create a backup of the old PKI
+------------------------------
+
+{% if servers.root_ca.location.existing_backup is defined %}
+Back up the old root CA
+~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to the old root CA using RDP.
+
+#. Open PowerShell and run the following command. When prompted, type in the password which will be used to encrypt the private key::
+
+    CertUtil -backup C:\Backup
+
+#. Backup the keys in the registry::
+
+    reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\Backup\backup.reg
+
+#. Transfer the backup directory ``C:\Backup`` to ``{{ servers.root_ca.location.existing_backup }} on ``{{ servers.root_ca.name }}``.
+
+{% endif %}
+
+{% for issuing_ca in servers.issuing_cas %}
+Back up the old issuing CA {{ issuing_ca.cn }}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~{{ '~' * (issuing_ca.cn | length) }}
+
+#. Log in to the old issuing CA machine for {{ issuing_ca.cn }} using RDP.
+
+#. Open PowerShell and run the following command. When prompted, type in the password which will be used to encrypt the private key::
+
+    CertUtil -backup C:\Backup
+
+#. Backup the keys in the registry::
+
+    reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\Backup\backup.reg
+
+#. Transfer the backup directory ``C:\Backup`` to ``{{ issuing_ca.location.existing_backup }}`` on ``{{ issuing_ca.name }}``.
+
+{% endfor %}
+{% endif %}
+
 Create repositories
 -------------------
 
