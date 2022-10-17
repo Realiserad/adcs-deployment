@@ -55,7 +55,7 @@ Create {{ server.name }}
 
 #. Optionally adjust the keyboard layout using PowerShell::
 
-    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+    Set-WinUserLanguageList -LanguageList {{ customer.keyboard_layout }}, en-US -Force
 
 #. Reset the password of the local administrator account using PowerShell::
 
@@ -135,7 +135,7 @@ Create the root CA
 
 #. Optionally adjust the keyboard layout using PowerShell::
 
-    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+    Set-WinUserLanguageList -LanguageList {{ customer.keyboard_layout }}, en-US -Force
 
 #. Check the local time against a reliable watch, and adjust it if necessary.
 
@@ -242,7 +242,7 @@ Prepare {{ issuing_ca.cn }}
 
 #. Optionally adjust the keyboard layout using PowerShell::
 
-    Set-WinUserLanguageList -LanguageList sv-SE, en-US -Force
+    Set-WinUserLanguageList -LanguageList {{ customer.keyboard_layout }}, en-US -Force
 
 #. Reset the password of the domain administrator account using PowerShell::
 

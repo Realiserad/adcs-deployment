@@ -14,6 +14,7 @@ owner:
   company: Atea Managed Services
 customer:
   domain: atea.se
+  keyboard_layout: sv-SE
   name: Atea Sverige AB
   simple_name: Atea
   city: Kista
