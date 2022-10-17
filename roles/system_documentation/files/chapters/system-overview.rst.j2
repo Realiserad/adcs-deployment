@@ -36,7 +36,7 @@ The PKI has been implemented as a two-tier CA hierachy with one root CA and one 
 
 The root CA signs the CA certificate for the issuing CA, and is stored offline when not in use. If the private key for the issuing CA is compromised, it is possible to revoke the issuing CA using the root CA without having to create a new CA hierarchy.
 
-To ensure high availability for revocation functions and avoid exposing the issuing CA to the internet, CRLs and CA certificates are published to a separate set of servers (known as a repository).
+To ensure high availability for revocation functions and avoid exposing the issuing CA to the internet, CRLs and CA certificates are published to a separate set of servers (known as *repositories*).
 
 .. figure:: ../diagrams/topology.png
 
