@@ -40,7 +40,7 @@ You can a container to build the documentation on any system where you have a co
 
 4. Run the container. The Ansible configuration file and a directory with customisations  must be provided on a volume mapped to ``/build`` on the container. The output files are written to the ``release`` folder on this volume before the container stops.
 
-For example, if you are on a Linux-system and use Docker as your container runtime:
+For example, if you are on a Linux system and use Docker as your container runtime:
 ```
 docker run \
   -v $(pwd)/group_vars/all.yml:/build/all.yml \
