@@ -6,7 +6,17 @@
       stat:
         path: files/naming_document
       register: naming_document_data
-  roles:
-    - role: naming_document
-      when: naming_document_data.stat.exists
-    - role: system_documentation
+  tasks:
+    - block:
+      - name: Create Naming and Profile Document
+        include_role:
+          name: naming_document
+        when: naming_document_data.stat.exists
+      - name: Create system documentation
+        include_role:
+          name: system_documentation
+      rescue:
+        - name: Cleaning up
+          file:
+            path: _docs
+            state: absent
