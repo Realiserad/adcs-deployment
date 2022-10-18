@@ -26,7 +26,7 @@ You can a container to build the documentation on any system where you have a co
 
 2. Adjust the Ansible configuration file ``group_vars/all.yml`` according to your needs.
 
-3. Optionally replace the files in ``files`` to customise the output according to the table below.
+3. Optionally replace the files in the ``files`` directory to customise the output according to the table below.
 
 | File                    | Description                                                 | Can remove?     |
 |-------------------------|-------------------------------------------------------------|-----------------|
