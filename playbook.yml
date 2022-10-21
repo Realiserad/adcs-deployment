@@ -8,6 +8,10 @@
       register: naming_document_data
   tasks:
     - block:
+      - name: Create release directory
+        file:
+          path: "release"
+          state: directory
       - name: Create Naming and Profile Document
         include_role:
           name: naming_document
@@ -26,3 +30,6 @@
           with_items:
             - roles/installation_manual/_docs
             - roles/operations_manual/_docs
+            - roles/naming_document/_docs
+          loop_control:
+            loop_var: docs
