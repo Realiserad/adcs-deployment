@@ -89,7 +89,7 @@
   community.general.archive:
     path:
       - "{{ playbook_dir }}/_docs/_build/html"
-      - "{{ playbook_dir }}/_docs/_build/latex/system-documentation.pdf"
-      - "{{ playbook_dir }}/_docs/_build/docx/system-documentation.docx"
+      - "{{ playbook_dir }}/_docs/_build/latex/installation-manual.pdf"
+      - "{{ playbook_dir }}/_docs/_build/docx/installation-manual.docx"
     format: zip
-    dest: "{{ playbook_dir }}/release/system-documentation.zip"
+    dest: "{{ playbook_dir }}/release/installation-manual.zip"
