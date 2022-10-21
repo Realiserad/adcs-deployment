@@ -12,9 +12,9 @@
         include_role:
           name: naming_document
         when: naming_document_data.stat.exists
-      - name: Create installation documentation
+      - name: Create installation manual
         include_role:
-          name: installation_documention
+          name: installation_manual
       rescue:
         - name: Cleaning up
           file:
