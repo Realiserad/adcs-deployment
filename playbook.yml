@@ -15,8 +15,14 @@
       - name: Create installation manual
         include_role:
           name: installation_manual
+      - name: Create operations manual
+        include_role:
+          name: operations_manual
       rescue:
         - name: Cleaning up
           file:
-            path: _docs
+            path: '{{ docs }}'
             state: absent
+          with_items:
+            - roles/installation_manual/_docs
+            - roles/operations_manual/_docs

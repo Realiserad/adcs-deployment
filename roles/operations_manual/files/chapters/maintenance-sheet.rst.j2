@@ -1,0 +1,30 @@
+Appendix A - Maintenance Schedule
+=================================
+
+.. list-table:: Maintenance items
+   :widths: 3 1 3
+   :header-rows: 1
+
+   * - Description of maintenance task
+     - Interval
+     - Notes
+   * - Review logical and physical access to PKI
+     - Quartely
+     -
+   * - Review root CA audit logs
+     - Yearly
+     -
+   * - Test integrity of root CA backup
+     - Yearly
+     - Perform a restore of the latest root CA backup to ensure the backup is functional.
+   * - Create a new root CA CRL
+     - Yearly
+     -
+   * - Create a backup of the root CA.
+     - Yearly
+     -
+{% for issuing_ca in servers.issuing_cas %}
+   * - Renew {{ issuing_ca.cn }}
+     - In {{ now().year + 4 }}
+     -
+{% endfor %}

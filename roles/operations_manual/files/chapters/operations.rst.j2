@@ -1,0 +1,530 @@
+Operations Manual
+=================
+
+This chapter describes how to operate the PKI on a daily basis by describing common maintenance tasks.
+
+These maintenance tasks should be carried out by the system owner in accordance with the maintenance schedule in Appendix C.
+
+.. note:: Failure to carry out any maintenance task within the timeframe stipulated in the maintenance schedule, can cause degradation of the system or a system outage. It is the responsibiliy of the system owner to carry out the maintenance tasks, and to make a note of any deviations to the maintenance schedule.
+
+{% if servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
+Protection of root CA private keys
+----------------------------------
+
+The installation of the root CA was done with limited protection of the private keys.
+
+As no *hardware security module (HSM)* is being used, the private key of the *root certificate authority (root CA)* is stored on disk and may be decrypted and/or copied by any personnel with access to the CA.
+
+As a consequence, it is important to restrict access to the root CA machine using logical and physical acccess control and be vigilant about access attempts.
+
+- The root CA machine ``{{ servers.root_ca.name }}`` should be turned off and stored in a safe when not in use.
+- Access should only be given to vetted personnel according to the CP/CPS or applicable company policy.
+- Access control lists and CA logs should be reviewed according to the maintenance schedule.
+- Any keys which are suspected or confirmed to be compromised should be replaced.
+{% endif %}
+
+General
+-------
+
+Inspect the status of the PKI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To determine the status of the PKI, you can use *Enterprise PKI Viewer*.
+
+#. Log in to one of the issuing CAs listed below using RDP.
+
+{% for issuing_ca in servers.issuing_cas %}
+- ``{{ issuing_ca.name }} with IP address ``{{ issuing_ca.ip }}``
+{% endfor %}
+
+#. Click on the start button, type ``pkiview.msc`` and press **Enter**.
+
+#. Expand the tree on the left and click on your issuing CA.
+
+#. Ensure that all entries are marked with *OK* in the *Status* column.
+
+.. figure:: ../graphics/pkiview.png
+
+      An example of what Enterprise PKI Viewer looks like for a fully-functional ADCS installation.
+
+Inspect the CA audit log
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to one of the CA machines.
+
+#. Click on the start button, type ``Eventvwr.exe`` and press **Enter** to open *Event Viewer*.
+
+#. In the left pane, expand **Windows logs** and click on **Security**. This shows all security events.
+
+#. In the *Actions* pane on the right, expand the *Security* category and click on **Filter Current Log...**
+
+#. In the *Event sources* dropdown, tick **Microsoft Windows security auditing**.
+
+#. In the *Task category* dropdown, tick **Certification Services**.
+
+#. Click on **OK** to apply the filter.
+
+.. figure:: ../graphics/filter_event_log.png
+
+      Applying a filter in Event Viewer allows you to see only events related to CA operations.
+
+Root CA maintenance
+-------------------
+
+Create a backup
+~~~~~~~~~~~~~~~
+
+Create a backup to disk using ``CertUtil``. The backup contains all issued certificates, the CA log, and the private key of the CA as a P12-file.
+
+#. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
+
+#. Open PowerShell and run the following command. When prompted, type in the password which will be used to encrypt the private key::
+
+    CertUtil -backup C:\Backup
+
+#. Backup the keys in the registry::
+
+    reg export HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration C:\Backup\backup.reg
+
+#. Transfer the backup directory ``C:\Backup`` to a secure location.
+
+#. Turn off ``{{ servers.root_ca.name }}``.
+
+Restore a backup
+~~~~~~~~~~~~~~~~
+
+#. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
+
+#. Reset the server using SysPrep::
+
+    %WINDIR%\system32\sysprep\sysprep.exe /generalize /reboot /oobe
+
+When configuring Windows, configure the name of the server to be ``{{ servers.root_ca.name }}`` as specified in the backup file.
+
+#. Transfer the latest backup directory ``C:\Backup`` to the root CA server.
+
+#. Install the ADCS Windows feature::
+
+    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+
+#. Restore the CA certificate and private key::
+
+    $BackupPassword = Read-Host -AsSecureString
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CertFile 'C:\Backup\R1.p12' -CertFilePassword $BackupPassword -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+
+#. Restore the CA database using CertUtil::
+
+    Remove-Item C:\Windows\System32\CertLog\* -Force
+    CertUtil -restoreDB C:\Backup
+
+#. Import the registry keys::
+
+    reg import C:\Backup\backup.reg
+
+#. Restart ADCS and make sure it starts without errors::
+
+    net stop certsvc
+    net start certsvc
+
+#. Turn off ``{{ servers.root_ca.name }}``.
+
+.. _issue root ca crl:
+
+Issue a new root CA CRL
+~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Turn on ``{{ servers.root_ca.name }}`` and log in using RDP.
+
+#. Issue a CRL from the root CA::
+
+    CertUtil -crl
+
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\R1.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+
+#. Turn off ``{{ servers.root_ca.name }}``.
+
+Renewal
+-------
+
+In a Microsoft environment, you can renew the CA certificate with a new CA certificate. This makes it possible to replace a compromised keypair, add extensions to the CA certificate or extend the validity if the CA is about to expire.
+
+If you renew a CA certificate on a standalone CA machine, you need to manually publish it to Active Directory. Windows devices connected to the domain will obtain the new CA certificate automatically when they restart or after the Group Policy Refresh Interval (8 hours by default).
+
+Clients can use the propritary Microsoft certificate extension ``1.3.6.1.4.1.311.21.2`` to link the new CA certificate to the old CA certificate.
+
+In a non-Microsoft environment it is recommended to create a new CA with a new keypair and subject DN and reissue any active certificates. If you are creating a new root CA you may have to manually distribute the new root CA certificate to the truststore of any machines which require it.
+
+Renew the root CA
+~~~~~~~~~~~~~~~~~
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. If you want to extend the lifetime of your root CA, create or edit the file ``%systemroot%\CAPolicy.inf`` and make sure the following sections are present::
+
+    [Version]
+    Signature = "$Windows NT$"
+
+    [CertSrv_Server]
+    RenewalValidityPeriodUnits = 30
+    RenewalValidityPeriod = Years
+
+.. note:: Adjust ``RenewalValidityPeriodUnits`` to fit your needs. The ``NotBefore`` date in the new root CA certificate is set to the local clock and the ``NotAfter`` date is set to the local clock + the number of years specified in ``RenewalValidityPeriodUnits``.
+
+.. note:: You cannot decrease the validity time of the root CA.
+
+#. Check the local time against a reliable watch, and adjust it if necessary.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M**, double-click on the **Certificate Authority** snap-in and click on **Finish**.
+
+#. Click on **OK** to add the snap-in.
+
+#. Expand **Certification Authority (Local)** the left pane, right-click on **R1** and choose **All Tasks → Renew CA Certificate...**.
+
+#. Click **Yes** to stop ADCS.
+
+#. In the *Renew CA Certificate* dialog box, choose if you want to create a new keypair when renewing the root CA certificate, and click on **OK**.
+
+#. Issue a CRL from the root CA::
+
+    CertUtil -crl
+
+#. Export the new root CA certificate to a file::
+
+    CertUtil "-ca.cert" "C:\R1.crt"
+
+{% for server in servers.repositories %}
+#. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+
+#. Transfer the file `C:\R1.crt`` to {{ servers.issuing_cas[0].name }} and publish the root CA certificate to AD::
+
+    CertUtil -dspublish -f C:\R1.crt
+
+.. _renew new keys:
+
+{% for issuing_ca in servers.issuing_cas %}
+Renew {{ issuing_ca.cn }} and create a new keypair
+~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
+
+#. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
+
+#. Right-click on ``{{ issuing_ca.cn }}`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
+
+#. Windows will ask if you want to stop ADCS. Click **Yes** to stop ADCS and continue with the renewal.
+
+#. You will now have the option to generate a new keypair. Pick **Yes** to generate a new keypair and click on **OK**.
+
+#. Click on **Cancel** to save the CSR to disk and to start ADCS again.
+
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to ``{{ servers.root_ca.name }}``.
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. Submit the CSR for the issuing CA and save the request ID::
+
+    $request = CertReq -submit -config - C:\{{ issuing_ca.cn }}.req | Out-String | Select-String 'RequestId: (\d+)'
+    $requestId = $request.Matches[0].Groups[1].Value.Trim()
+
+#. Accept the request and retrieve a copy of the new issuing CA certificate::
+
+    CertUtil -resubmit $requestId
+    CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}-G2.crt
+
+.. note:: Replace the ``G2`` postfix appropriately if you have previously renewed the CA.
+
+#. Transfer the file ``C:\{{ issuing_ca.cn }}-G2.crt`` to ``{{ issuing_ca.name }}``.
+
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
+
+#. Install the CA certificate::
+
+    CertUtil -installcert "C:\{{ issuing_ca.cn }}-G2.crt"
+
+{% for repository in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}-G2.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}.
+{% endfor %}
+
+#. Update the CDP and AIA paths to point to the new CRL and CA certificate::
+
+    CertUtil -setreg CA\CRLPublicationURLs "1:C:\%%3.crl\n1:C:\%%3-G2.crl\n2:http://pki.{{ customer.domain }}/%%3-G2.crl"
+    CertUtil -setreg CA\CACertPublicationURLs "3:http://pki.{{ customer.domain }}/%%3-G2.crt"
+
+#. Restart ADCS::
+
+    net stop certsvc
+    net start certsvc
+
+#. Create a CRL and publish it to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
+
+Renew {{ issuing_ca.cn }} with an existing keypair
+~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
+
+#. Click on the Start button, type ``apps: certsrv`` and press **Enter**.
+
+#. Right-click on ``{{ issuing_ca.cn }}`` in the tree on the left and click on **All Tasks → Renew CA Certificate...**.
+
+#. Windows will ask if you want to stop ADCS. Click **Yes** to stop ADCS and continue with the renewal.
+
+#. You will now have the option to generate a new keypair. Pick **No** to keep the existing keypair and click on **OK**.
+
+#. Click on **Cancel** to save the CSR to disk and to start ADCS again.
+
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to ``{{ servers.root_ca.name }}``.
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. Submit the CSR for the issuing CA and save the request ID::
+
+    $request = CertReq -submit -config - C:\{{ issuing_ca.cn }}.req | Out-String | Select-String 'RequestId: (\d+)'
+    $requestId = $request.Matches[0].Groups[1].Value.Trim()
+
+#. Accept the request and retrieve a copy of the new issuing CA certificate::
+
+    CertUtil -resubmit $requestId
+    CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}.crt
+
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``{{ issuing_ca.name }}``.
+
+#. Log in to ``{{ issuing_ca.name }}`` using RDP.
+
+#. Install the CA certificate::
+
+    CertUtil -installcert "C:\{{ issuing_ca.cn }}.crt"
+
+#. Restart ADCS::
+
+    net stop certsvc
+    net start certsvc
+
+#. Create a CRL and publish it to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
+
+{% for repository in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}. Replace the existing file.
+{% endfor %}
+
+{% endfor %}
+
+Revoke certificates
+-------------------
+
+Revoke an issuing CA
+~~~~~~~~~~~~~~~~~~~~
+
+You should only revoke an issuing CA certificate if you suspect that the private key may have been compromised, as revoking a CA will cause all certificates issued from it to be invalidated.
+
+#. If you are revoking the issuing CA currently being in use, you should :ref:`renew the issuing CA certificate <renew new keys>` first.
+
+#. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+
+#. List the certificates issued by the root CA using CertUtil. Make a note of the serial number for the certificate you want to revoke::
+
+    CertUtil -out "Issued Common Name","Certificate Expiration date","Serial Number" -view Log csv
+
+#. Revoke the certificate, replace ``serial number`` with the serial number of the certificate as reported by CertUtil::
+
+    CertUtil -revoke "serial number"
+
+#. Follow :ref:`the instructions to issue a new CRL from the root CA <issue root ca crl>`.
+
+Revoke the certificate for a domain computer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to the CA machine that issued the certificate using RDP.
+
+#. Make a note of the serial number of the certificate you want to revoke.
+
+    .. note:: Lookup the serial number
+
+        If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this:
+
+        .. code-block:: powershell
+
+            CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+
+        If you do not have a copy of the certificate, you can list all certificates issued to a particular computer in the domain using CertUtil. Replace ``computerName`` with the name of the computer:
+
+        .. code-block:: powershell
+
+            CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\computerName$" -view Log csv
+
+#. Revoke the certificate using CertUtil. Replace ``serial number`` with the serial number of the certificate::
+
+    CertUtil -revoke "serial number"
+
+#. Optionally create a new CRL and push it out to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
+
+Revoke the certificate for a domain user
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to the CA machine that issued the certificate using RDP.
+
+#. Make a note of the serial number of the certificate you want to revoke.
+
+    .. note:: Lookup the serial number
+
+        If you have a copy of the certificate saved as ``C:\Certificate.crt`` you can get the serial number like this:
+
+        .. code-block:: powershell
+
+            CertUtil -dump 'C:\Certificate.crt' | Select-String 'Serial Number'
+
+        If you do not have a copy of the certificate, you can list all certificates issued to a particular user in the domain using CertUtil. Replace ``userName`` with the name of the user:
+
+        .. code-block:: powershell
+
+            CertUtil -out "Certificate Expiration date","Serial Number" -restrict "RequesterName = {{ customer.domain.split('.')[0].upper() }}\userName" -view Log csv
+
+#. Revoke the certificate using CertUtil. Replace ``serial number`` with the serial number of the certificate::
+
+    CertUtil -revoke "serial number"
+
+#. Optionally create a new CRL and push it out to the repository::
+
+    CertUtil -crl
+    Start-ScheduledTask -TaskName "CopyCRL"
+
+Issue certificates
+------------------
+
+Reenroll all certificate holders
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Reenrollment of a certificate occurrs when the certificate is about to expire, or when the schema version of the certificate template used to issue the certificate has been updated.
+
+#. Log in to one of the issuing CA machines from where you want to reissue certificates using RDP.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M**, double-click on **Certificate Templates** in the panel on the left and click on **OK** to add the *Certificate Templates* snap-in.
+
+#. Double-click on **Certificate Templates** in the panel on the left. This will list all certificate templates in AD.
+
+#. Bump the major version number of the certificate by right-clicking on the certificate template you want clients to reenroll for, and click on **Reenroll All Certificate Holders**.
+
+    .. figure:: ../graphics/reenroll_certificate_holders.png
+
+        Reenrollment of all certificate holders for a certificate template called *Atea User*.
+
+To trigger reenrollment of a computer certificate, one of the following actions must be taken:
+
+    - The computer must be restarted, or
+    - An administrator must run ``CertUtil -pulse`` on the computer
+
+To trigger reenrollement of a user certificate, one of the following actions must be taken:
+
+    - The user must log in, or
+    - The user must run ``CertUtil -user -pulse`` on their computer
+
+Manually enroll for a user certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in with the user with whom you want to enroll.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M** and double-click on the **Certificates** snap-in.
+
+#. If a dialog windows is shown, select **My user account** and click on **Finish**.
+
+#. Click on **OK** to add the snap-in.
+
+#. Right-click on **Certificates - Current User → Personal → Certificates** in the panel on the left, and click on **All Tasks → Request New Certificate...**. The *Certificate Enrollment* wizard opens.
+
+#. Click on **Next** to start the wizard.
+
+#. Click on **Next** to choose the certificate enrollment policy configured by the administrator.
+
+#. Tick the checkboxes for the certificate templates you want to enroll for and click on **Enroll**.
+
+    .. note:: Only user certificates you are allowed to enroll for are shown in the list.
+
+    .. figure:: ../graphics/enroll_user_certificate.png
+        :width: 50%
+        :align: center
+
+        Enrollment of a user certificate for the *Atea User* certificate template.
+
+#. Wait until the certificate has been issued och click on **Finish** to close the wizard.
+
+    .. figure:: ../graphics/enroll_user_certificate_ok.png
+        :width: 50%
+        :align: center
+
+        What it looks like after a successful enrollment.
+
+Manually enroll for a computer certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in as an administrator on the computer where you want to enroll.
+
+#. Click on the Start button, type ``mmc.exe`` and press **Enter**.
+
+#. Press **Ctrl + M** and double-click on the **Certificates** snap-in.
+
+#. Pick **Computer account** and click on **Next**.
+
+#. Click on **Finish** to manage certificates on the local computer.
+
+#. Click on **OK** to add the snap-in.
+
+#. Right-click on **Certificates (Local Computer) → Personal → Certificates** in the panel on the left, and click on **All Tasks → Request New Certificate...**. The *Certificate Enrollment* wizard opens.
+
+#. Click on **Next** to start the wizard.
+
+#. Click on **Next** to choose the certificate enrollment policy configured by the administrator.
+
+#. Tick the checkboxes for the certificate templates you want to enroll for and click on **Enroll**.
+
+    .. note:: Only computer certificates you are allowed to enroll for are shown in the list.
+
+#. Wait until the certificate has been issued och click on **Finish** to close the wizard.
+
+{% if servers.issuing_cas | selectattr('web_enrollment')| length > 0 %}
+Manually enroll using web enrollment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Open Internet Explorer and navigate to ``https://<name of the CA server>/certsrv``.
+
+    .. note::
+
+        Replace **<name of the CA server>** with the name of the CA server you want to enroll for a certificate from.
+
+        The following CA servers are available for web enrollment:
+
+{% for ca in servers.issuing_cas | selectattr('web_enrollment') %}
+        - {{ ca.name }}
+{% endfor %}
+
+#. Log in with your domain account.
+
+#. Click on the link **Request a certificate**.
+
+#. Click on the link **Create and submit a request to this CA**.
+
+#. In the *Certificate Template* dropdown, choose what type of certificate you want to issue.
+
+#. In the *Identifying Information For Offline Template* section, fill in the information you want to incorporate into the certificate.
+
+#. Click on **Submit** to perform the enrollment.
+
+.. note:: If the browser asks if it can perform a digital signature on your behalf, click **Yes**.
+
+#. Click on the link **Install this certificate** to install the certificate to Windows certificate store.
+{% endif %}
