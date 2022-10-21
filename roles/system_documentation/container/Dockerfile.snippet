@@ -1,3 +1,7 @@
-RUN apt install -y texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra latexmk texlive-luatex graphviz cowsay && \
-    pip3 install sphinx ansible restructuredtext-lint doc8 diagrams docxbuilder guzzle_sphinx_theme docxtpl && \
-    ansible-galaxy collection install community.general
+RUN apt install -y texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra latexmk texlive-luatex
+RUN apt install -y graphviz
+RUN apt install -y cowsay
+RUN pip3 install sphinx restructuredtext-lint doc8 docxbuilder guzzle_sphinx_theme
+RUN pip3 install ansible
+RUN pip3 install diagrams
+RUN ansible-galaxy collection install community.general
