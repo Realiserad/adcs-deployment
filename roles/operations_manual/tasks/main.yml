@@ -7,36 +7,36 @@
     state: directory
     path: "{{ item }}"
   with_items:
-    - "_docs/chapters"
-    - "_docs/graphics"
-    - "_docs/scripts"
+    - "{{ role_path }}/_docs/chapters"
+    - "{{ role_path }}/_docs/graphics"
+    - "{{ role_path }}/_docs/scripts"
 - name: Create index from template
   template:
     src: index.rst.j2
-    dest: "_docs/index.rst"
+    dest: "{{ role_path }}/_docs/index.rst"
 - name: Create chapters from templates
   template:
     src: "{{ item }}"
-    dest: '_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
+    dest: '{{ role_path }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
   with_fileglob:
     - "chapters/*.rst.j2"
 - name: Perform RST linting
   command:
-    cmd: doc8 --max-line-length 2000 "_docs/chapters"
+    cmd: doc8 --max-line-length 2000 "{{ role_path }}/_docs/chapters"
 - name: Copy graphics
   copy:
     src: "{{ item }}"
-    dest: "_docs/graphics"
+    dest: "{{ role_path }}/_docs/graphics"
   with_fileglob:
     - "graphics/*.png"
 - name: Create Sphinx configuration
   template:
     src: conf.py.j2
-    dest: "_docs/conf.py"
+    dest: "{{ role_path }}/_docs/conf.py"
 - name: Copy Sphinx files
   copy:
     src: "{{ item }}"
-    dest: "_docs"
+    dest: "{{ role_path }}/_docs"
   with_items:
     - Makefile
     - mycustomstyle.sty
@@ -45,28 +45,28 @@
 - name: Create style for Microsoft Word
   shell: python3 render.py
   args:
-    chdir: "{{ playbook_dir }}/roles/operations_manual/files/docxbuilder"
+    chdir: "{{ role_path }}/files/docxbuilder"
 - name: Copy style for Microsoft Word
   copy:
     src: style.docx
-    dest: "_docs"
+    dest: "{{ role_path }}/_docs"
 - name: Build PDF
   make:
-    chdir: "_docs"
+    chdir: "{{ role_path }}/_docs"
     target: latexpdf
 - name: Build HTML
   make:
-    chdir: "_docs"
+    chdir: "{{ role_path }}/_docs"
     target: html
 - name: Build DOCX
   make:
-    chdir: "_docs"
+    chdir: "{{ role_path }}/_docs"
     target: docx
 - name: Create installation package
   community.general.archive:
     path:
-      - "_docs/_build/html"
-      - "_docs/_build/latex/operations-manual.pdf"
-      - "_docs/_build/docx/operations-manual.docx"
+      - "{{ role_path }}/_docs/_build/html"
+      - "{{ role_path }}/_docs/_build/latex/operations-manual.pdf"
+      - "{{ role_path }}/_docs/_build/docx/operations-manual.docx"
     format: zip
     dest: "{{ playbook_dir }}/release/operations-manual.zip"

@@ -7,55 +7,55 @@
     state: directory
     path: "{{ item }}"
   with_items:
-    - "_docs/chapters"
-    - "_docs/graphics"
-    - "_docs/templates"
-    - "_docs/diagrams"
+    - "{{ role_path }}/_docs/chapters"
+    - "{{ role_path }}/_docs/graphics"
+    - "{{ role_path }}/_docs/templates"
+    - "{{ role_path }}/_docs/diagrams"
 - name: Copy graphics
   copy:
     src: "{{ item }}"
-    dest: "{{ playbook_dir }}/_docs/graphics"
+    dest: "{{ role_path }}/_docs/graphics"
   with_fileglob:
     - "graphics/*.png"
 - name: Parse LDIF configuration
   shell:
-    cmd: python3 {{ playbook_dir }}/roles/naming_document/files/parse.py --file {{ playbook_dir }}/files/naming_document/Configuration.ldf
+    cmd: python3 {{ role_path }}/files/parse.py --file {{ playbook_dir }}/files/naming_document/Configuration.ldf
   register: public_key_services_configuration
 - name: Extract certificate templates from configuration
   shell:
-    cmd: python3 "{{ playbook_dir }}/roles/naming_document/extract_templates.py --file {{ playbook_dir }}/files/Configuration.ldf --output-directory {{ playbook_dir }}/files/naming_document/ldif
+    cmd: python3 "{{ role_path }}/roles/naming_document/extract_templates.py --file {{ playbook_dir }}/files/Configuration.ldf --output-directory {{ playbook_dir }}/files/naming_document/ldif
   when: extras.naming_and_profile_document.include_ldif | default(false)
 - name: Create index from template
   template:
     src: index.rst.j2
-    dest: "_docs/index.rst"
+    dest: "{{ role_path }}/_docs/index.rst"
 - name: Create chapters from template
   template:
     src: "{{ item }}"
-    dest: '_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
+    dest: '{{ role_path }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
   with_fileglob:
     - "chapters/*.rst.j2"
 - name: Perform RST linting
   command:
-    cmd: doc8 --max-line-length 2000 "{{ playbook_dir }}/roles/naming_document/_docs/chapters"
+    cmd: doc8 --max-line-length 2000 "{{ role_path }}/_docs/chapters"
 - name: Copy diagrams scripts
   template:
     src: "{{ item }}"
-    dest: '_docs/diagrams/{{ item | basename | regex_replace("\.j2$", "") }}'
+    dest: '{{ role_path }}/_docs/diagrams/{{ item | basename | regex_replace("\.j2$", "") }}'
   with_fileglob: templates/diagrams/*.py.j2
 - name: Render diagrams
   shell: python3 {{ item }}
   args:
-    chdir: "_docs/diagrams"
-  with_fileglob: "_docs/diagrams/*.py"
+    chdir: "{{ role_path }}/_docs/diagrams"
+  with_fileglob: "{{ role_path }}/_docs/diagrams/*.py"
 - name: Create Sphinx configuration
   template:
     src: conf.py.j2
-    dest: "_docs/conf.py"
+    dest: "{{ role_path }}/_docs/conf.py"
 - name: Copy Sphinx files
   copy:
     src: "{{ item }}"
-    dest: "_docs"
+    dest: "{{ role_path }}/_docs"
   with_items:
     - Makefile
     - mycustomstyle.sty
@@ -63,9 +63,9 @@
     - atea_aligned.png
 - name: Build PDF
   make:
-    chdir: "_docs"
+    chdir: "{{ role_path }}/_docs"
     target: latexpdf
 - name: Copy PDF to release folder
   copy:
-    src: "_docs/_build/latex/naming-document.pdf"
+    src: "{{ role_path }}/_docs/_build/latex/naming-document.pdf"
     dest: "{{ playbook_dir }}/release/naming-document.pdf"
