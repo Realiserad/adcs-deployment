@@ -11,7 +11,8 @@ To speed up the installation process, minimise the risk of making mistakes and m
 
 After building, the result is put in the ``release`` folder:
 
-- ``system-documentation.zip`` contains the system documentation for ADCS in HTML, PDF and DOCX format.
+- ``installation-manual.zip`` contains a manual for installing ADCS in HTML, PDF and DOCX format.
+- ``operations-manual.zip`` contains a manual for operating ADCS in HTML, PDF and DOCX format.
 - ``naming-document.pdf`` contains the Naming and Profile Document.
 
 Build
