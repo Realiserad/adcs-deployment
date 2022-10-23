@@ -3,3 +3,5 @@ release
 .~
 files/naming_document/ldif
 Dockerfile
+roles/operations_manual/files/style.docx
+roles/installation_manual/files/style.docx

@@ -20,7 +20,7 @@ master_doc = 'index'
 project = u'Active Directory Certificate Services'
 copyright = u'Atea Sverige AB'
 author = u'{{ consultant.name }}'
-subject = 'Documentation describing a PKI based on ADCS.'
+subject = 'Documentation describing the installation of a PKI based on ADCS.'
 
 version = "{{ short_commit_hash.stdout }}"
 release = "{{ short_commit_hash.stdout }}"
@@ -31,7 +31,7 @@ pygments_style = 'sphinx'
 todo_include_todos = False
 
 docx_documents = [
-    ('index', 'system-documentation.docx', {
+    ('index', 'operations-manual.docx', {
          'title': project,
          'creator': author,
          'subject': subject,
@@ -89,8 +89,8 @@ latex_elements = {
 latex_additional_files = [ 'mycustomstyle.sty' ]
 latex_documents = [
     (master_doc,
-     'system-documentation.tex',
-     u'{{ title }}\\\\{{ customer.name }}',
+     'operations-manual.tex',
+     u'Operations Manual\\\\{{ title }}\\\\{{ customer.name }}',
      u'Compiled by ' + author,
      'manual'),
 ]
@@ -103,7 +103,7 @@ man_pages = [
 ]
 texinfo_documents = [
     (master_doc,
-     'system-documentation',
+     'operations-manual',
       u'{{ title }}',
       author,
       'Active Directory Certificate Services',

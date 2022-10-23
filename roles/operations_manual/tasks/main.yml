@@ -1,0 +1,72 @@
+- name: Get shortened commit hash
+  command:
+    cmd: git rev-parse --short HEAD
+  register: short_commit_hash
+- name: Create directory structure
+  file:
+    state: directory
+    path: "{{ item }}"
+  with_items:
+    - "{{ role_path }}/_docs/chapters"
+    - "{{ role_path }}/_docs/graphics"
+    - "{{ role_path }}/_docs/scripts"
+- name: Create index from template
+  template:
+    src: index.rst.j2
+    dest: "{{ role_path }}/_docs/index.rst"
+- name: Create chapters from templates
+  template:
+    src: "{{ item }}"
+    dest: '{{ role_path }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
+  with_fileglob:
+    - "chapters/*.rst.j2"
+- name: Perform RST linting
+  command:
+    cmd: doc8 --max-line-length 2000 "{{ role_path }}/_docs/chapters"
+- name: Copy graphics
+  copy:
+    src: "{{ item }}"
+    dest: "{{ role_path }}/_docs/graphics"
+  with_fileglob:
+    - "graphics/*.png"
+- name: Create Sphinx configuration
+  template:
+    src: conf.py.j2
+    dest: "{{ role_path }}/_docs/conf.py"
+- name: Copy Sphinx files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ role_path }}/_docs"
+  with_items:
+    - Makefile
+    - mycustomstyle.sty
+    - atea.png
+    - atea_aligned.png
+- name: Create style for Microsoft Word
+  shell: python3 render.py
+  args:
+    chdir: "{{ role_path }}/files/docxbuilder"
+- name: Copy style for Microsoft Word
+  copy:
+    src: style.docx
+    dest: "{{ role_path }}/_docs"
+- name: Build PDF
+  make:
+    chdir: "{{ role_path }}/_docs"
+    target: latexpdf
+- name: Build HTML
+  make:
+    chdir: "{{ role_path }}/_docs"
+    target: html
+- name: Build DOCX
+  make:
+    chdir: "{{ role_path }}/_docs"
+    target: docx
+- name: Create installation package
+  community.general.archive:
+    path:
+      - "{{ role_path }}/_docs/_build/html"
+      - "{{ role_path }}/_docs/_build/latex/operations-manual.pdf"
+      - "{{ role_path }}/_docs/_build/docx/operations-manual.docx"
+    format: zip
+    dest: "{{ playbook_dir }}/release/operations-manual.zip"

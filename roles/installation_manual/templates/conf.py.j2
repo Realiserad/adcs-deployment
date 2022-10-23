@@ -1,0 +1,112 @@
+#
+# The Sphinx configuration file.
+#
+# See https://www.sphinx-doc.org/en/master/usage/configuration.html for
+# available options.
+#
+
+{% if theme == 'guzzle_sphinx_theme' %}
+import guzzle_sphinx_theme
+{% endif %}
+
+extensions = [
+    'docxbuilder'
+]
+
+templates_path = [ '_templates' ]
+source_suffix = '.rst'
+master_doc = 'index'
+
+project = u'Active Directory Certificate Services'
+copyright = u'Atea Sverige AB'
+author = u'{{ consultant.name }}'
+subject = 'Documentation describing the installation of a PKI based on ADCS.'
+
+version = "{{ short_commit_hash.stdout }}"
+release = "{{ short_commit_hash.stdout }}"
+
+language = None
+exclude_patterns = [ ' _build', 'Thumbs.db', '.DS_Store' ]
+pygments_style = 'sphinx'
+todo_include_todos = False
+
+docx_documents = [
+    ('index', 'installation-manual.docx', {
+         'title': project,
+         'creator': author,
+         'subject': subject,
+     }, True),
+]
+docx_style = 'style.docx'
+docx_pagebreak_before_section = 1
+
+html_theme = "{{ theme }}"
+
+{% if theme == 'guzzle_sphinx_theme' %}
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
+html_theme = 'guzzle_sphinx_theme'
+extensions.append("guzzle_sphinx_theme")
+html_theme_options = {
+    "project_nav_name": "{{ customer.simple_name }} PKI",
+    "projectlink": "{{ link }}",
+    "globaltoc_depth": 3,
+    "globaltoc_collapse": False,
+    "globaltoc_includehidden": False,
+}
+{% endif %}
+
+html_static_path = [ '_static' ]
+html_logo = 'atea.png'
+
+{% if theme == 'guzzle_sphinx_theme' %}
+html_sidebars = {
+    '**': [
+        'logo-text.html',
+        'globaltoc.html',
+        'localtoc.html',
+        'searchbox.html'
+    ]
+}
+{% else %}
+html_sidebars = {
+    '**': [
+        'relations.html',
+        'searchbox.html',
+    ]
+}
+{% endif %}
+
+htmlhelp_basename = 'AteaProject'
+
+latex_engine = 'pdflatex'
+latex_logo = 'atea_aligned.png'
+latex_elements = {
+    'papersize': 'a4paper',
+    'preamble': '\\usepackage{mycustomstyle}',
+    'extraclassoptions':',openany,oneside',
+    'figure_align': 'H',
+}
+latex_additional_files = [ 'mycustomstyle.sty' ]
+latex_documents = [
+    (master_doc,
+     'installation-manual.tex',
+     u'Installation Manual\\\\{{ title }}\\\\{{ customer.name }}',
+     u'Compiled by ' + author,
+     'manual'),
+]
+man_pages = [
+    (master_doc,
+     u'{{ title }}',
+     u'{{ title }}',
+     [ author ],
+     1)
+]
+texinfo_documents = [
+    (master_doc,
+     'installation-manual',
+      u'{{ title }}',
+      author,
+      'Active Directory Certificate Services',
+      subject,
+      'Miscellaneous'),
+]

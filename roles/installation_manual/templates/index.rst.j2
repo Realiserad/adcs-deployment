@@ -1,5 +1,5 @@
-{{ title }}
-{{ title | length * '=' }}
+Installation Manual
+===================
 
 .. toctree::
    :maxdepth: 3
@@ -12,7 +12,5 @@
 {% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
    chapters/switchover
 {% endif %}
-   chapters/operations
    chapters/network-configuration
    chapters/inventory
-   chapters/maintenance-sheet

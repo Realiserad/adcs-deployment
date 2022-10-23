@@ -8,15 +8,28 @@
       register: naming_document_data
   tasks:
     - block:
+      - name: Create release directory
+        file:
+          path: "release"
+          state: directory
       - name: Create Naming and Profile Document
         include_role:
           name: naming_document
         when: naming_document_data.stat.exists
-      - name: Create system documentation
+      - name: Create installation manual
         include_role:
-          name: system_documentation
+          name: installation_manual
+      - name: Create operations manual
+        include_role:
+          name: operations_manual
       rescue:
         - name: Cleaning up
           file:
-            path: _docs
+            path: '{{ docs }}'
             state: absent
+          with_items:
+            - roles/installation_manual/_docs
+            - roles/operations_manual/_docs
+            - roles/naming_document/_docs
+          loop_control:
+            loop_var: docs
