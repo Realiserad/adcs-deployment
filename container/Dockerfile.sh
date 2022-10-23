@@ -23,13 +23,14 @@ RUN apt install python3 python3-pip zip git -y
 
 EOF
 
-snippets="# Dependencies"
+snippets='# Dependencies'
 
 for snippet in roles/*/container/Dockerfile.snippet; do
     snippets="$snippets\n$(cat $snippet)"
 done
 
-echo -n "$snippets" | sort | uniq
+echo "$snippets" > /dev/shm/snippets
+awk '!x[$snippets]++' /dev/shm/snippets
 
 cat << EOF
 
