@@ -9,7 +9,7 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, '#nobuild') }}
     steps:
     - name: Checkout the code from GitHub
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Build the container image
       run: |
         ./build.sh && \
