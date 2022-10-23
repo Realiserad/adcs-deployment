@@ -1,4 +1,4 @@
-name: Compress Images
+name: Compress images
 on:
   pull_request:
     paths:

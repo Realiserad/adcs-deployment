@@ -1,4 +1,4 @@
-name: Publish
+name: Release container
 on:
   push:
     branches:
