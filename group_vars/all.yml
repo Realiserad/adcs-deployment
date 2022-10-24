@@ -1,7 +1,7 @@
 title: Active Directory Certificate Services
 link: https://atea.se
 theme: guzzle_sphinx_theme
-#system_description: Provide X.509 certificates for Windows workstations and employees at Atea.
+# system_description: Provide X.509 certificates for Windows workstations and employees at Atea.
 consultant:
   name: Foo Foobarsson
   company: Atea Sverige AB
@@ -33,7 +33,7 @@ smtp_exit_module:
     #   - NTLM
     #   - Kerberos
     method: Basic
-    use_tls: Yes
+    use_tls: true
     port: 465
     account:
       username: user
@@ -63,7 +63,7 @@ servers:
       existing_backup: Z:\app-RootCA\Backup
     policy:
       high_serial: 0xFFFFFFFF
-      keep_expired_certificates_on_crl: No
+      keep_expired_certificates_on_crl: false
       # Possible choices are:
       #  - RSA4096
       #  - P256
@@ -80,15 +80,15 @@ servers:
       gateway: 192.168.56.1
       os: Windows Server 2022
       dcom_port: 4000
-      web_enrollment: Yes
-      smtp_exit_module: Yes
+      web_enrollment: true
+      smtp_exit_module: true
       location:
         log: C:\Log
         database: C:\Database
         existing_backup: Z:\app-IssuingCA1\Backup
       policy:
         high_serial: 0xFFFFFFFF
-        keep_expired_certificates_on_crl: No
+        keep_expired_certificates_on_crl: false
         # Possible choices are:
         #  - RSA4096
         #  - P256
@@ -106,15 +106,15 @@ servers:
       gateway: 192.168.56.1
       os: Windows Server 2022
       dcom_port: 4000
-      web_enrollment: Yes
-      smtp_exit_module: Yes
+      web_enrollment: true
+      smtp_exit_module: true
       location:
         log: C:\Log
         database: C:\Database
         existing_backup: Z:\app-IssuingCA1\Backup
       policy:
         high_serial: 0xFFFFFFFF
-        keep_expired_certificates_on_crl: No
+        keep_expired_certificates_on_crl: false
         # Possible choices are:
         #  - RSA4096
         #  - P256
@@ -145,29 +145,29 @@ templates:
     description: Certificate for workstations in the domain.
     validity: 365
     renewal_period: 90
-    publish: No
-    use_ec: Yes
+    publish: false
+    use_ec: true
     groups:
       - name: Domain Computers
-        autoenroll: Yes
+        autoenroll: true
     subject:
-      email: No
-      dnsname: Yes
-      upn: No
+      email: false
+      dnsname: true
+      upn: false
   - from: User
     name: Atea User
     description: Certificate for users in the domain.
     validity: 365
     renewal_period: 90
-    publish: Yes
-    use_ec: Yes
+    publish: true
+    use_ec: true
     groups:
       - name: Domain Users
-        autoenroll: Yes
+        autoenroll: true
     subject:
-      email: Yes
-      dnsname: No
-      upn: Yes
+      email: true
+      dnsname: false
+      upn: true
   - name: Legacy User
     description: Legacy template for users.
   - name: Legacy Computer

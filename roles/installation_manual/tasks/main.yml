@@ -1,7 +1,3 @@
-- name: Get shortened commit hash
-  command:
-    cmd: git rev-parse --short HEAD
-  register: short_commit_hash
 - name: Generate a secret
   set_fact:
     secret: "{{ lookup('password', '/dev/null length=16') }}"
@@ -35,6 +31,7 @@
 - name: Perform RST linting
   command:
     cmd: doc8 --max-line-length 2000 "{{ role_path }}/_docs/chapters"
+  changed_when: false
 - name: Copy graphics
   copy:
     src: "{{ item }}"
@@ -47,10 +44,11 @@
     dest: '{{ role_path }}/_docs/diagrams/{{ item | basename | regex_replace("\.j2$", "") }}'
   with_fileglob: templates/diagrams/*.py.j2
 - name: Render diagrams
-  shell: python3 {{ item }}
+  command: python3 {{ item }}
   args:
     chdir: "{{ role_path }}/_docs/diagrams"
   with_fileglob: "{{ role_path }}/_docs/diagrams/*.py"
+  changed_when: true
 - name: Create Sphinx configuration
   template:
     src: conf.py.j2
@@ -65,9 +63,10 @@
     - atea.png
     - atea_aligned.png
 - name: Create style for Microsoft Word
-  shell: python3 render.py
+  command: python3 render.py
   args:
     chdir: "{{ role_path }}/files/docxbuilder"
+  changed_when: true
 - name: Copy style for Microsoft Word
   copy:
     src: style.docx

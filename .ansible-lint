@@ -1,0 +1,7 @@
+skip_list:
+  # Using FQDN for modules (e.g. ansible.builtin.copy instead of just copy)
+  # makes the YAML files harder to read.
+  - fqcn-builtins
+  # Since we only build this project locally, we are happy with the default
+  # file permissions.
+  - risky-file-permissions
