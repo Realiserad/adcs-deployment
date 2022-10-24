@@ -1,21 +1,21 @@
 extras:
   naming_and_profile_document:
-    include_ldif: Yes
-    include_ca_certs: Yes
+    include_ldif: true
+    include_ca_certs: true
     templates:
-    - name: Atea Computer
-      description: Certificate used to authenticate workstations at Atea.
-      # https://diagrams.mingrammer.com/docs/nodes/generic
-      # For example:
-      #
-      #   Mobile: diagrams.generic.device.Mobile
-      #   Client: diagrams.onprem.client.Client
-      #   User: diagrams.onprem.client.User
-      class: diagrams.onprem.client.User
-    - name: Atea User
-      description: Certificate used to authenticate employees at Atea.
+      - name: Atea Computer
+        description: Certificate used to authenticate workstations at Atea.
+        # https://diagrams.mingrammer.com/docs/nodes/generic
+        # For example:
+        #
+        #   Mobile: diagrams.generic.device.Mobile
+        #   Client: diagrams.onprem.client.Client
+        #   User: diagrams.onprem.client.User
+        class: diagrams.onprem.client.User
+      - name: Atea User
+        description: Certificate used to authenticate employees at Atea.
     certificate_authorities:
-    - name: R1
-      description: Trust anchor for Atea's public key infrastructure.
-    - name: ICA1
-      description: Issuing CA for Atea's public key infrastructure.
+      - name: R1
+        description: Trust anchor for Atea's public key infrastructure.
+      - name: ICA1
+        description: Issuing CA for Atea's public key infrastructure.

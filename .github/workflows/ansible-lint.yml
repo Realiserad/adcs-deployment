@@ -1,0 +1,12 @@
+name: Ansible linting
+on:
+  - push
+  - pull_request
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up GitHub workspace environment variable
+        uses: actions/checkout@v2
+      - name: Perform linting of Ansible files
+        uses: ansible-community/ansible-lint-action@main
