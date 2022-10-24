@@ -1,4 +1,4 @@
-[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml) [![Container size](https://ghcr-badge.herokuapp.com/realiserad/adcs-deployment/size?label=Container%20size)]() [![Hours spent](https://img.shields.io/endpoint?url=https%3A%2F%2Fmh.jessemillar.com%2Fhours%3Frepo%3Dhttps%3A%2F%2Fgithub.com%2FRealiserad%2Fadcs-deployment.git&label=Hours%20spent)](https://github.com/Realiserad/adcs-deployment/commits/main)
+[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml) [![Container size](https://ghcr-badge.herokuapp.com/realiserad/adcs-deployment/size?label=Container%20size&logo=linuxcontainers)]() [![Hours spent](https://img.shields.io/endpoint?url=https%3A%2F%2Fmh.jessemillar.com%2Fhours%3Frepo%3Dhttps%3A%2F%2Fgithub.com%2FRealiserad%2Fadcs-deployment.git&label=Hours%20spent&logo=clockify)](https://github.com/Realiserad/adcs-deployment/commits/main)
 
 About
 =====
