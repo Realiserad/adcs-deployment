@@ -1,0 +1,126 @@
+Appendix B - Use certificates for Kerberos authentication
+=========================================================
+
+If the certificates issued from the PKI are to be used for certificate-based authentication wuth Kerberos Authentication Center (KDC) running in a different domain, you need to add a strong mapping as explained in the `KB5014754 article on Microsoft's website <https://support.microsoft.com/en-us/topic/kb5014754-certificate-based-authentication-changes-on-windows-domain-controllers-ad2c23b0-15d8-4340-a468-4d4f3b188f16>`_.
+
+The mapping is done by replacing the ``altSecurityIdentities`` attribute in the appropriate AD container. Microsoft recommends that you add a mapping with the certificate serial number. This means that the mapping needs to be updated every time the certificate is reissued, as the serial number is unique for each certificate. The mapping has to be done by a domain administrator as the ``altSecurityIdentities`` attribute is not writable by other users.
+
+#.
+
+    Obtain a copy of the user or machine certificate that you want add a mapping for.
+
+    You can export the last issued certificate for a user or machine using ``CertUtil``::
+
+        CertUtil -view -silent -out "Binary Certificate" -restrict "RequesterName=User","RequestId==$" | Select -Skip 3 > certificate.pem
+
+#. Create a new PowerShell script named ``Create-CertificateMapping.ps1`` with the following content
+
+    ..  code-block:: powershell
+        :caption: Script for adding a certificate mapping in AD.
+
+        function Get-X509Certificate {
+            <#
+            .SYNOPSIS
+                Parses an X.509 certificate.
+
+            .DESCRIPTION
+                Creates a certificate object from a DER or PEM-encoded X.509 certificate structure provided on stdin.
+
+            .EXAMPLE
+                > Get-Item $File | Get-X509Certificate
+
+            .INPUTS
+                System.Object
+            #>
+            [CmdletBinding()]
+            [OutputType([System.Security.Cryptography.X509Certificates.X509Certificate2])]
+            param (
+                [Parameter(Mandatory=$true, ValueFromPipeline=$true, Position=0)] [object]$Input
+            )
+
+            [System.Security.Cryptography.X509Certificates.X509Certificate2]
+            $Certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList (,$Input)
+            Write-Output $Certificate
+        }
+
+        Function Convert-ReverseBytes {
+            <#
+            .SYNOPSIS
+            Reverses a string of hexadecimal characters.
+
+            .DESCRIPTION
+            Takes in a string of hexadecimal characters and returns the same
+            hexadecimal string in reverse order.
+
+            .PARAMETER Value
+            [String] The hexadecimal string to reverse.
+
+            .OUTPUTS
+            [String] The hexadecimal string in reverse order.
+
+            .EXAMPLE
+            > Convert-ReverseBytes -Value "010203"
+            030201
+
+            .NOTES
+            The hexadecimal string must not contain any byte separators.
+            #>
+            [CmdletBinding()]
+            [OutputType([String])]
+            param(
+                [Parameter(Mandatory=$true)] [String]$Value
+            )
+
+            $bytes = New-Object -TypeName byte[] -ArgumentList ($Value.Length / 2)
+            $next_index = 0
+            for ($i = $Value.Length - 2; $i -ge 0; $i -= 2) {
+                $bytes[$next_index] = [Convert]::ToByte($Value.Substring($i, 2), 16)
+                $next_index++
+            }
+
+            return [BitConverter]::ToString($bytes).Replace('-', '')
+        }
+
+        $Certificate = Get-Item $args[1] | Get-X509Certificate
+        $SerialNumber = Convert-ReverseBytes $Certificate.SerialNumber
+        $IssuerDnParts = $Certificate.Issuer -Split(", ")
+        [array]::Reverse($IssuerDnParts)
+        $AltSecurityIdentities="'X509:<I>" + ($IssuerDnParts -Join ",") + "<SR>" + $SerialNumber + "'"
+
+        if ($args[0].EndsWith("$")) {
+            Set-ADComputer $args[0] -Replace @{altSecurityIdentities=$AltSecurityIdentities}
+        } else {
+            Set-ADUser $args[0] -Replace @{altSecurityIdentities=$AltSecurityIdentities}
+        }
+
+#.
+
+    Run the script with the user or machine name and the path to the certificate file as arguments. For example, if the user is called ``User`` in AD and the user's certificate is stored in the file ``certificate.pem``::
+
+        .\Create-CertificateMapping.ps1 "User" "certificate.pem"
+
+    If the machine is called ``Machine`` in AD and the machine's certificate is stored in the file ``certificate.pem``
+
+    ::
+
+        .\Create-CertificateMapping.ps1 "Machine$" "certificate.pem"
+
+    .. note:: The script treats the input as the name of a machine if it ends with ``$``.
+
+#.
+
+    Optionally check that the mapping was created successfully, using ``Get-ADUser`` or ``Get-ADComputer`` cmdlets.
+
+    ::
+
+        Get-ADUser -Identity "User" -Properties * | Select altSecurityIdentities
+        Get-ADComputer -Identity "Machine$" -Properties * | Select altSecurityIdentities
+
+    This is what the ``altSecurityIdentities`` could look like after a successful mapping
+
+    ::
+
+        > Get-ADUser -Identity "User" -Properties * | Select altSecurityIdentities
+        altSecurityIdentities
+        ---------------------
+        {'X509:<I>C=SE,O=Atea Sverige AB,CN=ICA1<SR>07000000000068E9D37ED205A1890700000063'}

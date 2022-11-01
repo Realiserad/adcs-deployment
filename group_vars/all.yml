@@ -22,6 +22,7 @@ customer:
   country: SE
 extras:
   naming_and_profile_document:
+  kb5014754: true
 smtp_exit_module:
   smtp_server: smtp.pki.atea.se
   email:
