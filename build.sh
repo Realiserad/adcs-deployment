@@ -1,3 +1,3 @@
 #!/bin/sh
 sh container/Dockerfile.sh > Dockerfile
-docker build -t realiserad/adcs-deployment .
+docker build --squash -t realiserad/adcs-deployment .
