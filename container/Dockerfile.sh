@@ -1,3 +1,4 @@
+#!/bin/sh
 cat << EOF
 FROM ubuntu:jammy
 

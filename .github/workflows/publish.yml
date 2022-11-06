@@ -11,7 +11,7 @@ jobs:
     - name: Checkout the code from GitHub
       uses: actions/checkout@v3
     - name: Create a Dockerfile
-      run: container/Dockerfile.sh > Dockerfile
+      run: container/create_dockerfile.sh
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
     - name: Set up Docker Buildx
