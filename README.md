@@ -86,6 +86,15 @@ Pull requests are squashed
 
 When a pull request is accepted, all commits are being squashed into one commit to keep the history of the ``main`` branch as clean as possible. In GitHub, this is done by selecting the option "Squash and merge" when accepting the pull request.
 
+Ansible linting
+---------------
+
+Any ansible playbooks and roles are being checked by ansible-lint. You can install and run the linter manually to ensure that your changes don't trigger any errors.
+```
+pip3 install ansible-lint
+amsible-lint
+```
+
 Automatic builds
 ----------------
 
