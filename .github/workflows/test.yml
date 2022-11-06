@@ -18,14 +18,10 @@ jobs:
           -v $(pwd)/files:/build/files \
           -v /tmp/release:/build/release \
           realiserad/adcs-deployment
-    - name: List artefacts
-      run: |
-        echo 'Found the following artefacts in the release folder'
-        ls -la /tmp/release
     - name: Ensure artefacts are created
-      uses: andstor/file-existence-action@v2
-      with:
-        files: |
-          "/tmp/release/naming-document.pdf, /tmp/release/operations-manual.zip, /tmp/release/installation-manual.zip"
-        fail: true
+      shell: bash
+      run: |
+        test -f "/tmp/release/naming-document.pdf"
+        test -f "/tmp/release/operations-manual.zip" 
+        test -f "/tmp/release/installation-manual.zip"
 
