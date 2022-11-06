@@ -18,7 +18,7 @@ jobs:
           -v $(pwd)/files:/build/files \
           -v /tmp/release:/build/release \
           realiserad/adcs-deployment
-    - name: Ensure artefacts have been created
+    - name: Ensure artefacts are created
       uses: andstor/file-existence-action@v2
       with:
         files: |
