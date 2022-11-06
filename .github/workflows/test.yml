@@ -22,6 +22,6 @@ jobs:
       shell: bash
       run: |
         test -f "/tmp/release/naming-document.pdf"
-        test -f "/tmp/release/operations-manual.zip" 
+        test -f "/tmp/release/operations-manual.foo" 
         test -f "/tmp/release/installation-manual.zip"
 
