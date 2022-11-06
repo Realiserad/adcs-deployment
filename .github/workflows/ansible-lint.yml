@@ -1,6 +1,5 @@
 name: Ansible linting
 on:
-  - push
   - pull_request
 jobs:
   build:
