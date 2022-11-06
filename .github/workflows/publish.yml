@@ -10,27 +10,30 @@ jobs:
     steps:
     - name: Checkout the code from GitHub
       uses: actions/checkout@v3
-    - name: Enable experimental fatures for the Docker daemon
-      run: |
-        echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
-        sudo systemctl restart docker
-    - name: Build the container image
-      run: |
-        ./build.sh && \
-        docker tag $(docker images -q realiserad/adcs-deployment) ghcr.io/realiserad/adcs-deployment
-    - name: Run the container with the sample configuration
-      run: |
-        docker run \
-          -v $(pwd)/group_vars/all.yml:/build/all.yml \
-          -v $(pwd)/files:/build/files \
-          -v /tmp/release:/build/release \
-          ghcr.io/realiserad/adcs-deployment
+    - name: Create a Dockerfile
+      run: container/Dockerfile.sh > Dockerfile
+    - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
     - name: Log in to the GitHub Container Registry
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Push the container to ghcr.io
-      run: |
-        docker push ghcr.io/realiserad/adcs-deployment
+    - name: Create Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: realiserad/adcs-deployment
+    - name: Build an image and push it to ghcr.io
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
