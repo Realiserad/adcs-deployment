@@ -27,7 +27,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v4
       with:
-          images: realiserad/adcs-deployment
+          images: ghcr.io/realiserad/adcs-deployment
     - name: Build an image and push it to ghcr.io
       uses: docker/build-push-action@v3
       with:
