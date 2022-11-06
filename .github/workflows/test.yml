@@ -1,0 +1,29 @@
+name: Test the container
+on:
+  pull_request:
+    branches:
+      - 'main'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code from GitHub
+      uses: actions/checkout@v3
+    - name: Build the container image
+      run: ./build.sh
+    - name: Run the container with the sample configuration
+      run: |
+        docker run \
+          -v $(pwd)/group_vars/all.yml:/build/all.yml \
+          -v $(pwd)/files:/build/files \
+          -v /tmp/release:/build/release \
+          realiserad/adcs-deployment
+    - name: Ensure artefacts have been created
+      uses: andstor/file-existence-action@v2
+      with:
+        files: |
+          "/tmp/release/naming-document.pdf, 
+          /tmp/release/operatons-manual.zip,
+          /tmp/release/installation-manual.zip"
+        fail: true
+
