@@ -23,7 +23,7 @@ jobs:
       with:
         files: |
           "/tmp/release/naming-document.pdf, 
-          /tmp/release/operatons-manual.zip,
+          /tmp/release/operations-manual.zip,
           /tmp/release/installation-manual.zip"
         fail: true
 
