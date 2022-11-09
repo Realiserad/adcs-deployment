@@ -92,7 +92,7 @@ Ansible linting
 Any ansible playbooks and roles are being checked by ansible-lint. You can install and run the linter manually to ensure that your changes don't trigger any errors.
 ```
 pip3 install ansible-lint
-amsible-lint
+ansible-lint
 ```
 
 Automatic builds
