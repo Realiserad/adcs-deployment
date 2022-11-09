@@ -6,10 +6,10 @@ with Diagram("PKI Topology", show = False, filename = "topology"):
         root_ca = Windows("{{ servers.root_ca.name }}")
         with Cluster("Issuing CAs"):
 {% for issuing_ca in servers.issuing_cas %}
-            {{ issuing_ca.cn.lower().replace(' ', '_') }} = Windows("{{ issuing_ca.name }}")
+            zz_{{ issuing_ca.cn.lower().replace(' ', '').replace('-', '') }} = Windows("{{ issuing_ca.name }}")
 {% endfor %}
 {% for issuing_ca in servers.issuing_cas %}
-            {{ issuing_ca.cn.lower().replace(' ', '_') }} << \
+            zz_{{ issuing_ca.cn.lower().replace(' ', '').replace('-', '') }} << \
                 Edge(color = "black",
                     style = "dashed",
                     label = "Signing CA certificates for") << \
@@ -26,7 +26,7 @@ with Diagram("PKI Topology", show = False, filename = "topology"):
                 Edge(color = "blue",
                     style = "solid",
                     label = "Fetches GPOs from") << \
-                {{ issuing_ca.cn.lower().replace(' ', '_') }}
+                zz_{{ issuing_ca.cn.lower().replace(' ', '').replace('-', '') }}
 {% endfor %}
     with Cluster("Network Zone - Tier 1"):
         with Cluster("Repositories"):
@@ -39,4 +39,4 @@ with Diagram("PKI Topology", show = False, filename = "topology"):
                 Edge(color = "green",
                     style = "solid",
                     label = "Publishes CRLs to") << \
-                {{ servers.issuing_cas[0].cn.lower().replace(' ', '_') }}
+                zz_{{ servers.issuing_cas[0].cn.lower().replace(' ', '').replace('-', '') }}

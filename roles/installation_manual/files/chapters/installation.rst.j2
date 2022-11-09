@@ -465,9 +465,9 @@ Configure web enrollment
 
 #. Click on **Next**.
 
-#. Click on **Select...**, select the certificate authority **ICA1** in the list and click on **OK**.
+#. Click on **Select...**, select the certificate authority **{{ issuing_ca.cn }}** in the list and click on **OK**.
 
-#. In the *Friendly name** field, type ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}`` and click on **Finish** to issue the web server certificate.
+#. In the *Friendly name* field, type ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}`` and click on **Finish** to issue the web server certificate.
 
 #. Run the following PowerShell command to disable the *WebServer* template on the CA::
 

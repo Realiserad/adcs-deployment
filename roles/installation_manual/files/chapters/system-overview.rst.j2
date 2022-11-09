@@ -113,7 +113,7 @@ Certificate templates
 
 The following certificate templates are used for certificate issuance.
 
-{% set all_templates = templates | map(attribute = 'name') | list | union(servers.issuing_cas | selectattr('templates', 'defined') | map(attribute = 'templates') | list | first) | unique %}
+{% set all_templates = templates | map(attribute = 'name') | list | union(servers.issuing_cas | selectattr('templates', 'defined') | map(attribute = 'templates') | list) | unique %}
 
 .. list-table:: Certificate templates
    :widths: 1 2

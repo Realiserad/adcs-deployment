@@ -36,7 +36,7 @@ Restore the backup for {{ issuing_ca.cn }}
 #. Restore the CA database using CertUtil::
 
     Remove-Item C:\Windows\System32\CertLog\* -Force
-    CertUtil -restoreDB "{{ issuing_ca.location.existing_backup }}"
+    CertUtil -restoreDB "{{ issuing_ca.location.existing_backup | default('Z:\Backup') }}"
 
 #. Restart ADCS and make sure it starts without errors::
 
