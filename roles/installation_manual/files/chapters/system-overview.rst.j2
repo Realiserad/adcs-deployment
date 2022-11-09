@@ -55,13 +55,22 @@ The following accounts are used for administrating the PKI.
      - Account description
    * - ``{{ servers.root_ca.name.upper() }}\{{ accounts.local.user }}``
      - Local administrator account for ``{{ servers.root_ca.name }}``.
-{% for issuing_ca in servers.issuing_cas %}
    * - ``{{ customer.domain.split('.')[0].upper() }}\{{ accounts.domain.user }}``
-     - Domain administrator for the {{ customer.domain }} domain. Used for administration of ``{{ issuing_ca.name }}`` and Public Key Policies in Active Directory.
+     - | Domain administrator for the {{ customer.domain }} domain. Used for the following:
+       | ✓ Administration of Public Key Policies in Active Directory
+{% for issuing_ca in servers.issuing_cas %}
+       | ✓ Administration of ``{{ issuing_ca.name }}``
 {% endfor %}
 {% for repository in servers.repositories %}
+{% if repository.connected_to_ad %}
+       | ✓ Administration of ``{{ repository.name }}``
+{% endif %}
+{% endfor %}
+{% for repository in servers.repositories %}
+{% if repository.connected_to_ad is false %}
    * - ``{{ repository.name.upper() }}\{{ accounts.local.user }}``
      - Local administrator account for ``{{ repository.name }}``.
+{% endif %}
 {% endfor %}
 
 CRL distribution points

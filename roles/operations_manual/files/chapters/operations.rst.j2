@@ -26,6 +26,25 @@ As a consequence, it is important to restrict access to the root CA machine usin
 General
 -------
 
+{% if servers.jumphost is defined %}
+Connect to the jumphost
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The PKI servers are accessed through a jumphost called ``{{ servers.jumphost.name }}``. You can access the jumphost using a *remote desktop* (RDP) connection.
+
+To connect to the jumphost, follow these steps:
+
+#. Click on the Start button, type ``mstsc`` and press Enter.
+
+#. In the *Computer* field, enter ``{{ servers.jumphost.ip }}``.
+
+#. Click on the *Connect* button.
+
+#. In the popup dialog window, type in the username ``{{ customer.domain.upper() }}\{{ accounts.domain.user }}`` and your password.
+
+#. Click on **OK**.
+{% endif %}
+
 Inspect the status of the PKI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

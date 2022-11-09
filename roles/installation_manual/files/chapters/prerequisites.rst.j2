@@ -17,11 +17,13 @@ Prerequisites
 #. Ensure that there is a network drive mapped to ``{{ issuing_ca.name }}`` with at least 128 GB of free storage available for storing the CA logs and certificate database.
 {% endfor %}
 
-#. Create a local administrator account ``{{ accounts.local.user }}`` on the following servers:
+#. Create a local administrator account called ``{{ accounts.local.user }}`` on the following servers:
 
     - ``{{ servers.root_ca.name }}``
 {% for server in servers.repositories %}
-    - ``{{ server.name}}``
+{% if server.connected_to_ad is false %}
+    - ``{{ server.name }}``
+{% endif %}
 {% endfor %}
 
 #. Create an domain administrator account ``{{ accounts.domain.user }}``.

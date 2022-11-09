@@ -85,3 +85,20 @@ Appendix B - Inventory
        | vCPU: 2
      - Distributes CA certificates and CRLs over HTTP.
 {% endfor %}
+
+{% if servers.jumphost is defined %}
+.. list-table:: Miscellaneous
+   :widths: 1 1 1 1 2
+   :header-rows: 1
+
+   * - Name
+     - Network
+     - Operating system
+     - System requirements
+     - Purpose
+   * - {{ servers.jumphost.name }}
+     - {{ servers.jumphost.vlan }}
+     - {{ servers.jumphost.os }}
+     - N/A
+     - Jumphost
+{% endif %}

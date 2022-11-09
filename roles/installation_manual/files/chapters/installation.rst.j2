@@ -57,11 +57,13 @@ Create {{ server.name }}
 
     Set-WinUserLanguageList -LanguageList {{ customer.keyboard_layout }}, en-US -Force
 
+{% if server.connected_to_ad is false %}
 #. Reset the password of the local administrator account using PowerShell::
 
     $NewPassword = Read-Host -AsSecureString
     $UserAccount = Get-LocalUser -Name "{{ accounts.local.user }}"
     $UserAccount | Set-LocalUser -Password $NewPassword
+{% endif %}
 
 #. Install IIS and remove the default website using PowerShell::
 
@@ -517,6 +519,32 @@ Schedule publication of CRLs
 
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
+
+{% if issuing_ca.access is defined %}
+Configure access control
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Click on the Start button, type ``certsrv.msc`` and press **Enter** to start *Certificate Authority Management*.
+
+#. Right-click on **{{ issuing_ca.name }}** and click on **Properties**.
+
+#. Click on the **Security** tab.
+
+{% for principal in issuing_ca.access %}
+#. Click on **Add...**.
+
+#. In the textbox, type ``{{ principal.name }}``, click on **Check Names** and click on **OK**.
+
+#. Click on **OK** to close the *Select Users, Computers, or Groups* dialog.
+
+#. In *Permissions for Authenticated Users*, enable the following permissions:
+{% for permission in principal.permissions %}
+    #. {{ permission }}
+{% endfor %}
+{% endfor %}
+
+#. Click on **OK** to close the *Certificate Authority Properties* dialog.
+{% endif %}
 
 {% endfor %}
 

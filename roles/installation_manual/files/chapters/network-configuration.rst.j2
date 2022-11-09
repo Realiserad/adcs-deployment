@@ -15,15 +15,6 @@ The firewall should only allow access to the ports as specified in the tables be
      - Dst
      - Dst proto/port
      - Description
-   * - Jumphost
-     - | {{ servers.root_ca.name }}
-       | {{ issuing_ca.name }}
-{% for server in servers.repositories %}
-       | {{ server.name }}
-{% endfor %}
-       | Domain controllers
-     - tcp/3389
-     - RDP
    * - {{ issuing_ca.name }}
      - Domain controllers
      - tcp/135
@@ -71,6 +62,32 @@ The firewall should only allow access to the ports as specified in the tables be
 {% endif %}
 {% endfor %}
 
+{% if servers.jumphost is defined %}
+.. list-table:: Firewall rules for jumphost
+   :widths 1 1 1 1
+   :header-rows: 1
+
+   * - Src
+     - Dst
+     - Dst proto/port
+     - Description
+   * - Jumphost
+     - | {{ servers.root_ca.name }}
+{% for issuing_ca in servers.issuing_cas %}
+       | {{ issuing_ca.name }}
+{% endfor %}
+{% for server in servers.repositories %}
+       | {{ server.name }}
+{% endfor %}
+       | Domain controllers
+     - tcp/3389
+     - Administration of PKI machines via RDP.
+   * - Administrator workstation
+     - Jumphost
+     - tcp/3389
+     - Administrator access to jumphost via RDP.
+{% endif %}
+
 .. list-table:: Firewall rules for CRL distribution
    :widths: 1 1 1 1
    :header-rows: 1
@@ -85,6 +102,14 @@ The firewall should only allow access to the ports as specified in the tables be
 {% endfor %}
      - http/80
      - Certificate validation
+{% for issuing_ca in servers.issuing_cas %}
+   * - {{ issuing_ca.name }}
+{% for repository in servers.repositories %}
+     - | {{ repository.name }}
+{% endfor %}
+     - tcp/445
+     - Automated certificate distribution from {{ issuing_ca.name }} using the SMB protocol.
+{% endfor %}
 
 {% for issuing_ca in servers.issuing_cas %}
 {% if issuing_ca.dcom_port is defined %}

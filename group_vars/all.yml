@@ -50,6 +50,11 @@ smtp_exit_module:
     - SHUTDOWN
     - STARTUP
 servers:
+  jumphost:
+    name: app-Jumphost
+    ip: 10.11.12.13
+    vlan: ADMIN
+    os: Windows Server 2022
   root_ca:
     name: app-RootCA
     description: Hosting the trust anchor.
@@ -76,7 +81,7 @@ servers:
       cn: ICA1
       description: Hosting the first CA issuing certificates to subscribers.
       ip: 192.168.56.101
-      vlan: VLAN0
+      vlan: VLAN1
       netmask: 255.255.255.0
       gateway: 192.168.56.1
       os: Windows Server 2022
@@ -98,11 +103,16 @@ servers:
       templates:
         - Legacy Computer
         - Legacy User
+      access:
+        - name: ATEA\Enrollment servers
+          permissions:
+            - Issue and Manage Certificates
+            - Request Certificates
     - name: app-IssuingCA2
       cn: ICA2
       description: Hosting the second CA issuing certificates to subscribers.
       ip: 192.168.56.102
-      vlan: VLAN0
+      vlan: VLAN1
       netmask: 255.255.255.0
       gateway: 192.168.56.1
       os: Windows Server 2022
@@ -125,10 +135,11 @@ servers:
     - name: app-Repository
       description: Distributing CA certificates and CRLs over HTTP.
       ip: 192.168.56.102
-      vlan: VLAN1
+      vlan: DMZ
       netmask: 255.255.255.0
       gateway: 192.168.56.1
       os: Windows Server 2022
+      connected_to_ad: true
   dns_servers:
     - 192.168.56.10
     - 192.168.56.11
