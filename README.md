@@ -35,7 +35,7 @@ You can a container to build the documentation on any system where you have a co
 | ├── all.yml             | Ansible configuration file.                                 |                 |
 | ├── atea.png            | Company logo.                                               |                 |
 | ├── atea_aligned.png    | Company logo with padding.                                  |                 |
-| naming_document/        |                                                             | Yes             |
+| files/naming_document/  |                                                             | Yes             |
 | ├── Configuration.ldf   | [Configuration exported from AD](https://github.com/Realiserad/adcs-deployment/blob/main/roles/naming_document/README.md).                             |                 |
 | ├── *.dat               | [Registry hive(s)](https://github.com/Realiserad/adcs-deployment/blob/main/roles/naming_document/README.md) with CA configuration.                     | Yes             |
 
