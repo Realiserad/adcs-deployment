@@ -7,7 +7,7 @@ These maintenance tasks should be carried out by the system owner in accordance 
 
 .. note:: Failure to carry out any maintenance task within the timeframe stipulated in the maintenance schedule, can cause degradation of the system or a system outage. It is the responsibiliy of the system owner to carry out the maintenance tasks, and to make a note of any deviations to the maintenance schedule.
 
-{% if servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
+{% if servers.root_ca is defined and servers.root_ca.policy.key_storage_provider == 'Microsoft Software Key Storage Provider' %}
 Protection of root CA private keys
 ----------------------------------
 
@@ -87,6 +87,7 @@ Inspect the CA audit log
 
       Applying a filter in Event Viewer allows you to see only events related to CA operations.
 
+{% if servers.root_ca is defined %}
 Root CA maintenance
 -------------------
 
@@ -164,6 +165,8 @@ Issue a new root CA CRL
 
 #. Turn off ``{{ servers.root_ca.name }}``.
 
+{% endif %}
+
 Renewal
 -------
 
@@ -175,6 +178,7 @@ Clients can use the propritary Microsoft certificate extension ``1.3.6.1.4.1.311
 
 In a non-Microsoft environment it is recommended to create a new CA with a new keypair and subject DN and reissue any active certificates. If you are creating a new root CA you may have to manually distribute the new root CA certificate to the truststore of any machines which require it.
 
+{% if servers.root_ca is defined %}
 Renew the root CA
 ~~~~~~~~~~~~~~~~~
 
@@ -223,6 +227,8 @@ Renew the root CA
 
     CertUtil -dspublish -f C:\R1.crt
 
+{% endif %}
+
 .. _renew new keys:
 
 {% for issuing_ca in servers.issuing_cas %}
@@ -241,9 +247,17 @@ Renew {{ issuing_ca.cn }} and create a new keypair
 
 #. Click on **Cancel** to save the CSR to disk and to start ADCS again.
 
+{% if servers.root_ca is defined %}
 #. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to ``{{ servers.root_ca.name }}``.
+{% else %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to the root CA.
+{% endif %}
 
+{% if servers.root_ca is defined %}
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+{% else %}
+#. Log in to the root CA.
+{% endif %}
 
 #. Submit the CSR for the issuing CA and save the request ID::
 
@@ -299,9 +313,17 @@ Renew {{ issuing_ca.cn }} with an existing keypair
 
 #. Click on **Cancel** to save the CSR to disk and to start ADCS again.
 
+{% if servers.root_ca is defined %}
 #. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to ``{{ servers.root_ca.name }}``.
+{% else %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to the root CA.
+{% endif %}
 
+{% if servers.root_ca is defined %}
 #. Log in to ``{{ servers.root_ca.name }}`` using RDP.
+{% else %}
+#. Log in to the root CA.
+{% endif %}
 
 #. Submit the CSR for the issuing CA and save the request ID::
 
@@ -340,6 +362,7 @@ Renew {{ issuing_ca.cn }} with an existing keypair
 Revoke certificates
 -------------------
 
+{% if servers.root_ca is defined %}
 Revoke an issuing CA
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -358,6 +381,8 @@ You should only revoke an issuing CA certificate if you suspect that the private
     CertUtil -revoke "serial number"
 
 #. Follow :ref:`the instructions to issue a new CRL from the root CA <issue root ca crl>`.
+
+{% endif %}
 
 Revoke the certificate for a domain computer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

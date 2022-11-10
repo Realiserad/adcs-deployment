@@ -3,7 +3,11 @@ from diagrams.generic.os import Windows
 
 with Diagram("PKI Topology", show = False, filename = "topology"):
     with Cluster("Network Zone - Tier 0"):
+{% if servers.root_ca is defined %}
         root_ca = Windows("{{ servers.root_ca.name }}")
+{% else %}
+        root_ca = Windows("Root CA")
+{% endif %}
         with Cluster("Issuing CAs"):
 {% for issuing_ca in servers.issuing_cas %}
             zz_{{ issuing_ca.cn.lower().replace(' ', '').replace('-', '') }} = Windows("{{ issuing_ca.name }}")

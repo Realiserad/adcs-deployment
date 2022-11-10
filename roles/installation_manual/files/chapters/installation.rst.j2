@@ -3,11 +3,11 @@ Installation Manual
 
 This chapter describes the installation of the PKI.
 
-{% if servers.root_ca.location.existing_backup is defined or servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
+{% if (servers.root_ca is defined and servers.root_ca.location.existing_backup is defined) or servers.issuing_cas | selectattr('location.existing_backup', 'defined') | length > 0 %}
 Create a backup of the old PKI
 ------------------------------
 
-{% if servers.root_ca.location.existing_backup is defined %}
+{% if servers.root_ca is defined and servers.root_ca.location.existing_backup is defined %}
 Back up the old root CA
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -48,6 +48,7 @@ Create repositories
 -------------------
 
 {% for server in servers.repositories %}
+
 Create {{ server.name }}
 ~~~~~~~{{ '~' * server.name | length }}
 
@@ -125,6 +126,7 @@ If the old PKI uses AIA and CDP URLs which do not match the URLs used by this in
 
 {% endif %}
 
+{% if servers.root_ca is defined %}
 {% if servers.root_ca.location.existing_backup is defined %}
 Migrate the root CA
 -------------------
@@ -151,7 +153,7 @@ Create the root CA
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
 
-{% if servers.root_ca.location.existing_backup is defined %}
+{% if servers.root_ca is defined and servers.root_ca.location.existing_backup is defined %}
 #. Restore the CA certificate and private key::
 
     $BackupPassword = Read-Host -AsSecureString
@@ -232,6 +234,16 @@ Publish root CA artefacts
     CertUtil -dspublish -f C:\R1.crt
 
 {% endif %}
+{% endif %}
+
+{% if servers.root_ca is not defined %}
+Publish root CA artefacts
+-------------------------
+
+{% for server in servers.repositories %}
+#. Transfer a copy of the root CA certificate and the latest root CA CRL to ``C:\inetpub\pki`` on {{ server.name }}.
+{% endfor %}
+{% endif %}
 
 Prepare issuing CA machines
 ---------------------------
@@ -259,7 +271,7 @@ Prepare {{ issuing_ca.cn }}
     [Certsrv_Server]
     LoadDefaultTemplates = 0
 
-{% if issuing_ca.location.existing_backup is undefined %}
+{% if issuing_ca.location.existing_backup is not defined %}
 #. Install the ADCS Windows feature::
 
     Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
@@ -312,14 +324,19 @@ Test {{ issuing_ca.cn }} backup integrity
 Finalise the configuration of {{ issuing_ca.cn }}
 ------------------------------{{ issuing_ca.cn | length * '-' }}
 
+{% if issuing_ca.location.existing_backup is defined %}
 Log in to {{ issuing_ca.cn }}
 ~~~~~~~~~~{{ issuing_ca.cn | length * '~' }}
 
-#. Log in to {{ servers.root_ca.name }} using RDP.
+#. Log in to {{ issuing_ca.name }} using RDP.
+
+{% endif %}
 
 {% if issuing_ca.location.existing_backup is not defined %}
 Sign the CA certificate
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to {{ servers.root_ca.name }} using RDP.
 
 #. Submit the CSR for {{ issuing_ca.cn }} and save the request ID::
 
@@ -339,6 +356,8 @@ Sign the CA certificate
 
 Import the CA certificate
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to {{ issuing_ca.name }} using RDP.
 
 #. Install the CA certificate chain::
 

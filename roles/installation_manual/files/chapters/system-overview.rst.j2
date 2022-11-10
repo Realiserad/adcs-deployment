@@ -15,9 +15,11 @@ The following servers are a part of the PKI. For details, refer to *Appendix B*.
    * - Server name
      - IP address
      - Description
+{% if servers.root_ca is defined %}
    * - {{ servers.root_ca.name }}
      - {{ servers.root_ca.ip }}
      - {{ servers.root_ca.description }}
+{% endif %}
 {% for issuing_ca in servers.issuing_cas %}
    * - {{ issuing_ca.name }}
      - {{ issuing_ca.ip }}
@@ -53,8 +55,10 @@ The following accounts are used for administrating the PKI.
 
    * - Account name
      - Account description
+{% if servers.root_ca is defined %}
    * - ``{{ servers.root_ca.name.upper() }}\{{ accounts.local.user }}``
      - Local administrator account for ``{{ servers.root_ca.name }}``.
+{% endif %}
    * - ``{{ customer.domain.split('.')[0].upper() }}\{{ accounts.domain.user }}``
      - | Domain administrator for the {{ customer.domain }} domain. Used for the following:
        | ✓ Administration of Public Key Policies in Active Directory

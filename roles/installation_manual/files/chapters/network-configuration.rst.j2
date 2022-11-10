@@ -72,14 +72,16 @@ The firewall should only allow access to the ports as specified in the tables be
      - Dst proto/port
      - Description
    * - Jumphost
-     - | {{ servers.root_ca.name }}
+     - | Domain controllers
+{% if servers.root_ca is defined %}
+       | {{ servers.root_ca.name }}
+{% endif %}
 {% for issuing_ca in servers.issuing_cas %}
        | {{ issuing_ca.name }}
 {% endfor %}
 {% for server in servers.repositories %}
        | {{ server.name }}
 {% endfor %}
-       | Domain controllers
      - tcp/3389
      - Administration of PKI machines via RDP.
    * - Administrator workstation
@@ -97,15 +99,17 @@ The firewall should only allow access to the ports as specified in the tables be
      - Dst proto/port
      - Description
    * - Internet
+     - |
 {% for server in servers.repositories %}
-     - {{ server.name }}
+       | {{ server.name }}
 {% endfor %}
      - http/80
      - Certificate validation
 {% for issuing_ca in servers.issuing_cas %}
    * - {{ issuing_ca.name }}
+     - |
 {% for repository in servers.repositories %}
-     - | {{ repository.name }}
+       | {{ repository.name }}
 {% endfor %}
      - tcp/445
      - Automated certificate distribution from {{ issuing_ca.name }} using the SMB protocol.
@@ -130,10 +134,12 @@ The records specified in the table below should be added manually to the DNS ser
      - Record value(s)
      - Record type
      - Load balacing policy
+{% if servers.root_ca is defined %}
    * - {{ servers.root_ca.name ~ '.' ~ customer.domain }}
      - {{ servers.root_ca.ip }}
      - A
      - N/A
+{% endif %}
 {% for issuing_ca in servers.issuing_cas %}
    * - {{ issuing_ca.name ~ '.' ~ customer.domain }}
      - {{ issuing_ca.ip }}
@@ -147,12 +153,9 @@ The records specified in the table below should be added manually to the DNS ser
      - N/A
 {% endfor %}
    * - {{ 'pki' ~ '.' ~ customer.domain }}
+     - |
 {% for server in servers.repositories %}
-{% if loop.index == 0 %}
-     - {{ server.ip }}
-{% else %}
-     - | {{ server.ip }}
-{% endif %}
+       | {{ server.ip }}
 {% endfor %}
      - A
      - Round-robin

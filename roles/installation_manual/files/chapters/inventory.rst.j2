@@ -1,6 +1,7 @@
 Appendix B - Inventory
 ======================
 
+{% if servers.root_ca is defined %}
 .. list-table:: Standalone root CA servers
    :widths: 1 1 1 1 2
    :header-rows: 1
@@ -27,6 +28,7 @@ Appendix B - Inventory
        | Disk: 32 GB
        | vCPU: 2
      - Trust anchor for the ``{{ customer.domain }}`` domain.
+{% endif %}
 
 .. list-table:: Enterprise issuing CA servers
    :widths: 1 1 1 1 2
