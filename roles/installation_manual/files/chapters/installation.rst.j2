@@ -58,7 +58,7 @@ Create {{ server.name }}
 
     Set-WinUserLanguageList -LanguageList {{ customer.keyboard_layout }}, en-US -Force
 
-{% if server.connected_to_ad is false %}
+{% if not server.connected_to_ad %}
 #. Reset the password of the local administrator account using PowerShell::
 
     $NewPassword = Read-Host -AsSecureString
@@ -69,7 +69,6 @@ Create {{ server.name }}
 #. Install IIS and remove the default website using PowerShell::
 
     Install-WindowsFeature -Name Web-Server -IncludeManagementTools
-    Remove-IISSite -Name "Default Web Site"
 
 #. Create a folder where the repository files should be stored::
 
@@ -77,12 +76,16 @@ Create {{ server.name }}
 
 #. Create a new website for the repository::
 
-    New-IISSite -Name PKI -PhysicalPath "C:\inetpub\pki" -Protocol http -BindingInformation "*:80:"
+    New-IISSite -Name PKI -PhysicalPath "C:\inetpub\pki" -Protocol http -BindingInformation "*:80:" -Force
+    Remove-IISSite -Name "Default Web Site"
+    Start-IISSite -Name PKI
 
+{% if not server.connected_to_ad %}
 #. Create a local user account::
 
     $Password = ConvertTo-SecureString "{{ secret }}" -AsPlaintext -Force
     New-LocalUser -AccountNeverExpires -Name "PKIUser" -Password $Password
+{% endif %}
 
 #. Create an SMB share using PowerShell::
 
@@ -94,7 +97,11 @@ Create {{ server.name }}
     $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone", "FullControl", "ContainerInherit,Objectinherit", "None", "Allow")
     $Acl.AddAccessRule($AccessRule)
     Set-ACL "C:\inetpub\pki\" $Acl
+{% if server.connected_to_ad %}
+    Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ customer.domain.split('.')[0].upper() }}\{{ accounts.service.user }}" -AccessRight Full -Force
+{% else %}
     Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ server.name ~ '.' ~ customer.domain }}\PKIUser" -AccessRight Full -Force
+{% endif %}
 {% endfor %}
 
 {% if servers.issuing_cas | selectattr('location.existing_backup', 'defined') | list | length > 0 %}
@@ -245,7 +252,7 @@ Publish root CA artefacts
 {% endfor %}
 {% endif %}
 
-Prepare issuing CA machines
+Install issuing CA machines
 ---------------------------
 
 {% for issuing_ca in servers.issuing_cas %}
@@ -263,6 +270,10 @@ Prepare {{ issuing_ca.cn }}
     $NewPassword = Read-Host -AsSecureString
     Set-ADAccountPassword -Identity {{ accounts.domain.user }} -NewPassword $NewPassword -Reset
 
+#. Install the ADCS Windows feature::
+
+    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+
 #. Create the file ``%systemroot%\CAPolicy.inf``::
 
     [Version]
@@ -272,10 +283,6 @@ Prepare {{ issuing_ca.cn }}
     LoadDefaultTemplates = 0
 
 {% if issuing_ca.location.existing_backup is not defined %}
-#. Install the ADCS Windows feature::
-
-    Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
-
 #. Create an issuing CA using PowerShell::
 
 {% if issuing_ca.policy.key_specification == 'P256' %}
@@ -288,8 +295,13 @@ Prepare {{ issuing_ca.cn }}
 
 #. Transfer the file ``C:\{{ issuing_ca.cn }}.req`` to {{ servers.root_ca.name }}.
 {% else %}
-Test {{ issuing_ca.cn }} backup integrity
-~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~
+
+Activate {{ issuing_ca.cn }} and restore a backup
+~~~~~~~~~{{ issuing_ca.cn | length * '~' }}~~~~~~~~~~~~~~~~~~~~~
+
+#. Make sure the old CA is turned off.
+
+.. note:: When running ``Install-AdcsCertificationAuthority`` the new CA will be registered in Active Directory and the new CA will start receiving certicate requests.
 
 #. Restore the CA certificate and private key::
 
@@ -298,6 +310,8 @@ Test {{ issuing_ca.cn }} backup integrity
 
 #. Restore the CA database using CertUtil::
 
+    Remove-Item "{{ issuing_ca.location.log }}\* -Force
+    Remove-Item "{{ issuing_ca.location.database }}\* -Force
     CertUtil -restoreDB "{{ issuing_ca.location.existing_backup }}"
 
 #. Import the registry keys::
@@ -448,59 +462,64 @@ Configure web enrollment
 
 #. Run the following commands in PowerShell to enable web enrollment::
 
+    Install-WindowsFeature -Name Web-Server -IncludeManagementTools
     Add-WindowsFeature Adcs-Web-Enrollment
     Install-AdcsWebEnrollment
 
-#. IIS uses the built-in *WebServer* template to fetch certificates, and it must be temporarily enabled on the CA.
+#. Create a configuration file called ``RequestPolicy.inf`` with the following content::
 
-    Add-CATemplate -Name WebServer -Force
+    [Version]
+    Signature="$Windows NT$"
+
+    [NewRequest]
+    Subject = "CN={{ issuing_ca.name.lower() ~ '.' ~ customer.domain }}"
+
+    Exportable = FALSE
+    KeyAlgorithm = RSA
+    KeyLength = 2048
+    KeySpec = 1
+    KeyUsage = 0xA0
+    MachineKeySet = True
+    ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
+    RequestType = PKCS10
+
+    [EnhancedKeyUsageExtension]
+    OID=1.3.6.1.5.5.7.3.1
+
+    [Extensions]
+    2.5.29.17 = "{text}"
+    _continue_ = "dns={{ issuing_ca.name.lower() ~ '.' ~ customer.domain }}&"
+
+    [RequestAttributes]
+    CertificateTemplate = WebServer
+
+#. Issue a server certificate using ``CertReq``::
+
+    CertReq -new RequestPolicy.inf Request.csr
+    CertReq -submit Request.csr Certificate.cer
+
+#. Click **OK** in the dialog box.
+
+#. Import the certificate to Windows certificate store and clean up::
+
+    Import-Certificate -FilePath Certificate.cer -CertStoreLocation Cert:\LocalMachine\My
+    Remove-Item Request.csr
+    Remove-Item Certificate.rsp
+    Remove-Item Certificate.cer
 
 #. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
 
-#. Expand ``{{ issuing_ca.name }}`` in the tree on the left.
+#. Double-click on ``{{ issuing_ca.name }}`` in the tree on the left, and double-click on **Server certificates** in the middle pane.
 
-#. Double-click on **Server Certificates**.
+#. In the *Actions* pane on the right, click on **Enable Automatic Rebind of Renewed Certificate**.
 
-#. In the *Actions* pane on the right, click on **Create Domain Certificate...**.
-
-#. Fill in the subject DN attributes using the table below.
-
-.. list-table::
-   :widths: 1 1
-   :header-rows: 0
-
-   * - **Common name**
-     - ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}``
-   * - **Organisation**
-     - ``{{ customer.name }}``
-   * - **Organizational unit**
-     - ``IT``
-   * - **City/locality**
-     - ``{{ customer.city }}``
-   * - **State/province**
-     - ``{{ customer.state }}``
-   * - **Country/region**
-     - ``{{ customer.country }}``
-
-#. Click on **Next**.
-
-#. Click on **Select...**, select the certificate authority **{{ issuing_ca.cn }}** in the list and click on **OK**.
-
-#. In the *Friendly name* field, type ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}`` and click on **Finish** to issue the web server certificate.
-
-#. Run the following PowerShell command to disable the *WebServer* template on the CA::
-
-    Remove-CATemplate -Name WebServer -Force
-
-#. Expand **Sites** in the tree on the left, right-click on **Default Web Site** and click **Edit Bindings...**.
+#. Expand **Sites** in the left pane, right-click on **Default Web Site** and click **Edit Bindings...**.
 
 #. Click on **Add...** to add a new binding, and make the following adjustments:
 
     #. In the *Type* dropdown, pick **https**.
 
-    #. In the *Host name* field, type ``{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}``.
-
-    #. In the *SSL certificate* dropdown, select **{{ issuing_ca.name.lower() }} ~ {{ customer.domain }}**.
+    #. In the *SSL certificate* dropdown, select **{{ issuing_ca.name.lower() ~ '.' ~ customer.domain }}**.
 
 #. Click on **OK** to add the new binding.
 
@@ -520,9 +539,17 @@ Schedule publication of CRLs
 
 {% for server in servers.repositories %}
     :: Copy CRLs to {{ server.name }}
-    net use X: "\\{{ server.name }}.{{ customer.domain }}\PKI Repository" "{{ secret }}" /user:{{ server.name }}.{{ customer.domain }}\PKIUser /persistent:Yes
-    xcopy "C:\*.crl" X:\ /y
-    net use X: /delete
+{% if server.connected_to_ad %}
+    net use P: "\\{{ server.name }}.{{ customer.domain }}\PKI Repository" "{{ accounts.service.password }}" /user:{{ customer.domain.split('.')[0].upper() }}\{{ accounts.service.user }} /persistent:No
+{% else %}
+    net use P: "\\{{ server.name }}.{{ customer.domain }}\PKI Repository" "{{ secret }}" /user:{{ server.name }}.{{ customer.domain }}\PKIUser /persistent:No
+{% endif %}
+{% if issuing_ca.location.certsrv is defined %}
+    xcopy "{{ issuing_ca.location.certsrv }}\*.crl" P:\ /y
+{% else %}
+    xcopy "C:\*.crl" P:\ /y
+{% endif %}
+    net use P: /delete
 {% endfor %}
 
 #. Schedule a daily background task::
@@ -681,28 +708,21 @@ Enable certificate templates
 ----------------------------
 
 {% for issuing_ca in servers.issuing_cas %}
+
 Enable certificate templates for {{ issuing_ca.cn }}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{{ issuing_ca.cn | length * '~' }}
 
 #. Log in to ``{{ issuing_ca.name }}`` using RDP.
 
-#. Pull any GPO changes from the domain controller::
-
-    gpupdate
+#. Enable templates using PowerShell::
 
 {% if issuing_ca.templates is defined %}
 {% for template in issuing_ca.templates %}
-#. Enable the template *{{ template }}* using PowerShell::
-
     Add-CATemplate -Name "{{ template | replace(' ', '') }}" -Force
-
 {% endfor %}
 {% else %}
 {% for template in templates %}
-#. Enable the template *{{ template.name }}* using PowerShell::
-
     Add-CATemplate -Name "{{ template.name | replace(' ', '') }}" -Force
-
 {% endfor %}
 {% endif %}
 {% endfor %}

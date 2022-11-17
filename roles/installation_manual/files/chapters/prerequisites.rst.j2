@@ -9,7 +9,7 @@ Prerequisites
 #. Create a GPO called **{{ autoenrollment.gpo }}**.
 {% endif %}
 
-#. Create machines according to *Appendix B*.
+#. Create machines according to *Appendix B*. Make sure the machines are in the *Cert Publishers* group.
 
 {% for issuing_ca in servers.issuing_cas %}
 #. Join the server ``{{ issuing_ca.name }}`` to the domain ``{{ customer.domain }}``.
@@ -30,5 +30,9 @@ Prerequisites
 {% endif %}
 
 #. Create an domain administrator account ``{{ accounts.domain.user }}``.
+
+{% if accounts.service is defined %}
+#. Create a service account in Active Directory called ``{{ accounts.service.user }}``.
+{% endif %}
 
 #. Share instructions and credentials for VPN access if the installation is to be done remotely.

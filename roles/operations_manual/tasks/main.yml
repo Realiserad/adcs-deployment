@@ -16,6 +16,10 @@
     dest: '{{ role_path }}/_docs/chapters/{{ item | basename | regex_replace("\.j2$", "") }}'
   with_fileglob:
     - "chapters/*.rst.j2"
+- name: Create RequestPolicy.inf from template
+  template:
+    src: RequestPolicy.inf.j2
+    dest: "{{ role_path }}/_docs/RequestPolicy.inf"
 - name: Perform RST linting
   command:
     cmd: doc8 --max-line-length 2000 "{{ role_path }}/_docs/chapters"

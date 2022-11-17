@@ -87,6 +87,15 @@ Inspect the CA audit log
 
       Applying a filter in Event Viewer allows you to see only events related to CA operations.
 
+Search for expiring certificates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to one of the CA machines.
+
+#. Open PowerShell and run the following command to list all certificates expiring within the next eight hours::
+
+    CertUtil -restrict "NotAfter<=now+00:08","NotAfter>now" -view -out "Requester Name","Certificate Expiration date" | More
+
 {% if servers.root_ca is defined %}
 Root CA maintenance
 -------------------
@@ -572,3 +581,51 @@ Manually enroll using web enrollment
 
 #. Click on the link **Install this certificate** to install the certificate to Windows certificate store.
 {% endif %}
+
+Manually enroll using CertReq
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``CertReq`` is a command-line utility which can be used to enroll certificates from ADCS.
+
+#. Create a configuration file called ``RequestPolicy.inf`` according to the following template:
+
+    .. literalinclude:: ../RequestPolicy.inf
+       :language: ini
+       :linenos:
+
+#. Create a certificate signing request (CSR) using ``CertReq``::
+
+    CertReq -new RequestPolicy.inf Request.csr
+
+#. Submit the CSR to the CA using ``CertReq``::
+
+    CertReq -submit Request.csr Certificate.cer
+
+#. Click **OK** in the dialog box.
+
+#. You can now double-click on the certificate ``Certificate.cer`` to import it to the Windows certificate store.
+
+    To import a machine certificate using PowerShell::
+
+        Import-Certificate -FilePath Certificate.cer -CertStoreLocation Cert:\LocalMachine\My
+
+    Or to import a user certificate::
+
+        Import-Certificate -FilePath Certificate.cer -CertStoreLocation Cert:\CurrentUser\My
+
+Renew IIS server certificates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to the server where IIS is installed.
+
+#. Click on the Start button, type ``inetmgr`` and press **Enter** to start *Internet Information Services (IIS) Manager*.
+
+#. Double-click on the name of the server in the tree on the left, and double-click on **Server certificates** in the middle pane.
+
+#. In the list of certificates, select the certificate you want to renew and click on **Renew...** in the *Actions* pane on the right.
+
+#. Click on **Next**.
+
+#. Click on **Select...**, select the issuing CA in the list and click on **OK**.
+
+#. Click on **Finish** to renew the certificate.
