@@ -1,4 +1,4 @@
-[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml) [![Container size](https://ghcr-badge.herokuapp.com/realiserad/adcs-deployment/size?label=Container%20size&logo=linuxcontainers)](https://github.com/Realiserad/adcs-deployment/pkgs/container/adcs-deployment/versions) [![Last commit](https://shields.io/github/last-commit/realiserad/adcs-deployment?label=Last%20commit&logo=git)](https://github.com/Realiserad/adcs-deployment/commits/main)
+[![Build status](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml/badge.svg?event=push&branch=main)](https://github.com/Realiserad/adcs-deployment/actions/workflows/publish.yml) [![Last commit](https://shields.io/github/last-commit/realiserad/adcs-deployment?label=Last%20commit&logo=git)](https://github.com/Realiserad/adcs-deployment/commits/main)
 
 About
 =====
