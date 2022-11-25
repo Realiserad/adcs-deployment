@@ -139,7 +139,7 @@ When configuring Windows, configure the name of the server to be ``{{ servers.ro
 #. Restore the CA certificate and private key::
 
     $BackupPassword = Read-Host -AsSecureString
-    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CertFile 'C:\Backup\R1.p12' -CertFilePassword $BackupPassword -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CertFile 'C:\Backup\{{ servers.root_ca.cn}}.p12' -CertFilePassword $BackupPassword -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
 
 #. Restore the CA database using CertUtil::
 
@@ -169,7 +169,7 @@ Issue a new root CA CRL
     CertUtil -crl
 
 {% for server in servers.repositories %}
-#. Transfer the file ``C:\R1.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+#. Transfer the file ``C:\{{ servers.root_ca.cn }}.crt`` to ``{{ server.www_root | default('C:\inetpub') }}\pki`` on {{ server.name }}.
 {% endfor %}
 
 #. Turn off ``{{ servers.root_ca.name }}``.
@@ -214,7 +214,7 @@ Renew the root CA
 
 #. Click on **OK** to add the snap-in.
 
-#. Expand **Certification Authority (Local)** the left pane, right-click on **R1** and choose **All Tasks → Renew CA Certificate...**.
+#. Expand **Certification Authority (Local)** the left pane, right-click on **{{ servers.root_ca.cn }}** and choose **All Tasks → Renew CA Certificate...**.
 
 #. Click **Yes** to stop ADCS.
 
@@ -226,15 +226,15 @@ Renew the root CA
 
 #. Export the new root CA certificate to a file::
 
-    CertUtil "-ca.cert" "C:\R1.crt"
+    CertUtil "-ca.cert" "C:\{{ servers.root_ca.cn }}.crt"
 
 {% for server in servers.repositories %}
-#. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+#. Transfer the files ``C:\{{ servers.root_ca.cn }}.crt`` and ``C:\{{ servers.root_ca.cn }}.crl`` to ``{{ server.www_root | default('C:\inetpub') }}\pki`` on {{ server.name }}.
 {% endfor %}
 
-#. Transfer the file `C:\R1.crt`` to {{ servers.issuing_cas[0].name }} and publish the root CA certificate to AD::
+#. Transfer the file `C:\{{ servers.root_ca.cn }}.crt`` to {{ servers.issuing_cas[0].name }} and publish the root CA certificate to AD::
 
-    CertUtil -dspublish -f C:\R1.crt
+    CertUtil -dspublish -f C:\{{ servers.root_ca.cn }}.crt
 
 {% endif %}
 
@@ -288,8 +288,8 @@ Renew {{ issuing_ca.cn }} and create a new keypair
 
     CertUtil -installcert "C:\{{ issuing_ca.cn }}-G2.crt"
 
-{% for repository in servers.repositories %}
-#. Transfer the file ``C:\{{ issuing_ca.cn }}-G2.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}.
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}-G2.crt`` to ``{{ server.www_root | default('C:\inetpub') }}\pki`` on {{ server.name }}.
 {% endfor %}
 
 #. Update the CDP and AIA paths to point to the new CRL and CA certificate::
@@ -362,8 +362,8 @@ Renew {{ issuing_ca.cn }} with an existing keypair
     CertUtil -crl
     Start-ScheduledTask -TaskName "CopyCRL"
 
-{% for repository in servers.repositories %}
-#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ repository.name }}. Replace the existing file.
+{% for server in servers.repositories %}
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``{{ server.www_root | default('C:\inetpub') }}\pki`` on {{ server.name }}. Replace the existing file.
 {% endfor %}
 
 {% endfor %}

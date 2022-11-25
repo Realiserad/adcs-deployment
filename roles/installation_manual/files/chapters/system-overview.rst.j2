@@ -34,7 +34,11 @@ The following servers are a part of the PKI. For details, refer to *Appendix B*.
 Topology
 --------
 
-The PKI has been implemented as a two-tier CA hierachy with one root CA and one issuing CA.
+{% if servers.issuing_cas | length == 1 %}
+The PKI has been implemented as a two-tier CA hierachy with a root CA and a single issuing CA.
+{% else %}
+The PKI has been implemented as a two-tier CA hierachy with a root CA and {{ servers.issuing_cas | length | pronounce }} issuing CAs.
+{% endif %}
 
 The root CA signs the CA certificate for the issuing CA, and is stored offline when not in use. If the private key for the issuing CA is compromised, it is possible to revoke the issuing CA using the root CA without having to create a new CA hierarchy.
 
@@ -88,10 +92,24 @@ The following endpoints are used for distribution of *Certificate Revocation Lis
 
    * - Certificate Authority
      - CRL Distribution Point
-   * - R1
-     - ``http://pki.{{ customer.domain }}/R1.crl``
-   * - ICA1
+{% if servers.root_ca is defined %}
+{% if servers.root_ca.urls is defined %}
+   * - {{ servers.root_ca.cn }}
+     - ``{{ servers.root_ca.urls.cdp }}``
+{% else %}
+   * - {{ servers.root_ca.cn }}
+     - ``http://pki.{{ customer.domain }}/{{ servers.root_ca.cn }}.crl``
+{% endif %}
+{% endif %}
+{% for issuing_ca in servers.issuing_cas %}
+{% if issuing_ca.urls is defined %}
+   * - {{ issuing_ca.cn }}
+     - ``{{ issuing_ca.urls.aia }}``
+{% else %}
+   * - {{ issuing_ca.cn }}
      - ``http://pki.{{ customer.domain }}/ICA1-<CRLNameSuffix>.crl``
+{% endif %}
+{% endfor %}
 
 The appropriate URLs are put in the *CRL Distribution Points* certificate extension (2.5.29.31) of issued certificates.
 
@@ -104,10 +122,24 @@ The following endpoints are used for distribution of CA certificates.
    :widths: 1 3
    :header-rows: 1
 
-   * - R1
+{% if servers.root_ca is defined %}
+{% if servers.root_ca.urls is defined %}
+   * - {{ servers.root_ca.cn }}
+     - ``{{ servers.root_ca.urls.cdp }}``
+{% else %}
+   * - {{ servers.root_ca.cn }}
      - ``http://pki.{{ customer.domain }}/R1.crt``
-   * - ICA1
+{% endif %}
+{% endif %}
+{% for issuing_ca in servers.issuing_cas %}
+{% if issuing_ca.urls is defined %}
+   * - {{ issuing_ca.cn }}
+     - ``{{ issuing_ca.urls.aia }}``
+{% else %}
+   * - {{ issuing_ca.cn }}
      - ``http://pki.{{ customer.domain }}/<CertificateName>.crt``
+{% endif %}
+{% endfor %}
 
 The appropriate URLs are put in the *Authority Information Access* certificate extension (1.3.6.1.5.5.7.1.1) of issued certificates.
 

@@ -72,11 +72,11 @@ Create {{ server.name }}
 
 #. Create a folder where the repository files should be stored::
 
-    New-Item -Path "C:\inetpub" -Name "pki" -ItemType "directory"
+    New-Item -Path "{{ server.www_root | default('C:\inetpub')}}" -Name "pki" -ItemType "directory"
 
 #. Create a new website for the repository::
 
-    New-IISSite -Name PKI -PhysicalPath "C:\inetpub\pki" -Protocol http -BindingInformation "*:80:" -Force
+    New-IISSite -Name PKI -PhysicalPath "{{ server.www_root | default('C:\inetpub')}}\pki" -Protocol http -BindingInformation "*:80:" -Force
     Remove-IISSite -Name "Default Web Site"
     Start-IISSite -Name PKI
 
@@ -89,14 +89,14 @@ Create {{ server.name }}
 
 #. Create an SMB share using PowerShell::
 
-    New-SmbShare -Name "PKI Repository" -Path "C:\inetpub\pki"
+    New-SmbShare -Name "PKI Repository" -Path "{{ server.www_root | default('C:\inetpub')}}\pki"
 
 #. Grant NTFS and SMB share permissions::
 
-    $Acl = Get-ACL "C:\inetpub\pki\"
+    $Acl = Get-ACL "{{ server.www_root | default('C:\inetpub')}}\pki\"
     $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone", "FullControl", "ContainerInherit,Objectinherit", "None", "Allow")
     $Acl.AddAccessRule($AccessRule)
-    Set-ACL "C:\inetpub\pki\" $Acl
+    Set-ACL "{{ server.www_root | default('C:\inetpub')}}\pki\" $Acl
 {% if server.connected_to_ad %}
     Grant-SmbShareAccess -Name "PKI Repository" -AccountName "{{ customer.domain.split('.')[0].upper() }}\{{ accounts.service.user }}" -AccessRight Full -Force
 {% else %}
@@ -184,9 +184,9 @@ Create the root CA
 #. Create a root CA using PowerShell::
 
 {% if servers.root_ca.policy.key_specification == 'P256' %}
-    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "ECDSA_P256#{{ servers.root_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "ECDSA_P256#{{ servers.root_ca.policy.key_storage_provider }}" -KeyLength 256 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "{{ servers.root_ca.cn }}" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
 {% elif servers.root_ca.policy.key_specification == 'RSA4096' %}
-    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "RSA#{{ servers.root_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "R1" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
+    Install-AdcsCertificationAuthority -CAType StandaloneRootCa -CryptoProviderName "RSA#{{ servers.root_ca.policy.key_storage_provider }}" -KeyLength 4096 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 25 -CACommonName "{{ servers.root_ca.cn }}" -CADistinguishedNameSuffix "O={{ customer.name }},C={{ customer.country }}" -DatabaseDirectory $(Join-Path $env:SystemRoot "System32\CertLog") -Force
 {% else %}
     Unknown key specification '{{ servers.root_ca.policy.key_specification }}'.
 {% endif %}
@@ -223,22 +223,22 @@ Publish root CA artefacts
 
 #. Export a copy of the root CA certificate::
 
-    CertUtil "-ca.cert" "C:\R1.crt"
+    CertUtil "-ca.cert" "C:\{{ servers.root_ca.cn }}.crt"
 
 #. Issue a CRL from the root CA::
 
     CertUtil -crl
 
 {% for server in servers.repositories %}
-#. Transfer the files ``C:\R1.crt`` and ``C:\R1.crl`` to ``C:\inetpub\pki`` on {{ server.name }}.
+#. Transfer the files ``C:\{{ servers.root_ca.cn }}.crt`` and ``C:\{{ servers.root_ca.cn }}.crl`` to ``{{ server.www_root | default('C:\inetpub')}}\pki`` on {{ server.name }}.
 {% endfor %}
 
 {% if servers.root_ca.location.existing_backup is not defined %}
-#. Transfer ``C:\R1.crt`` to servers.issuing_cas[0] and log in to servers.issuing_cas[0] using RDP.
+#. Transfer ``C:\{{ servers.root_ca.cn }}.crt`` to servers.issuing_cas[0] and log in to servers.issuing_cas[0] using RDP.
 
 #. Publish the root CA certificate to AD::
 
-    CertUtil -dspublish -f C:\R1.crt
+    CertUtil -dspublish -f C:\{{ servers.root_ca.cn }}.crt
 
 {% endif %}
 {% endif %}
@@ -328,7 +328,7 @@ Activate {{ issuing_ca.cn }} and restore a backup
     CertUtil "-ca.cert" "C:\{{ issuing_ca.cn }}.crt"
 
 {% for server in servers.repositories %}
-#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``{{ server.www_root | default('C:\inetpub')}}\pki`` on {{ server.name }}.
 {% endfor %}
 
 {% endif %}
@@ -354,7 +354,7 @@ Sign the CA certificate
 
 #. Submit the CSR for {{ issuing_ca.cn }} and save the request ID::
 
-    $request = CertReq -submit -config - C:\ICA1.csr | Out-String | Select-String 'RequestId: (\d+)'
+    $request = CertReq -submit -config - C:\{{ issuing_ca.cn }}.csr | Out-String | Select-String 'RequestId: (\d+)'
     $requestId = $request.Matches[0].Groups[1].Value.Trim()
 
 #. Accept the request and retrieve a copy of the issuing CA certificate::
@@ -362,10 +362,10 @@ Sign the CA certificate
     CertUtil -resubmit $requestId
     CertReq -retrieve -config - $requestId C:\{{ issuing_ca.cn }}.crt
 
-#. Transfer the files ``C:\{{ issuing_ca.cn }}.crt`` and ``C:\R1.crt`` to {{ issuing_ca.name }}.
+#. Transfer the files ``C:\{{ issuing_ca.cn }}.crt`` and ``C:\{{ servers.root_ca.cn }}.crt`` to {{ issuing_ca.name }}.
 
 {% for server in servers.repositories %}
-#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``C:\inetpub\pki`` on {{ server.name }}.
+#. Transfer the file ``C:\{{ issuing_ca.cn }}.crt`` to ``{{ server.www_root | default('C:\inetpub')}}\pki`` on {{ server.name }}.
 {% endfor %}
 
 Import the CA certificate
@@ -375,7 +375,7 @@ Import the CA certificate
 
 #. Install the CA certificate chain::
 
-    Import-Certificate -FilePath C:\R1.crt -CertStoreLocation Cert:\LocalMachine\Root
+    Import-Certificate -FilePath C:\{{ servers.root_ca.cn }}.crt -CertStoreLocation Cert:\LocalMachine\Root
     CertUtil -installcert "C:\{{ issuing_ca.cn }}.crt"
 
 Configure registry settings
