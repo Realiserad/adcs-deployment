@@ -183,7 +183,7 @@ In a Microsoft environment, you can renew the CA certificate with a new CA certi
 
 If you renew a CA certificate on a standalone CA machine, you need to manually publish it to Active Directory. Windows devices connected to the domain will obtain the new CA certificate automatically when they restart or after the Group Policy Refresh Interval (8 hours by default).
 
-Clients can use the propritary Microsoft certificate extension ``1.3.6.1.4.1.311.21.2`` to link the new CA certificate to the old CA certificate.
+Clients can use the proprietary Microsoft certificate extension ``1.3.6.1.4.1.311.21.2`` to link the new CA certificate to the old CA certificate.
 
 In a non-Microsoft environment it is recommended to create a new CA with a new keypair and subject DN and reissue any active certificates. If you are creating a new root CA you may have to manually distribute the new root CA certificate to the truststore of any machines which require it.
 
